@@ -105,6 +105,30 @@ const isBlogDetailPage = (page?: Page | null) => {
   );
 };
 
+const extractBlogArticleIdentifier = (
+  pagePath: string,
+  blogIndexPath: string,
+): string | null => {
+  const normalizedPath = pagePath.replace(/\/+$/, "") || "/";
+  const normalizedIndexPath = blogIndexPath.replace(/\/+$/, "") || "/blog";
+  const prefixes = [
+    `${normalizedIndexPath}/`,
+    "/blog-detail/",
+    "/blogdetail/",
+  ];
+
+  for (const prefix of prefixes) {
+    if (
+      normalizedPath.startsWith(prefix) &&
+      normalizedPath.length > prefix.length
+    ) {
+      return decodeURIComponent(normalizedPath.slice(prefix.length));
+    }
+  }
+
+  return null;
+};
+
 // ---------------------------------------------------------------------------
 // Font preset definitions (Step 12.1) — mirrors backend/constants/fontPresets.js
 // ---------------------------------------------------------------------------
@@ -457,76 +481,68 @@ const PublicWebsite: React.FC = () => {
           );
           if (blogIndex) {
             const indexPath = blogIndex.path || "/blog";
-            const prefix = indexPath.endsWith("/")
-              ? indexPath
-              : `${indexPath}/`;
-            if (
-              pagePath.startsWith(prefix) &&
-              pagePath.length > prefix.length
-            ) {
-              const postSlug = pagePath
-                .slice(prefix.length)
-                .replace(/\/+$/, "");
-              if (postSlug) {
-                const identifier = decodeURIComponent(postSlug);
-                // Prefer the saved "Blog Detail" template page: render its authored
-                // BLOG_ARTICLE block (container styles + per-element style overrides
-                // travel with its real page/block ids) but swap in the visited slug,
-                // so the owner's editor styling applies to every article. Falls back
-                // to a default-styled synthetic block for legacy blogs with no
-                // detail page.
-                const detailPage = sortedPages.find(
-                  (p) =>
-                    p.pageType === "BLOG_DETAIL" ||
-                    (Array.isArray(p.blocks) &&
-                      p.blocks.some(
-                        (b: any) => b.blockType === "BLOG_ARTICLE",
-                      )),
-                );
-                const detailBlock =
-                  detailPage &&
-                  Array.isArray(detailPage.blocks)
-                    ? detailPage.blocks.find(
-                        (b: any) => b.blockType === "BLOG_ARTICLE",
-                      )
-                    : null;
+            const identifier = extractBlogArticleIdentifier(
+              pagePath,
+              indexPath,
+            );
 
-                if (detailPage && detailBlock) {
-                  page = {
-                    ...detailPage,
-                    path: pagePath,
-                    blocks: detailPage.blocks.map((b: any) =>
-                      b === detailBlock
-                        ? {
-                            ...b,
-                            content: {
-                              ...(b.content || {}),
-                              postIdentifier: identifier,
-                              backButtonLink: indexPath,
-                            },
-                          }
-                        : b,
-                    ),
-                  };
-                } else {
-                  page = {
-                    id: -2,
-                    title: "Blog",
-                    path: pagePath,
-                    isHome: false,
-                    blocks: [
-                      {
-                        id: -1,
-                        blockType: "BLOG_ARTICLE",
-                        sortOrder: 0,
-                        content: {
-                          postIdentifier: identifier,
-                          backButtonLink: indexPath,
-                        },
+            if (identifier) {
+              // Prefer the saved "Blog Detail" template page: render its authored
+              // BLOG_ARTICLE block (container styles + per-element style overrides
+              // travel with its real page/block ids) but swap in the visited slug,
+              // so the owner's editor styling applies to every article. Falls back
+              // to a default-styled synthetic block for legacy blogs with no
+              // detail page.
+              const detailPage = sortedPages.find(
+                (p) =>
+                  p.pageType === "BLOG_DETAIL" ||
+                  (Array.isArray(p.blocks) &&
+                    p.blocks.some(
+                      (b: any) => b.blockType === "BLOG_ARTICLE",
+                    )),
+              );
+              const detailBlock =
+                detailPage && Array.isArray(detailPage.blocks)
+                  ? detailPage.blocks.find(
+                      (b: any) => b.blockType === "BLOG_ARTICLE",
+                    )
+                  : null;
+
+              if (detailPage && detailBlock) {
+                page = {
+                  ...detailPage,
+                  path: pagePath,
+                  blocks: detailPage.blocks.map((b: any) =>
+                    b === detailBlock
+                      ? {
+                          ...b,
+                          content: {
+                            ...(b.content || {}),
+                            postIdentifier: identifier,
+                            backButtonLink: indexPath,
+                          },
+                        }
+                      : b,
+                  ),
+                };
+              } else {
+                page = {
+                  id: -2,
+                  title: "Blog",
+                  path: pagePath,
+                  isHome: false,
+                  blocks: [
+                    {
+                      id: -1,
+                      blockType: "BLOG_ARTICLE",
+                      sortOrder: 0,
+                      content: {
+                        postIdentifier: identifier,
+                        backButtonLink: indexPath,
                       },
-                    ],
-                  };
-                }
+                    },
+                  ],
+                };
               }
             }
           }

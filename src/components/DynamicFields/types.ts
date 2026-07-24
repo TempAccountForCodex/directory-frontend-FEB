@@ -39,6 +39,7 @@ export const FieldType = {
   REPEATER: "REPEATER",
   TOKEN: "TOKEN",
   MENU_SELECT: "MENU_SELECT",
+  BLOG_POSTS: "BLOG_POSTS",
 } as const;
 export type FieldType = (typeof FieldType)[keyof typeof FieldType];
 

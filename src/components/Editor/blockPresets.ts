@@ -224,6 +224,26 @@ export const getBlockDefaultContent = (
         emptyMessage: "No articles found in this category yet.",
         readMoreLink: "/blog/{slug}",
       };
+    case "BLOG_SHOWCASE":
+      return {
+        _subType: "blog_showcase",
+        variant: "grid",
+        eyebrow: "FROM THE BLOG",
+        heading: "Latest articles & insights",
+        description:
+          "Fresh perspectives, guides, and updates from our team — handpicked for you.",
+        cards: [
+          { _id: "showcase-card-1", slug: "" },
+          { _id: "showcase-card-2", slug: "" },
+          { _id: "showcase-card-3", slug: "" },
+        ],
+        columns: 3,
+        authorLabel: "Editorial",
+        readMoreLink: "/blog/{slug}",
+        emptyMessage: "No articles published yet — check back soon.",
+        ctaText: "View all blogs",
+        ctaLink: "/blog",
+      };
     case "BLOG_ARTICLE":
       return {
         showTableOfContents: true,
@@ -736,6 +756,55 @@ export const getLocalFieldMetadata = (
         },
         makeTextField("authorLabel", "Author Label", 7),
         makeTextField("emptyMessage", "Empty Message", 8),
+      ]);
+    case "BLOG_SHOWCASE":
+      return contentGroup([
+        makeTextField("eyebrow", "Eyebrow", 1),
+        makeTextField("heading", "Heading", 2),
+        makeTextField("description", "Description", 3, true),
+        {
+          name: "variant",
+          label: "Layout",
+          type: "SELECT",
+          order: 4,
+          ui: {
+            help: "Grid shows equal cards. Feature + list shows one large card beside three stacked cards.",
+            props: {
+              options: [
+                { label: "Card grid", value: "grid" },
+                { label: "Feature + list", value: "split" },
+              ],
+            },
+          },
+        },
+        {
+          name: "cards",
+          label: "Blog cards",
+          type: "BLOG_POSTS",
+          order: 5,
+          ui: {
+            help: "Reorder cards by dragging. Leave a card on “Auto” to always show the latest post. In Feature + list, the first card is the large one.",
+          },
+        },
+        {
+          name: "columns",
+          label: "Columns (card grid only)",
+          type: "SELECT",
+          order: 6,
+          ui: {
+            props: {
+              options: [
+                { label: "2 Columns", value: 2 },
+                { label: "3 Columns", value: 3 },
+                { label: "4 Columns", value: 4 },
+              ],
+            },
+          },
+        },
+        makeTextField("authorLabel", "Author Label", 7),
+        makeTextField("ctaText", "Button Text (blank = hidden)", 8),
+        makeTextField("ctaLink", "Button Link", 9),
+        makeTextField("emptyMessage", "Empty Message", 10),
       ]);
     case "BLOG_ARTICLE":
       // Article body content comes from the blog post (not editable here); only

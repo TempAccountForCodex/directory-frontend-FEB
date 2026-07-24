@@ -80,11 +80,13 @@ const BLOG_SECTION_SUBTYPE_TO_TYPE: Record<string, string> = {
   blog_hero: "BLOG_HERO",
   blog_featured: "BLOG_FEATURED",
   blog_grid: "BLOG_GRID",
+  blog_showcase: "BLOG_SHOWCASE",
 };
 const BLOG_STATIC_STYLE_BLOCK_TYPES = new Set([
   "BLOG_HERO",
   "BLOG_FEATURED",
   "BLOG_GRID",
+  "BLOG_SHOWCASE",
   "BLOG_ARTICLE",
 ]);
 

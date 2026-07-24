@@ -4,10 +4,10 @@
  * Covers:
  * 1. Paid plan user sees checked opt-in checkbox by default
  * 2. Free plan user sees locked upgrade CTA
- * 3. Wizard completion with opt-in calls POST /extract
- * 4. Wizard completion without opt-in does not call extract
- * 5. Extraction error shows warning but completes wizard
- * 6. Expandable customization section toggles
+ * 3. Wizard completion with opt-in records intent (no extract — setup happens
+ *    later on the dashboard Listing tab, where eligibility runs on real content)
+ * 4. Wizard completion without opt-in records no intent and calls no API
+ * 5. Expandable customization section toggles
  */
 
 import React from "react";
@@ -162,6 +162,7 @@ describe("ListingOptInStep", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   it("renders checked opt-in checkbox for paid plan user", () => {
@@ -192,26 +193,22 @@ describe("ListingOptInStep", () => {
     expect(screen.queryByTestId("opt-in-checkbox")).not.toBeInTheDocument();
   });
 
-  it("calls POST /extract on completion with opt-in checked", async () => {
-    mockedAxios.post.mockResolvedValueOnce({ data: { success: true } });
-
+  it("records listing intent (no extract) on completion with opt-in checked", async () => {
     render(<ListingOptInStep {...defaultProps} />);
 
     const completeBtn = screen.getByTestId("complete-btn");
     fireEvent.click(completeBtn);
 
     await waitFor(() => {
-      expect(mockedAxios.post).toHaveBeenCalledWith(
-        expect.stringContaining("/websites/1/listing/extract"),
-      );
-    });
-
-    await waitFor(() => {
       expect(defaultProps.onComplete).toHaveBeenCalled();
     });
+
+    // Intent is recorded client-side; no listing is set up or validated here.
+    expect(localStorage.getItem("tt_directory_listing_intent_1")).toBe("1");
+    expect(mockedAxios.post).not.toHaveBeenCalled();
   });
 
-  it("does not call extract API when opt-in is unchecked", async () => {
+  it("does not record intent (or call any API) when opt-in is unchecked", async () => {
     render(<ListingOptInStep {...defaultProps} />);
 
     // Uncheck the opt-in
@@ -227,20 +224,8 @@ describe("ListingOptInStep", () => {
       expect(defaultProps.onComplete).toHaveBeenCalled();
     });
 
+    expect(localStorage.getItem("tt_directory_listing_intent_1")).toBeNull();
     expect(mockedAxios.post).not.toHaveBeenCalled();
-  });
-
-  it("completes wizard even when extraction fails (non-blocking)", async () => {
-    mockedAxios.post.mockRejectedValueOnce(new Error("Network error"));
-
-    render(<ListingOptInStep {...defaultProps} />);
-
-    const completeBtn = screen.getByTestId("complete-btn");
-    fireEvent.click(completeBtn);
-
-    await waitFor(() => {
-      expect(defaultProps.onComplete).toHaveBeenCalled();
-    });
   });
 
   it("toggles the expandable customization section", () => {

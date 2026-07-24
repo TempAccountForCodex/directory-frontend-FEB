@@ -65,6 +65,8 @@ const isLocalStaticStyleFieldPath = (path?: string | null) =>
 const normalizeBackendStaticStyleFieldPath = (
   path?: string | null,
 ): string | null => {
+  if (!path) return null;
+
   const fieldPath = toFieldPath(path);
   const match = fieldPath.match(/^staticStyles\.([^:]+)::([^.]+)\.([^.]+)$/);
   if (!match) return null;
@@ -1220,8 +1222,24 @@ export function useEditorAI({
       setConflict(null);
       setActiveRequest(true);
 
+      let baselineValue: unknown = undefined;
+      let deterministicPatch: AIProposalPatch | null = null;
+      const apiTarget: EditElementTarget = {
+        kind: requestTarget.kind,
+        fieldPath:
+          requestTarget.persistedFieldPath ??
+          (requestTarget.kind === "editable" || requestTarget.kind === "section"
+            ? toPersistedBlockContentPath(
+                requestTarget.fieldPath,
+                pageId,
+                requestTarget.blockId,
+              )
+            : requestTarget.fieldPath),
+        aiEditKey: requestTarget.aiEditKey,
+      };
+
       try {
-        const baselineValue = resolveTargetBaselineValue(
+        baselineValue = resolveTargetBaselineValue(
           requestTarget,
           getCurrentValue,
         );
@@ -1230,26 +1248,11 @@ export function useEditorAI({
           buildEditSessionId(websiteId, requestTarget);
         editSessionRef.current.set(key, editSessionId);
 
-        const deterministicPatch = buildDeterministicStylePatch(
+        deterministicPatch = buildDeterministicStylePatch(
           requestTarget,
           instruction,
           baselineValue,
         );
-
-        const apiTarget: EditElementTarget = {
-          kind: requestTarget.kind,
-          fieldPath:
-            requestTarget.persistedFieldPath ??
-            (requestTarget.kind === "editable" ||
-            requestTarget.kind === "section"
-              ? toPersistedBlockContentPath(
-                  requestTarget.fieldPath,
-                  pageId,
-                  requestTarget.blockId,
-                )
-              : requestTarget.fieldPath),
-          aiEditKey: requestTarget.aiEditKey,
-        };
 
         if (isLocalStaticStyleFieldPath(requestTarget.fieldPath)) {
           const localTargetSchema = buildEditorChatEditableTargets(

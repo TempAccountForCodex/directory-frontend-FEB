@@ -34,6 +34,9 @@ const Image8 = "/assets/publicAssets/images/home/d777.jpg";
 import { SparklesCore } from "../../UI/shadcn-io/sparkles";
 
 const HeroVideo1 = "/assets/publicAssets/videos/Home/hero7.mp4";
+// First frame of HeroVideo1 — doubles as the poster and as the thumbnail
+// Google's video crawler looks for
+const HeroVideo1Poster = "/assets/publicAssets/images/home/heroFrames/hero7.webp";
 
 const HeroImage1 = "/assets/publicAssets/images/home/3d(1).webp";
 
@@ -223,6 +226,7 @@ const StyledHader: React.FC = () => {
   const [shouldLoadVideo, setShouldLoadVideo] = React.useState(false);
 
   const videos = [HeroVideo1];
+  const videoPosters = [HeroVideo1Poster];
   const images = [HeroImage1];
 
   const handleVideoEnd = () => {
@@ -305,6 +309,7 @@ const StyledHader: React.FC = () => {
           <video
             key={videoIndex} // important to force re-render
             src={videos[videoIndex]} // dynamic video
+            poster={videoPosters[videoIndex]}
             autoPlay
             muted
             loop={false} // stop looping manually

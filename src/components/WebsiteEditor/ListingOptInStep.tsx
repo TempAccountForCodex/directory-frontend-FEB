@@ -3,11 +3,8 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import Alert from "@mui/material/Alert";
-import Skeleton from "@mui/material/Skeleton";
-import CircularProgress from "@mui/material/CircularProgress";
 import { Info } from "lucide-react";
-import { apiClient } from "../../api/client";
+import { setDirectoryListingIntent } from "../../utils/directoryListingIntent";
 import DashboardGradientButton from "../Dashboard/shared/DashboardGradientButton";
 import DashboardActionButton from "../Dashboard/shared/DashboardActionButton";
 import PropertyItemCard from "../publicComponents/Listing/PropertyCardItem";
@@ -32,8 +29,6 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
   const [businessCategory, setBusinessCategory] = useState(
     defaultBusinessCategory || "",
   );
-  const [extracting, setExtracting] = useState(false);
-  const [error, setError] = useState("");
 
   const handleOptInChange = useCallback(
     (_e: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
@@ -48,39 +43,17 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
     }
   }, [businessCategory, defaultBusinessCategory]);
 
-  const handleComplete = useCallback(async () => {
-    if (!optedIn) {
-      onComplete();
-      return;
+  const handleComplete = useCallback(() => {
+    // Intent only — the listing is NOT set up or validated here. At this point
+    // the site has only template placeholder content, so running eligibility now
+    // would judge the template, not the user's real business. We just record the
+    // intent and nudge the user to finish setup from the dashboard Listing tab,
+    // where `extract` pulls the real content and the AI eligibility check runs.
+    if (optedIn) {
+      setDirectoryListingIntent(websiteId);
     }
-
-    setExtracting(true);
-    setError("");
-
-    try {
-      try {
-        await apiClient.post(`/websites/${websiteId}/listing/extract`);
-      } catch {
-        setError(
-          "Directory listing extraction encountered an issue. Your saved details are still available in settings.",
-        );
-      }
-
-      if (businessCategory) {
-        await apiClient.patch(`/websites/${websiteId}/listing`, {
-          businessCategory,
-        });
-      }
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          "Directory listing setup encountered an issue. You can configure it later in settings.",
-      );
-    } finally {
-      setExtracting(false);
-      onComplete();
-    }
-  }, [businessCategory, optedIn, websiteId, onComplete]);
+    onComplete();
+  }, [optedIn, websiteId, onComplete]);
 
   const previewData = useMemo(
     () => ({
@@ -97,38 +70,8 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
     [websiteId, websiteName, businessCategory],
   );
 
-  if (extracting) {
-    return (
-      <Box sx={{ py: 4 }}>
-        <Skeleton
-          variant="rectangular"
-          height={40}
-          sx={{ mb: 2, borderRadius: 1 }}
-        />
-        <Skeleton
-          variant="rectangular"
-          height={80}
-          sx={{ mb: 2, borderRadius: 1 }}
-        />
-        <Skeleton variant="rectangular" height={40} sx={{ borderRadius: 1 }} />
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 2 }}>
-          <CircularProgress size={16} />
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Extracting listing data from your website...
-          </Typography>
-        </Box>
-      </Box>
-    );
-  }
-
   return (
     <Box sx={{ py: 1 }}>
-      {error && (
-        <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setError("")}>
-          {error}
-        </Alert>
-      )}
-
       {optedIn && (
         <>
           {/* Preview card */}
@@ -163,8 +106,8 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
               <Info size={16} />
             </Box>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              You can customize your listing details anytime <br /> edit the
-              description, category, photos and more from your dashboard under
+              We'll remember this. Once your site content is ready, finish
+              setting up your listing from your dashboard under
               <br />
               <Box
                 component="span"
@@ -172,7 +115,7 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
               >
                 Websites → Manage → Listing
               </Box>
-              .
+              {" "}— we'll check that it's a business before it goes live.
             </Typography>
           </Box>
         </>
@@ -211,19 +154,14 @@ const ListingOptInStep = React.memo(function ListingOptInStep({
           sx={{ m: 0 }}
         />
         <Box sx={{ display: "flex", gap: 1, scale: 0.9 }}>
-          <DashboardActionButton onClick={onSkip} disabled={extracting}>
+          <DashboardActionButton onClick={onSkip}>
             Skip
           </DashboardActionButton>
           <DashboardGradientButton
             onClick={handleComplete}
-            disabled={extracting}
             data-testid="complete-btn"
           >
-            {extracting ? (
-              <CircularProgress size={16} sx={{ color: "inherit" }} />
-            ) : (
-              "Continue"
-            )}
+            Continue
           </DashboardGradientButton>
         </Box>
       </Box>

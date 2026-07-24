@@ -245,6 +245,41 @@ export function resolveBlogHeroGlow(primaryColor?: string | null) {
   };
 }
 
+export function resolveBlogCommentPalette(primaryColor?: string | null) {
+  const accent = resolveAccent(primaryColor);
+  const rgb = hexToRgb(accent);
+  const hsl = rgb ? rgbToHsl(rgb) : { h: 175, s: 55, l: 40 };
+  const hue = Math.round(hsl.h);
+  const saturation = Math.round(Math.min(78, Math.max(42, hsl.s * 1.08)));
+  const actionLightness = Math.round(
+    Math.min(52, Math.max(38, hsl.l < 42 ? hsl.l + 12 : hsl.l - 4)),
+  );
+  const textLightness = Math.round(Math.min(32, Math.max(18, hsl.l * 0.62)));
+
+  const hslColor = (lightness: number, alpha?: number, sat = saturation) =>
+    alpha == null
+      ? `hsl(${hue}, ${sat}%, ${lightness}%)`
+      : `hsla(${hue}, ${sat}%, ${lightness}%, ${alpha})`;
+
+  return {
+    hue,
+    accent,
+    action: hslColor(actionLightness),
+    actionHover: hslColor(Math.max(30, actionLightness - 5)),
+    text: hslColor(textLightness, undefined, Math.max(36, saturation - 8)),
+    muted: hslColor(48, undefined, Math.max(24, saturation - 28)),
+    surface: hslColor(99, 0.94, Math.max(22, saturation - 34)),
+    surfaceSoft: hslColor(97, 0.9, Math.max(24, saturation - 30)),
+    surfaceMuted: hslColor(95, 0.74, Math.max(18, saturation - 38)),
+    border: hslColor(88, 0.92, Math.max(24, saturation - 34)),
+    borderStrong: hslColor(74, 0.86, Math.max(32, saturation - 24)),
+    ring: hslColor(92, 0.95, Math.max(38, saturation - 12)),
+    avatarBg: `linear-gradient(135deg, ${hslColor(76, undefined, saturation)} 0%, ${hslColor(66, undefined, Math.max(38, saturation - 4))} 100%)`,
+    avatarText: hslColor(22, undefined, Math.max(34, saturation - 18)),
+    danger: "#dc2626",
+  };
+}
+
 /** Resolve a usable accent, defaulting to the blog teal when none is provided. */
 export function resolveAccent(color?: string | null): string {
   const c = normalizeHex(color);
@@ -485,7 +520,18 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
                 fontSize: "12px",
               }}
             >
-              <Typography variant="body2">{author}</Typography>
+              <Typography
+                {...(blockId
+                  ? blogStaticProps(
+                      blockId,
+                      `${staticPrefix}-author`,
+                      "Featured article author",
+                    )
+                  : {})}
+                variant="body2"
+              >
+                {author}
+              </Typography>
               <Box
                 {...(blockId
                   ? blogStaticProps(blockId, `${staticPrefix}-read-link`, "Featured article link")
@@ -577,6 +623,9 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
         }}
       >
         <Box
+          {...(blockId
+            ? blogStaticProps(blockId, `${staticPrefix}-meta`, "Article card meta")
+            : {})}
           sx={{
             display: "flex",
             alignItems: "center",
@@ -636,7 +685,18 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
             fontSize: "12px",
           }}
         >
-          <Typography variant="body2">{author}</Typography>
+          <Typography
+            {...(blockId
+              ? blogStaticProps(
+                  blockId,
+                  `${staticPrefix}-author`,
+                  "Article card author",
+                )
+              : {})}
+            variant="body2"
+          >
+            {author}
+          </Typography>
           <Box
             {...(blockId
               ? blogStaticProps(blockId, `${staticPrefix}-read-link`, "Article card link")
@@ -658,23 +718,377 @@ export const BlogInsightCard: React.FC<BlogInsightCardProps> = ({
   );
 };
 
+/* ===================== Split-layout cards ===================== */
+
+export interface BlogSplitCardProps {
+  post: BlogPost;
+  /** "tall" = large feature card filling a column; "row" = compact horizontal card. */
+  layout: "tall" | "row";
+  authorLabel?: string;
+  accent?: string;
+  onOpen?: (post: BlogPost) => void;
+  blockId?: string | number;
+  staticPrefix: string;
+}
+
+/**
+ * The cards used by the BLOG_SHOWCASE "feature + list" variant. Shares the
+ * visual language of BlogInsightCard (border, radius, shadow, accent category
+ * pill, hover lift) but in two shapes: a tall feature card that fills the left
+ * column, and a compact row card for the stacked right column.
+ */
+export const BlogSplitCard: React.FC<BlogSplitCardProps> = ({
+  post,
+  layout,
+  authorLabel,
+  accent,
+  onOpen,
+  blockId,
+  staticPrefix,
+}) => {
+  const author = authorLabel || resolveAuthorName(post);
+  const image = resolveBlogImage(post.image);
+  const accentColor = resolveAccent(accent);
+  const accentHoverBorder = hexToRgba(accentColor, 0.45);
+  const accentHoverShadow = hexToRgba(accentColor, 0.14);
+  const isTall = layout === "tall";
+
+  const shellProps = blockId
+    ? blogStaticProps(
+        blockId,
+        staticPrefix,
+        isTall ? "Feature article card" : "Article row card",
+        "container",
+      )
+    : {};
+
+  return (
+    <Box
+      {...shellProps}
+      onClick={() => onOpen?.(post)}
+      sx={{
+        display: "flex",
+        flexDirection: isTall ? "column" : "row",
+        height: "100%",
+        border: "1px solid #d7e2ec",
+        borderRadius: isTall ? "16px" : "14px",
+        cursor: onOpen ? "pointer" : "default",
+        background: "#ffffff",
+        position: "relative",
+        isolation: "isolate",
+        overflow: "hidden",
+        boxShadow: "0 6px 14px rgba(12, 28, 45, 0.07)",
+        transition:
+          "border-color 0.28s ease, transform 0.28s ease, box-shadow 0.28s ease",
+        "&:hover": {
+          borderColor: accentHoverBorder,
+          transform: "translateY(-4px)",
+          boxShadow: `0 16px 30px rgba(12, 28, 45, 0.16), 0 0 0 1px ${accentHoverShadow}`,
+        },
+      }}
+    >
+      <Box
+        {...(blockId
+          ? blogStaticProps(
+              blockId,
+              `${staticPrefix}-image`,
+              isTall ? "Feature article image" : "Article row image",
+              "media",
+            )
+          : {})}
+        sx={
+          isTall
+            ? {
+                // Absorbs all slack so the card matches the section height
+                // instead of growing to the image's natural aspect ratio.
+                flex: "1 1 0",
+                minHeight: { xs: 200, md: 0 },
+                position: "relative",
+                background: "#0a1825",
+              }
+            : {
+                flex: "0 0 auto",
+                width: { xs: 108, sm: 132 },
+                position: "relative",
+                background: "#0a1825",
+              }
+        }
+      >
+        {image && <FadeInImage src={image} alt={post.title} eager={isTall} />}
+        {isTall && post.category && (
+          <Box
+            {...(blockId
+              ? blogStaticProps(
+                  blockId,
+                  `${staticPrefix}-category`,
+                  "Feature article category",
+                )
+              : {})}
+            sx={{
+              position: "absolute",
+              bottom: "14px",
+              left: "14px",
+              background: accentColor,
+              color: "#ffffffea",
+              fontSize: "12px",
+              fontWeight: 700,
+              padding: "4px 10px",
+              borderRadius: "100px",
+              letterSpacing: "0.6px",
+              zIndex: 1,
+            }}
+          >
+            {post.category}
+          </Box>
+        )}
+      </Box>
+
+      <Box
+        sx={{
+          // Tall: sit at natural height so the image takes the slack (no blank
+          // gap). Row: grow horizontally beside the thumbnail and centre.
+          flex: isTall ? "0 0 auto" : "1 1 auto",
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: isTall ? "flex-start" : "center",
+          padding: isTall ? { xs: "20px", md: "22px 26px" } : "12px 16px",
+          color: "#0f172a",
+        }}
+      >
+        <Box
+          {...(blockId
+            ? blogStaticProps(
+                blockId,
+                `${staticPrefix}-meta`,
+                isTall ? "Feature article meta" : "Article row meta",
+              )
+            : {})}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            mb: isTall ? "12px" : "6px",
+            color: "#64748b",
+            fontSize: isTall ? "12px" : "11px",
+          }}
+        >
+          <Typography variant="body2" sx={{ fontSize: "inherit" }}>
+            {formatBlogDate(post.publishedAt)}
+          </Typography>
+          <Typography variant="body2" sx={{ fontSize: "inherit" }}>
+            |
+          </Typography>
+          <Typography variant="body2" sx={{ fontSize: "inherit" }}>
+            {estimateReadTime(post.excerpt, post.description)}
+          </Typography>
+        </Box>
+
+        <Typography
+          {...(blockId
+            ? blogStaticProps(
+                blockId,
+                `${staticPrefix}-title`,
+                isTall ? "Feature article title" : "Article row title",
+              )
+            : {})}
+          sx={{
+            color: "#1e293b",
+            fontSize: isTall ? { xs: "20px", md: "24px" } : "15px",
+            fontWeight: 700,
+            lineHeight: 1.3,
+            letterSpacing: isTall ? "-0.3px" : "-0.1px",
+            mb: isTall ? "10px" : 0,
+            display: "-webkit-box",
+            WebkitLineClamp: isTall ? 3 : 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {post.title}
+        </Typography>
+
+        {isTall && (
+          <Typography
+            {...(blockId
+              ? blogStaticProps(
+                  blockId,
+                  `${staticPrefix}-excerpt`,
+                  "Feature article excerpt",
+                )
+              : {})}
+            sx={{
+              color: "#475569",
+              fontSize: "14px",
+              lineHeight: 1.65,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {blogExcerpt(post.description || post.excerpt, 180)}
+          </Typography>
+        )}
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+            mt: isTall ? "14px" : "8px",
+            pt: isTall ? "14px" : 0,
+            ...(isTall ? { borderTop: "1px solid #e2e8f0" } : {}),
+            color: "#64748b",
+            fontSize: isTall ? "12px" : "11px",
+          }}
+        >
+          <Typography
+            {...(blockId
+              ? blogStaticProps(
+                  blockId,
+                  `${staticPrefix}-author`,
+                  isTall ? "Feature article author" : "Article row author",
+                )
+              : {})}
+            variant="body2"
+            noWrap
+            sx={{ fontSize: "inherit" }}
+          >
+            {author}
+          </Typography>
+          <Box
+            {...(blockId
+              ? blogStaticProps(
+                  blockId,
+                  `${staticPrefix}-read-link`,
+                  isTall ? "Feature article link" : "Article row link",
+                )
+              : {})}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              color: accentColor,
+              fontWeight: 600,
+              letterSpacing: "0.6px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Read <ArrowForwardIcon sx={{ fontSize: isTall ? "1rem" : "0.85rem" }} />
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+/**
+ * Loading placeholder for BlogSplitCard — mirrors the real card's shell, image
+ * proportions and text rhythm so the layout doesn't shift when posts arrive.
+ */
+export const BlogSplitCardSkeleton: React.FC<{ layout: "tall" | "row" }> = ({
+  layout,
+}) => {
+  const isTall = layout === "tall";
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: isTall ? "column" : "row",
+        height: "100%",
+        width: "100%",
+        border: "1px solid #d7e2ec",
+        borderRadius: isTall ? "16px" : "14px",
+        background: "#ffffff",
+        overflow: "hidden",
+        boxShadow: "0 6px 14px rgba(12, 28, 45, 0.07)",
+      }}
+    >
+      <Skeleton
+        variant="rectangular"
+        sx={
+          isTall
+            ? { flex: "1 1 0", minHeight: { xs: 200, md: 0 }, width: "100%" }
+            : { flex: "0 0 auto", width: { xs: 108, sm: 132 }, height: "100%" }
+        }
+      />
+
+      <Box
+        sx={{
+          flex: isTall ? "0 0 auto" : "1 1 auto",
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: isTall ? "flex-start" : "center",
+          padding: isTall ? { xs: "20px", md: "22px 26px" } : "12px 16px",
+        }}
+      >
+        <Skeleton variant="text" width="45%" height={isTall ? 16 : 13} />
+        <Skeleton variant="text" width="95%" height={isTall ? 30 : 20} />
+        <Skeleton variant="text" width="70%" height={isTall ? 30 : 20} />
+        {isTall && (
+          <>
+            <Skeleton variant="text" width="100%" height={18} />
+            <Skeleton variant="text" width="82%" height={18} />
+          </>
+        )}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mt: isTall ? "14px" : "8px",
+            pt: isTall ? "14px" : 0,
+            ...(isTall ? { borderTop: "1px solid #e2e8f0" } : {}),
+          }}
+        >
+          <Skeleton variant="text" width={isTall ? 78 : 56} height={isTall ? 16 : 13} />
+          <Skeleton variant="text" width={isTall ? 52 : 40} height={isTall ? 16 : 13} />
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
 /** Skeleton placeholder matching the small card footprint. */
 export const BlogCardSkeleton: React.FC = () => (
   <Box
     sx={{
+      display: "flex",
+      flexDirection: "column",
       border: "1px solid #d7e2ec",
       borderRadius: "14px",
       overflow: "hidden",
       background: "#ffffff",
+      boxShadow: "0 6px 14px rgba(12, 28, 45, 0.07)",
       height: "100%",
     }}
   >
-    <Skeleton variant="rectangular" height={220} />
-    <Box sx={{ p: "22px" }}>
+    <Skeleton variant="rectangular" height={220} sx={{ flex: "0 0 auto" }} />
+    <Box
+      sx={{ p: "22px", flex: 1, display: "flex", flexDirection: "column" }}
+    >
       <Skeleton variant="text" width="40%" height={14} />
       <Skeleton variant="text" width="90%" height={26} />
       <Skeleton variant="text" width="100%" height={16} />
       <Skeleton variant="text" width="70%" height={16} />
+      {/* Footer — mirrors the card's author + "Read" row and its divider. */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mt: "auto",
+          pt: "16px",
+          borderTop: "1px solid #e2e8f0",
+        }}
+      >
+        <Skeleton variant="text" width={72} height={14} />
+        <Skeleton variant="text" width={46} height={14} />
+      </Box>
     </Box>
   </Box>
 );

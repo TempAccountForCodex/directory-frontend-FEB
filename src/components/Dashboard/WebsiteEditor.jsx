@@ -95,6 +95,7 @@ import { getDashboardColors } from "../../styles/dashboardTheme";
 import { PreviewProvider, usePreview } from "../../context/PreviewContext";
 import PreviewPanel from "../WebsiteEditor/PreviewPanel";
 import { DashboardInput, ConfirmationDialog, BottomSheet } from "./shared";
+import CommentSettingsSection from "./CommentSettingsSection";
 import RegenerateButton from "../Editor/RegenerateButton";
 import DraggableBlockList from "../Editor/DraggableBlockList";
 import FormGenerator from "../FormGenerator";
@@ -712,40 +713,109 @@ const aiTurnHasStaticStylePatch = (turn) => {
     )
   );
 };
+/**
+ * Style properties exposed to AI requests for a selected static element.
+ *
+ * These must stay in sync with what the style sidebar can set
+ * (EditorStyleToolbar / EditorSectionStyleToolbar) and with what
+ * BlogStaticStyleApplier can actually apply — otherwise the AI is either
+ * offered less than the user sees, or accepts a property that never renders.
+ */
+const BASE_STATIC_STYLE_PROPERTIES = [
+  ["color", "Text color", "color"],
+  ["backgroundColor", "Background color", "background"],
+  ["backgroundImage", "Background image", "background"],
+  ["opacity", "Opacity", "style"],
+  ["paddingTop", "Top padding", "spacing"],
+  ["paddingBottom", "Bottom padding", "spacing"],
+  ["paddingLeft", "Left padding", "spacing"],
+  ["paddingRight", "Right padding", "spacing"],
+  ["marginTop", "Top margin", "spacing"],
+  ["marginBottom", "Bottom margin", "spacing"],
+  ["marginLeft", "Left margin", "spacing"],
+  ["marginRight", "Right margin", "spacing"],
+  ["borderColor", "Border color", "border"],
+  ["borderRadius", "Border radius", "border"],
+  ["borderWidth", "Border width", "border"],
+  ["borderStyle", "Border style", "border"],
+  ["boxShadow", "Box shadow", "shadow"],
+  ["width", "Width", "size"],
+  ["height", "Height", "size"],
+  ["minWidth", "Minimum width", "size"],
+  ["maxWidth", "Maximum width", "size"],
+  ["minHeight", "Minimum height", "size"],
+  ["maxHeight", "Maximum height", "size"],
+  ["display", "Display", "layout"],
+  ["transform", "Transform", "style"],
+  ["zIndex", "Layer order", "layout"],
+];
+
+const TEXT_STATIC_STYLE_PROPERTIES = [
+  ["fontFamily", "Font family", "font"],
+  ["fontSize", "Font size", "font"],
+  ["fontWeight", "Font weight", "font"],
+  ["fontStyle", "Font style", "font"],
+  ["textAlign", "Text alignment", "alignment"],
+  ["textDecoration", "Text decoration", "font"],
+  ["textTransform", "Text transform", "font"],
+  ["textShadow", "Text shadow", "shadow"],
+  ["lineHeight", "Line height", "font"],
+  ["letterSpacing", "Letter spacing", "font"],
+  ["wordSpacing", "Word spacing", "font"],
+  ["textIndent", "Text indent", "font"],
+];
+
+const CONTAINER_STATIC_STYLE_PROPERTIES = [
+  ["flexDirection", "Flex direction", "layout"],
+  ["justifyContent", "Horizontal alignment", "alignment"],
+  ["alignItems", "Vertical alignment", "alignment"],
+  ["alignSelf", "Self alignment", "alignment"],
+  ["gap", "Gap", "spacing"],
+  ["flex", "Flex", "layout"],
+  ["gridTemplateColumns", "Grid columns", "layout"],
+  ["position", "Position", "layout"],
+  ["top", "Top offset", "layout"],
+  ["right", "Right offset", "layout"],
+  ["bottom", "Bottom offset", "layout"],
+  ["left", "Left offset", "layout"],
+];
+
+const MEDIA_STATIC_STYLE_PROPERTIES = [
+  ["objectFit", "Object fit", "media"],
+];
+
+const getStaticStylePropertiesForSelection = (staticType) => {
+  const type = String(staticType || "").toLowerCase();
+  const isKnown =
+    type === "text" || type === "container" || type === "media" || type === "icon";
+
+  const properties = [
+    ...BASE_STATIC_STYLE_PROPERTIES,
+    // Text properties also apply to containers/icons — they cascade to children.
+    ...(type === "media" ? [] : TEXT_STATIC_STYLE_PROPERTIES),
+    ...(type === "container" || !isKnown ? CONTAINER_STATIC_STYLE_PROPERTIES : []),
+    ...(type === "media" || type === "icon" || !isKnown
+      ? MEDIA_STATIC_STYLE_PROPERTIES
+      : []),
+  ];
+
+  // De-dupe by CSS property, keeping the first (most specific) label.
+  const seen = new Set();
+  return properties.filter(([property]) => {
+    if (seen.has(property)) return false;
+    seen.add(property);
+    return true;
+  });
+};
+
 const buildStaticStyleAITargets = (selection) => {
   if (!selection?.blockId || !selection?.styleKey || !selection?.staticId) {
     return [];
   }
 
-  const styleProperties = [
-    ["color", "Text color", "color"],
-    ["backgroundColor", "Background color", "background"],
-    ["fontSize", "Font size", "font"],
-    ["fontWeight", "Font weight", "font"],
-    ["textAlign", "Text alignment", "alignment"],
-    ["textShadow", "Text shadow", "shadow"],
-    ["fontStyle", "Font style", "font"],
-    ["textDecoration", "Text decoration", "font"],
-    ["lineHeight", "Line height", "font"],
-    ["letterSpacing", "Letter spacing", "font"],
-    ["wordSpacing", "Word spacing", "font"],
-    ["textTransform", "Text transform", "font"],
-    ["paddingTop", "Top padding", "spacing"],
-    ["paddingBottom", "Bottom padding", "spacing"],
-    ["paddingLeft", "Left padding", "spacing"],
-    ["paddingRight", "Right padding", "spacing"],
-    ["marginTop", "Top margin", "spacing"],
-    ["marginBottom", "Bottom margin", "spacing"],
-    ["marginLeft", "Left margin", "spacing"],
-    ["marginRight", "Right margin", "spacing"],
-    ["borderColor", "Border color", "border"],
-    ["borderRadius", "Border radius", "border"],
-    ["borderWidth", "Border width", "border"],
-    ["width", "Width", "size"],
-    ["height", "Height", "size"],
-    ["opacity", "Opacity", "style"],
-    ["objectFit", "Object fit", "media"],
-  ];
+  const styleProperties = getStaticStylePropertiesForSelection(
+    selection.staticType,
+  );
 
   return styleProperties.map(([property, label, category]) => {
     const fieldPath = buildAIStaticStyleFieldPath(selection, property);
@@ -1715,6 +1785,17 @@ const buildInnerBlockFromLibraryItem = (item) => {
           afterLabel: "After",
         },
       };
+    case "blog_showcase":
+    case "blog_hero":
+    case "blog_featured":
+    case "blog_grid":
+      // The split blog sections render via their real components in the shared
+      // renderer; seed the same default content the standard editor uses.
+      return {
+        type: normalizedKey,
+        label,
+        content: { ...getBlockDefaultContent(normalizedKey.toUpperCase()) },
+      };
     default:
       return {
         type: "generic_card",
@@ -2225,18 +2306,23 @@ const BLOG_SECTION_TYPE_TO_SUBTYPE = {
   BLOG_HERO: "blog_hero",
   BLOG_FEATURED: "blog_featured",
   BLOG_GRID: "blog_grid",
+  BLOG_SHOWCASE: "blog_showcase",
 };
 const BLOG_SECTION_SUBTYPE_TO_TYPE = {
   blog_hero: "BLOG_HERO",
   blog_featured: "BLOG_FEATURED",
   blog_grid: "BLOG_GRID",
+  blog_showcase: "BLOG_SHOWCASE",
 };
 const BLOG_STATIC_STYLE_BLOCK_TYPES = new Set([
   "BLOG_HERO",
   "BLOG_FEATURED",
   "BLOG_GRID",
+  "BLOG_SHOWCASE",
   "BLOG_ARTICLE",
 ]);
+// Blog blocks whose static text elements double as editable content targets
+// (inline text edit writes into block.content at the mapped path).
 const BLOG_HERO_EDITABLE_CONTENT_PATHS = new Set([
   "eyebrow",
   "heading",
@@ -2248,6 +2334,18 @@ const BLOG_HERO_STATIC_ID_TO_CONTENT_PATH = {
   "blog-hero-heading": "heading",
   "blog-hero-heading-accent": "headingAccent",
   "blog-hero-description": "description",
+};
+const BLOG_SHOWCASE_EDITABLE_CONTENT_PATHS = new Set([
+  "eyebrow",
+  "heading",
+  "description",
+  "ctaText",
+]);
+const BLOG_SHOWCASE_STATIC_ID_TO_CONTENT_PATH = {
+  "blog-showcase-eyebrow": "eyebrow",
+  "blog-showcase-heading": "heading",
+  "blog-showcase-description": "description",
+  "blog-showcase-cta": "ctaText",
 };
 
 const getBlogRenderBlockType = (block) => {
@@ -2264,21 +2362,30 @@ const getBlogRenderBlockType = (block) => {
 
 const isBlogStaticStyleBlock = (block) =>
   BLOG_STATIC_STYLE_BLOCK_TYPES.has(getBlogRenderBlockType(block));
+// NOTE: named for the blog hero historically, but now resolves the editable
+// content path for any blog section whose static text doubles as content
+// (blog hero + blog showcase). Kept as the same name so existing call sites
+// (inline text edit, AI patch fieldPath) don't need to change.
 const getBlogHeroStaticContentPath = (selection) =>
   selection?.contentPath ||
-  BLOG_HERO_STATIC_ID_TO_CONTENT_PATH[String(selection?.staticId || "")];
+  BLOG_HERO_STATIC_ID_TO_CONTENT_PATH[String(selection?.staticId || "")] ||
+  BLOG_SHOWCASE_STATIC_ID_TO_CONTENT_PATH[String(selection?.staticId || "")];
 const isBlogHeroContentStaticElement = (selection) => {
-  const isBlogHeroBlock =
-    getBlogRenderBlockType({
-      blockType: selection?.blockType,
-      content: { _subType: selection?._subType },
-    }) === "BLOG_HERO" ||
-    String(selection?.staticId || "").startsWith("blog-hero-");
-  return (
-    isBlogHeroBlock &&
-    selection?.staticType === "text" &&
-    BLOG_HERO_EDITABLE_CONTENT_PATHS.has(getBlogHeroStaticContentPath(selection))
-  );
+  if (selection?.staticType !== "text") return false;
+  const contentPath = getBlogHeroStaticContentPath(selection);
+  if (!contentPath) return false;
+  const staticId = String(selection?.staticId || "");
+  const renderType = getBlogRenderBlockType({
+    blockType: selection?.blockType,
+    content: { _subType: selection?._subType },
+  });
+  if (renderType === "BLOG_HERO" || staticId.startsWith("blog-hero-")) {
+    return BLOG_HERO_EDITABLE_CONTENT_PATHS.has(contentPath);
+  }
+  if (renderType === "BLOG_SHOWCASE" || staticId.startsWith("blog-showcase-")) {
+    return BLOG_SHOWCASE_EDITABLE_CONTENT_PATHS.has(contentPath);
+  }
+  return false;
 };
 
 const sanitizeBlockContentForSave = (blockType, content) => {
@@ -5401,6 +5508,20 @@ const WebsiteEditorInner = () => {
 
     return extras;
   }, [resolvedFrontendTemplateId]);
+
+  // Blog-only sections (BLOG_SHOWCASE) belong on any page EXCEPT the blog index
+  // and blog-detail pages, which already render the full blog experience.
+  const blockLibraryHiddenKeys = useMemo(() => {
+    const pageType = String(selectedPage?.pageType || "").toUpperCase();
+    const pagePath = String(selectedPage?.path || "").toLowerCase();
+    const isBlogPage =
+      pageType === "BLOG_INDEX" ||
+      pageType === "BLOG_DETAIL" ||
+      pagePath === "/blog" ||
+      pagePath.startsWith("/blog/") ||
+      pagePath === "/blog-detail";
+    return isBlogPage ? ["BLOG_SHOWCASE"] : [];
+  }, [selectedPage?.pageType, selectedPage?.path]);
 
   const resolveInsertPositionForSection = useCallback((blockId, placement) => {
     const blockIndex = blocksRef.current.findIndex(
@@ -10114,6 +10235,23 @@ const WebsiteEditorInner = () => {
                                       }
                                     />
                                   )}
+                                  {String(
+                                    editingBlock?.blockType || "",
+                                  ).toUpperCase() === "BLOG_ARTICLE" && (
+                                    <CommentSettingsSection
+                                      websiteId={websiteId}
+                                      initialSettings={website?.commentSettings}
+                                      accent={colors.primary}
+                                      textColor={colors.text}
+                                      onSaved={(saved) =>
+                                        setWebsite((prev) =>
+                                          prev
+                                            ? { ...prev, commentSettings: saved }
+                                            : prev,
+                                        )
+                                      }
+                                    />
+                                  )}
                                 </Box>
                               </Box>
                             </>
@@ -12252,6 +12390,7 @@ const WebsiteEditorInner = () => {
             onBlockDragChange={setDraggedLibraryBlock}
             closeAfterInsert={false}
             currentUserRole={websiteRole}
+            hiddenBlockKeys={blockLibraryHiddenKeys}
           />
         )}
 

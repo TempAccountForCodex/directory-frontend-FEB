@@ -955,7 +955,12 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
 
   return (
     <Box
-      {...blogStaticProps(block.id, "blog-article-root", "Blog article", "container")}
+      {...blogStaticProps(
+        block.id,
+        "blog-article-root",
+        "Blog article",
+        "container",
+      )}
       ref={articleRootRef}
       component="main"
       className="website-blog-article"
@@ -984,7 +989,12 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
         <Box sx={{ mx: "auto" }}>
           {/* ---------- Full-bleed dark hero ---------- */}
           <Box
-            {...blogStaticProps(block.id, "article-hero", "Article hero", "container")}
+            {...blogStaticProps(
+              block.id,
+              "article-hero",
+              "Article hero",
+              "container",
+            )}
             className={FADE_IN_CLASS}
             sx={{
               borderRadius: 0,
@@ -1022,7 +1032,11 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
           >
             {/* Breadcrumb */}
             <Box
-              {...blogStaticProps(block.id, "article-breadcrumb", "Article breadcrumb")}
+              {...blogStaticProps(
+                block.id,
+                "article-breadcrumb",
+                "Article breadcrumb",
+              )}
               sx={{
                 display: "flex",
                 flexWrap: "wrap",
@@ -1034,37 +1048,76 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                 zIndex: 1,
               }}
             >
-              <Box component="span" sx={{ cursor: "pointer" }} onClick={goToBlog}>
+              <Box
+                component="span"
+                sx={{ cursor: "pointer" }}
+                onClick={goToBlog}
+              >
                 Blog
               </Box>
               <ChevronRightOutlinedIcon sx={{ fontSize: "1rem" }} />
               {isLoading ? (
-                <Skeleton variant="text" width={96} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                <Skeleton
+                  variant="text"
+                  width={96}
+                  sx={{ bgcolor: "rgba(255,255,255,0.18)" }}
+                />
               ) : (
                 <span>{sanitizeText(post!.category || "")}</span>
               )}
             </Box>
 
             {/* Meta */}
-            <Box sx={{ mt: 2.6, display: "flex", alignItems: "center", gap: 1.2, position: "relative", zIndex: 1 }}>
+            <Box
+              sx={{
+                mt: 2.6,
+                display: "flex",
+                alignItems: "center",
+                gap: 1.2,
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
               {isLoading ? (
                 <>
-                  <Skeleton variant="rounded" width={110} height={28} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
-                  <Skeleton variant="text" width={92} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                  <Skeleton
+                    variant="rounded"
+                    width={110}
+                    height={28}
+                    sx={{ bgcolor: "rgba(255,255,255,0.18)" }}
+                  />
+                  <Skeleton
+                    variant="text"
+                    width={92}
+                    sx={{ bgcolor: "rgba(255,255,255,0.18)" }}
+                  />
                 </>
               ) : (
                 <>
                   {post!.category && (
                     <Typography
-                      {...blogStaticProps(block.id, "article-category", "Article category")}
+                      {...blogStaticProps(
+                        block.id,
+                        "article-category",
+                        "Article category",
+                      )}
                       sx={badgeSx}
                     >
                       {sanitizeText(post!.category)}
                     </Typography>
                   )}
                   <Box
-                    {...blogStaticProps(block.id, "article-read-time", "Article read time")}
-                    sx={{ display: "flex", alignItems: "center", gap: 0.7, color: "rgba(232,242,247,0.82)" }}
+                    {...blogStaticProps(
+                      block.id,
+                      "article-read-time",
+                      "Article read time",
+                    )}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.7,
+                      color: "rgba(232,242,247,0.82)",
+                    }}
                   >
                     <AccessTimeOutlinedIcon sx={{ fontSize: "1rem" }} />
                     <span>{readingTime} min read</span>
@@ -1081,7 +1134,12 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                 maxWidth: "1280px",
                 fontWeight: 800,
                 color: "#ffffff",
-                fontSize: { xs: "1.95rem", sm: "2.45rem", md: "3.2rem", lg: "4rem" },
+                fontSize: {
+                  xs: "1.95rem",
+                  sm: "2.45rem",
+                  md: "3.2rem",
+                  lg: "4rem",
+                },
                 lineHeight: { xs: 1.14, md: 1.1, lg: 1.08 },
                 letterSpacing: { xs: "-0.25px", md: "-0.55px", lg: "-0.9px" },
                 position: "relative",
@@ -1090,18 +1148,41 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
             >
               {isLoading ? (
                 <>
-                  <Skeleton variant="text" width="82%" sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
-                  <Skeleton variant="text" width="58%" sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                  <Skeleton
+                    variant="text"
+                    width="82%"
+                    sx={{ bgcolor: "rgba(255,255,255,0.18)" }}
+                  />
+                  <Skeleton
+                    variant="text"
+                    width="58%"
+                    sx={{ bgcolor: "rgba(255,255,255,0.18)" }}
+                  />
                 </>
               ) : (
                 sanitizeText(post!.title)
               )}
             </Typography>
 
-            <Divider sx={{ my: { xs: 2.6, md: 3.2 }, borderColor: "rgba(255,255,255,0.14)", position: "relative", zIndex: 1 }} />
+            <Divider
+              sx={{
+                my: { xs: 2.6, md: 3.2 },
+                borderColor: "rgba(255,255,255,0.14)",
+                position: "relative",
+                zIndex: 1,
+              }}
+            />
 
             {/* Author + date */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.4, position: "relative", zIndex: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.4,
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
               <Box
                 sx={{
                   width: 42,
@@ -1114,26 +1195,49 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                   border: `1px solid ${hexToRgba(accent, 0.25)}`,
                 }}
               >
-                <PersonOutlineOutlinedIcon sx={{ color: "#ffffff", fontSize: "1.2rem" }} />
+                <PersonOutlineOutlinedIcon
+                  sx={{ color: "#ffffff", fontSize: "1.2rem" }}
+                />
               </Box>
               <Box>
                 <Typography
-                  {...blogStaticProps(block.id, "article-author-name", "Article author name")}
-                  sx={{ fontWeight: 700, fontSize: "1.05rem", color: "#ffffff" }}
+                  {...blogStaticProps(
+                    block.id,
+                    "article-author-name",
+                    "Article author name",
+                  )}
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: "1.05rem",
+                    color: "#ffffff",
+                  }}
                 >
                   {isLoading ? (
-                    <Skeleton variant="text" width={160} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                    <Skeleton
+                      variant="text"
+                      width={160}
+                      sx={{ bgcolor: "rgba(255,255,255,0.18)" }}
+                    />
                   ) : (
                     authorName
                   )}
                 </Typography>
                 <Box
                   {...blogStaticProps(block.id, "article-date", "Article date")}
-                  sx={{ display: "flex", alignItems: "center", gap: 0.7, color: "rgba(232,242,247,0.82)" }}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.7,
+                    color: "rgba(232,242,247,0.82)",
+                  }}
                 >
                   <CalendarTodayOutlinedIcon sx={{ fontSize: "0.9rem" }} />
                   {isLoading ? (
-                    <Skeleton variant="text" width={132} sx={{ bgcolor: "rgba(255,255,255,0.18)" }} />
+                    <Skeleton
+                      variant="text"
+                      width={132}
+                      sx={{ bgcolor: "rgba(255,255,255,0.18)" }}
+                    />
                   ) : (
                     <span>{formatDate(post!.publishedAt)}</span>
                   )}
@@ -1141,7 +1245,14 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
               </Box>
             </Box>
 
-            <Divider sx={{ my: 2.4, borderColor: "rgba(255,255,255,0.14)", position: "relative", zIndex: 1 }} />
+            <Divider
+              sx={{
+                my: 2.4,
+                borderColor: "rgba(255,255,255,0.14)",
+                position: "relative",
+                zIndex: 1,
+              }}
+            />
 
             {/* Tags + share */}
             <Box
@@ -1159,7 +1270,11 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                 {tags.map((tag) => (
                   <Box
                     key={tag}
-                    {...blogStaticProps(block.id, `article-tag-${slugify(tag)}`, "Article tag")}
+                    {...blogStaticProps(
+                      block.id,
+                      `article-tag-${slugify(tag)}`,
+                      "Article tag",
+                    )}
                     sx={{
                       ...chipSx,
                       border: `1px solid ${hexToRgba(accent, 0.35)}`,
@@ -1170,9 +1285,20 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                   </Box>
                 ))}
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
+              >
                 <Typography
-                  {...blogStaticProps(block.id, "article-share-label", "Article share label")}
+                  {...blogStaticProps(
+                    block.id,
+                    "article-share-label",
+                    "Article share label",
+                  )}
                   sx={{ color: "rgba(232,242,247,0.82)" }}
                 >
                   Share:
@@ -1186,7 +1312,7 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
           <Box
             sx={{
               mt: { xs: 2, md: 2.4 },
-              pb: { xs: 6, sm: 7, md: 10, lg: 15 },
+              pb: { xs: 2, sm: 3, md: 5, lg: 5 },
               borderRadius: { xs: 0, md: "16px" },
               position: "relative",
               isolation: "isolate",
@@ -1227,11 +1353,27 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
               <Box>
                 {isLoading ? (
                   <>
-                    <Skeleton variant="rectangular" sx={{ width: "100%", height: { xs: 230, md: 420, lg: 520 }, borderRadius: "16px", mb: 1.5 }} />
-                    <Skeleton variant="text" width="64%" sx={{ mx: "auto", mb: { xs: 4, md: 5.8 } }} />
+                    <Skeleton
+                      variant="rectangular"
+                      sx={{
+                        width: "100%",
+                        height: { xs: 230, md: 420, lg: 520 },
+                        borderRadius: "16px",
+                        mb: 1.5,
+                      }}
+                    />
+                    <Skeleton
+                      variant="text"
+                      width="64%"
+                      sx={{ mx: "auto", mb: { xs: 4, md: 5.8 } }}
+                    />
                     {Array.from({ length: 4 }).map((_, i) => (
                       <Box key={i} sx={{ mb: 5.8 }}>
-                        <Skeleton variant="text" width={i % 2 === 0 ? "72%" : "58%"} height={56} />
+                        <Skeleton
+                          variant="text"
+                          width={i % 2 === 0 ? "72%" : "58%"}
+                          height={56}
+                        />
                         <Skeleton variant="text" width="100%" height={24} />
                         <Skeleton variant="text" width="96%" height={24} />
                         <Skeleton variant="text" width="88%" height={24} />
@@ -1242,7 +1384,12 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                   <>
                     {post!.image && (
                       <Box
-                        {...blogStaticProps(block.id, "article-featured-image", "Article featured image", "media")}
+                        {...blogStaticProps(
+                          block.id,
+                          "article-featured-image",
+                          "Article featured image",
+                          "media",
+                        )}
                         className={FADE_IN_CLASS}
                         component="img"
                         src={resolveBlogImage(post!.image)}
@@ -1260,7 +1407,11 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                     )}
                     {captionText && (
                       <Typography
-                        {...blogStaticProps(block.id, "article-image-caption", "Article image caption")}
+                        {...blogStaticProps(
+                          block.id,
+                          "article-image-caption",
+                          "Article image caption",
+                        )}
                         className={FADE_IN_CLASS}
                         sx={{
                           mt: 1.5,
@@ -1289,24 +1440,36 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                             {...blogStaticProps(
                               block.id,
                               `${blockStaticBase}-container`,
-                              b.type === "conclusion" ? "Conclusion section" : "Article section",
+                              b.type === "conclusion"
+                                ? "Conclusion section"
+                                : "Article section",
                               "container",
                             )}
                             key={b.id || index}
                             id={anchorId}
                             className={FADE_IN_CLASS}
-                            sx={{ scrollMarginTop: "120px", mb: { xs: 5.2, md: 6.8 } }}
+                            sx={{
+                              scrollMarginTop: "120px",
+                              mb: { xs: 5.2, md: 6.8 },
+                            }}
                           >
                             {b.heading && (
                               <Typography
                                 {...blogStaticProps(
                                   block.id,
                                   `${blockStaticBase}-heading`,
-                                  b.type === "conclusion" ? "Conclusion heading" : "Section heading",
+                                  b.type === "conclusion"
+                                    ? "Conclusion heading"
+                                    : "Section heading",
                                 )}
                                 sx={{
                                   fontWeight: 700,
-                                  fontSize: { xs: "1.35rem", sm: "1.6rem", md: "1.85rem", lg: "2.05rem" },
+                                  fontSize: {
+                                    xs: "1.35rem",
+                                    sm: "1.6rem",
+                                    md: "1.85rem",
+                                    lg: "2.05rem",
+                                  },
                                   lineHeight: 1.18,
                                   borderLeft: `3px solid ${accent}`,
                                   color: ui.headingText,
@@ -1322,7 +1485,9 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                                 {...blogStaticProps(
                                   block.id,
                                   `${blockStaticBase}-paragraph-${pIdx + 1}`,
-                                  b.type === "conclusion" ? "Conclusion paragraph" : "Section paragraph",
+                                  b.type === "conclusion"
+                                    ? "Conclusion paragraph"
+                                    : "Section paragraph",
                                 )}
                                 key={pIdx}
                                 sx={{
@@ -1342,7 +1507,12 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                         if (!b.text) return null;
                         return (
                           <Box
-                            {...blogStaticProps(block.id, `${blockStaticBase}-container`, "Quote block", "container")}
+                            {...blogStaticProps(
+                              block.id,
+                              `${blockStaticBase}-container`,
+                              "Quote block",
+                              "container",
+                            )}
                             key={b.id || index}
                             className={FADE_IN_CLASS}
                             sx={{
@@ -1359,8 +1529,17 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                             &quot;{sanitizeText(b.text)}&quot;
                             {b.attribution && (
                               <Typography
-                                {...blogStaticProps(block.id, `${blockStaticBase}-attribution`, "Quote attribution")}
-                                sx={{ mt: 1.5, fontSize: { xs: "0.9rem", md: "0.95rem" }, color: ui.mutedText, fontStyle: "normal" }}
+                                {...blogStaticProps(
+                                  block.id,
+                                  `${blockStaticBase}-attribution`,
+                                  "Quote attribution",
+                                )}
+                                sx={{
+                                  mt: 1.5,
+                                  fontSize: { xs: "0.9rem", md: "0.95rem" },
+                                  color: ui.mutedText,
+                                  fontStyle: "normal",
+                                }}
                               >
                                 — {sanitizeText(b.attribution)}
                               </Typography>
@@ -1372,7 +1551,12 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                         if (!b.text) return null;
                         return (
                           <Box
-                            {...blogStaticProps(block.id, `${blockStaticBase}-container`, "Key takeaway block", "container")}
+                            {...blogStaticProps(
+                              block.id,
+                              `${blockStaticBase}-container`,
+                              "Key takeaway block",
+                              "container",
+                            )}
                             key={b.id || index}
                             className={FADE_IN_CLASS}
                             sx={{
@@ -1385,14 +1569,27 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                             }}
                           >
                             <Typography
-                              {...blogStaticProps(block.id, `${blockStaticBase}-title`, "Key takeaway title")}
+                              {...blogStaticProps(
+                                block.id,
+                                `${blockStaticBase}-title`,
+                                "Key takeaway title",
+                              )}
                               sx={{ color: accent, fontWeight: 700 }}
                             >
                               {sanitizeText(b.title || "Key Takeaway")}
                             </Typography>
                             <Typography
-                              {...blogStaticProps(block.id, `${blockStaticBase}-text`, "Key takeaway text")}
-                              sx={{ mt: 0.6, color: ui.bodyText, lineHeight: 1.68, fontSize: { xs: "0.92rem", md: "0.9rem" } }}
+                              {...blogStaticProps(
+                                block.id,
+                                `${blockStaticBase}-text`,
+                                "Key takeaway text",
+                              )}
+                              sx={{
+                                mt: 0.6,
+                                color: ui.bodyText,
+                                lineHeight: 1.68,
+                                fontSize: { xs: "0.92rem", md: "0.9rem" },
+                              }}
                             >
                               {sanitizeText(b.text)}
                             </Typography>
@@ -1403,7 +1600,12 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                         if (!b.code) return null;
                         return (
                           <Box
-                            {...blogStaticProps(block.id, `${blockStaticBase}-container`, "Code block", "container")}
+                            {...blogStaticProps(
+                              block.id,
+                              `${blockStaticBase}-container`,
+                              "Code block",
+                              "container",
+                            )}
                             key={b.id || index}
                             className={FADE_IN_CLASS}
                             sx={{
@@ -1429,22 +1631,36 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                     {/* Fallback body when no authored blocks */}
                     {blocks.length === 0 && post!.description && (
                       <Typography
-                        {...blogStaticProps(block.id, "article-fallback-description", "Article description")}
+                        {...blogStaticProps(
+                          block.id,
+                          "article-fallback-description",
+                          "Article description",
+                        )}
                         sx={{ color: ui.bodyText, lineHeight: 1.84, mb: 4 }}
                       >
                         {sanitizeText(post!.description)}
                       </Typography>
                     )}
 
-                    <Divider className={FADE_IN_CLASS} sx={{ my: 3.2, borderColor: ui.divider }} />
+                    <Divider
+                      className={FADE_IN_CLASS}
+                      sx={{ my: 3.2, borderColor: ui.divider }}
+                    />
 
                     {/* Bottom tags */}
                     {tags.length > 0 && (
-                      <Box className={FADE_IN_CLASS} sx={{ display: "flex", flexWrap: "wrap", gap: 1.1 }}>
+                      <Box
+                        className={FADE_IN_CLASS}
+                        sx={{ display: "flex", flexWrap: "wrap", gap: 1.1 }}
+                      >
                         {tags.map((tag) => (
                           <Box
                             key={`bottom-${tag}`}
-                            {...blogStaticProps(block.id, `article-bottom-tag-${slugify(tag)}`, "Article bottom tag")}
+                            {...blogStaticProps(
+                              block.id,
+                              `article-bottom-tag-${slugify(tag)}`,
+                              "Article bottom tag",
+                            )}
                             sx={chipSx}
                           >
                             {tag}
@@ -1456,26 +1672,49 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                     {/* Footer actions */}
                     <Box
                       className={FADE_IN_CLASS}
-                      sx={{ mt: 3, display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 2 }}
+                      sx={{
+                        mt: 3,
+                        display: "flex",
+                        flexWrap: "wrap",
+                        justifyContent: "space-between",
+                        gap: 2,
+                      }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Typography
-                          {...blogStaticProps(block.id, "article-footer-share-label", "Footer share label")}
+                          {...blogStaticProps(
+                            block.id,
+                            "article-footer-share-label",
+                            "Footer share label",
+                          )}
                           sx={subtleTextSx}
                         >
                           Share this article:
                         </Typography>
                         {renderShareRow("footer")}
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Typography
-                          {...blogStaticProps(block.id, "article-helpful-label", "Helpful vote label")}
+                          {...blogStaticProps(
+                            block.id,
+                            "article-helpful-label",
+                            "Helpful vote label",
+                          )}
                           sx={subtleTextSx}
                         >
                           Was this helpful?
                         </Typography>
                         <Box
-                          {...blogStaticProps(block.id, "article-helpful-yes", "Helpful yes button", "container")}
+                          {...blogStaticProps(
+                            block.id,
+                            "article-helpful-yes",
+                            "Helpful yes button",
+                            "container",
+                          )}
                           onClick={() => handleHelpfulVote("yes")}
                           role="button"
                           aria-label="Mark article as helpful"
@@ -1485,18 +1724,31 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                             px: 1.4,
                             gap: 0.8,
                             cursor: "pointer",
-                            borderColor: helpfulVote === "yes" ? hexToRgba(accent, 0.55) : undefined,
-                            backgroundColor: helpfulVote === "yes" ? hexToRgba(accent, 0.12) : "transparent",
+                            borderColor:
+                              helpfulVote === "yes"
+                                ? hexToRgba(accent, 0.55)
+                                : undefined,
+                            backgroundColor:
+                              helpfulVote === "yes"
+                                ? hexToRgba(accent, 0.12)
+                                : "transparent",
                             color: helpfulVote === "yes" ? accent : undefined,
                             transition: "all .2s ease",
                             ...shareBtnHover,
                           }}
                         >
-                          <ThumbUpOffAltOutlinedIcon sx={{ fontSize: "1rem" }} />
+                          <ThumbUpOffAltOutlinedIcon
+                            sx={{ fontSize: "1rem" }}
+                          />
                           <span>Yes</span>
                         </Box>
                         <Box
-                          {...blogStaticProps(block.id, "article-helpful-no", "Helpful no button", "container")}
+                          {...blogStaticProps(
+                            block.id,
+                            "article-helpful-no",
+                            "Helpful no button",
+                            "container",
+                          )}
                           onClick={() => handleHelpfulVote("no")}
                           role="button"
                           aria-label="Mark article as not helpful"
@@ -1506,24 +1758,67 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                             px: 1.4,
                             gap: 0.8,
                             cursor: "pointer",
-                            borderColor: helpfulVote === "no" ? hexToRgba(accent, 0.55) : undefined,
-                            backgroundColor: helpfulVote === "no" ? hexToRgba(accent, 0.12) : "transparent",
+                            borderColor:
+                              helpfulVote === "no"
+                                ? hexToRgba(accent, 0.55)
+                                : undefined,
+                            backgroundColor:
+                              helpfulVote === "no"
+                                ? hexToRgba(accent, 0.12)
+                                : "transparent",
                             color: helpfulVote === "no" ? accent : undefined,
                             transition: "all .2s ease",
                             ...shareBtnHover,
                           }}
                         >
-                          <ThumbDownOffAltOutlinedIcon sx={{ fontSize: "1rem" }} />
+                          <ThumbDownOffAltOutlinedIcon
+                            sx={{ fontSize: "1rem" }}
+                          />
                           <span>No</span>
                         </Box>
                       </Box>
                     </Box>
+                    {/* Comments. Rendered in template mode too (the editor's
+                        Blog-Detail page) so the section is visible and its static
+                        elements are stylable there; it previews the latest post's
+                        real thread. Skipped only for the synthetic placeholder,
+                        which has no real post to load comments for. */}
+                    {!isLoading &&
+                      websiteId &&
+                      post!.id != null &&
+                      String(post!.id) !== String(PLACEHOLDER_POST.id) && (
+                        <Box
+                          sx={{
+                            // maxWidth: "1300px",
+                            mx: "auto",
+                            mt: { xs: 4, md: 6 },
+                          }}
+                        >
+                          <BlogComments
+                            websiteId={websiteId}
+                            blogId={post!.id}
+                            editorBlockId={block.id}
+                            postAuthorId={post!.author?.id}
+                            primaryColor={accent}
+                            headingColor={ui.headingText}
+                            bodyColor={ui.bodyText}
+                          />
+                        </Box>
+                      )}
                   </>
                 )}
               </Box>
 
               {/* Sidebar */}
-              <Box sx={{ position: { lg: "sticky" }, top: { lg: 105 }, alignSelf: "start", display: "grid", gap: 2.2 }}>
+              <Box
+                sx={{
+                  position: { lg: "sticky" },
+                  top: { lg: 105 },
+                  alignSelf: "start",
+                  display: "grid",
+                  gap: 2.2,
+                }}
+              >
                 {isLoading ? (
                   <>
                     <Box sx={{ ...panelSx, p: { xs: 2, md: 3 } }}>
@@ -1533,7 +1828,14 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                     </Box>
                     <Box sx={{ ...panelSx, p: { xs: 2, md: 3 } }}>
                       <Skeleton variant="text" width="68%" height={36} />
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, mt: 1.2 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.2,
+                          mt: 1.2,
+                        }}
+                      >
                         <Skeleton variant="circular" width={40} height={40} />
                         <Box sx={{ flex: 1 }}>
                           <Skeleton variant="text" width="70%" height={22} />
@@ -1547,12 +1849,21 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                     {/* TOC */}
                     {showTableOfContents && tocSections.length > 0 && (
                       <Box
-                        {...blogStaticProps(block.id, "article-toc-card", "Table of contents card", "container")}
+                        {...blogStaticProps(
+                          block.id,
+                          "article-toc-card",
+                          "Table of contents card",
+                          "container",
+                        )}
                         className={FADE_IN_CLASS}
                         sx={{ ...panelSx, p: { xs: 2, md: 3 } }}
                       >
                         <Typography
-                          {...blogStaticProps(block.id, "article-toc-title", "Table of contents heading")}
+                          {...blogStaticProps(
+                            block.id,
+                            "article-toc-title",
+                            "Table of contents heading",
+                          )}
                           sx={{ fontWeight: 700, mb: 1.1, fontSize: "1.45rem" }}
                         >
                           Table of Contents
@@ -1573,7 +1884,11 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                           {tocSections.map((section, index) => (
                             <Box
                               key={`toc-${section.id}`}
-                              {...blogStaticProps(block.id, `article-toc-item-${index + 1}`, "Table of contents item")}
+                              {...blogStaticProps(
+                                block.id,
+                                `article-toc-item-${index + 1}`,
+                                "Table of contents item",
+                              )}
                               data-toc-section={section.id}
                               onClick={() => onTocClick(section.id)}
                               sx={{
@@ -1581,12 +1896,18 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                                 gap: 1,
                                 py: 0.8,
                                 cursor: "pointer",
-                                color: activeSection === section.id ? accent : ui.stickyInactive,
-                                fontWeight: activeSection === section.id ? 700 : 400,
+                                color:
+                                  activeSection === section.id
+                                    ? accent
+                                    : ui.stickyInactive,
+                                fontWeight:
+                                  activeSection === section.id ? 700 : 400,
                                 fontSize: { xs: "0.92rem", md: "0.98rem" },
                               }}
                             >
-                              <span style={{ opacity: 0.9 }}>{String(index + 1).padStart(2, "0")}</span>
+                              <span style={{ opacity: 0.9 }}>
+                                {String(index + 1).padStart(2, "0")}
+                              </span>
                               <span>{section.heading}</span>
                             </Box>
                           ))}
@@ -1596,17 +1917,28 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
 
                     {/* Author bio */}
                     <Box
-                      {...blogStaticProps(block.id, "article-author-card", "Author card", "container")}
+                      {...blogStaticProps(
+                        block.id,
+                        "article-author-card",
+                        "Author card",
+                        "container",
+                      )}
                       className={FADE_IN_CLASS}
                       sx={{ ...panelSx, p: { xs: 2, md: 3 } }}
                     >
                       <Typography
-                        {...blogStaticProps(block.id, "article-author-card-title", "Author card heading")}
+                        {...blogStaticProps(
+                          block.id,
+                          "article-author-card-title",
+                          "Author card heading",
+                        )}
                         sx={{ fontWeight: 700, mb: 1.4, fontSize: "1.45rem" }}
                       >
                         About the Author
                       </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1.2 }}
+                      >
                         <Box
                           sx={{
                             width: 40,
@@ -1619,17 +1951,27 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                             border: `1px solid ${ui.panelBorder}`,
                           }}
                         >
-                          <PersonOutlineOutlinedIcon sx={{ color: ui.avatarIcon, fontSize: "1.1rem" }} />
+                          <PersonOutlineOutlinedIcon
+                            sx={{ color: ui.avatarIcon, fontSize: "1.1rem" }}
+                          />
                         </Box>
                         <Box>
                           <Typography
-                            {...blogStaticProps(block.id, "article-author-card-name", "Author name")}
+                            {...blogStaticProps(
+                              block.id,
+                              "article-author-card-name",
+                              "Author name",
+                            )}
                             sx={{ fontWeight: 700 }}
                           >
                             {authorName}
                           </Typography>
                           <Typography
-                            {...blogStaticProps(block.id, "article-author-card-role", "Author role")}
+                            {...blogStaticProps(
+                              block.id,
+                              "article-author-card-role",
+                              "Author role",
+                            )}
                             sx={{ color: accent, fontSize: "0.9rem" }}
                           >
                             {authorRole}
@@ -1638,7 +1980,11 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                       </Box>
                       {authorBio && (
                         <Typography
-                          {...blogStaticProps(block.id, "article-author-bio", "Author bio")}
+                          {...blogStaticProps(
+                            block.id,
+                            "article-author-bio",
+                            "Author bio",
+                          )}
                           sx={{
                             mt: 1.6,
                             ...subtleTextSx,
@@ -1657,12 +2003,21 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                     {/* Related articles */}
                     {sidebarArticles.length > 0 && (
                       <Box
-                        {...blogStaticProps(block.id, "article-related-card", "Related articles card", "container")}
+                        {...blogStaticProps(
+                          block.id,
+                          "article-related-card",
+                          "Related articles card",
+                          "container",
+                        )}
                         className={FADE_IN_CLASS}
                         sx={{ ...panelSx, p: { xs: 2, md: 3 } }}
                       >
                         <Typography
-                          {...blogStaticProps(block.id, "article-related-title", "Related articles heading")}
+                          {...blogStaticProps(
+                            block.id,
+                            "article-related-title",
+                            "Related articles heading",
+                          )}
                           sx={{ fontWeight: 700, mb: 1.2, fontSize: "1.45rem" }}
                         >
                           Related Articles
@@ -1670,12 +2025,28 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                         {sidebarArticles.map((article, index) => (
                           <Box
                             key={article.id}
-                            {...blogStaticProps(block.id, `article-related-item-${index + 1}`, "Related article item", "container")}
+                            {...blogStaticProps(
+                              block.id,
+                              `article-related-item-${index + 1}`,
+                              "Related article item",
+                              "container",
+                            )}
                             onClick={() => openArticle(article)}
-                            sx={{ display: "flex", gap: 1.1, mb: 1.2, cursor: "pointer", alignItems: "flex-start" }}
+                            sx={{
+                              display: "flex",
+                              gap: 1.1,
+                              mb: 1.2,
+                              cursor: "pointer",
+                              alignItems: "flex-start",
+                            }}
                           >
                             <Box
-                              {...blogStaticProps(block.id, `article-related-image-${index + 1}`, "Related article image", "media")}
+                              {...blogStaticProps(
+                                block.id,
+                                `article-related-image-${index + 1}`,
+                                "Related article image",
+                                "media",
+                              )}
                               component="img"
                               src={resolveBlogImage(article.image)}
                               alt={article.title}
@@ -1695,14 +2066,27 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                               {article.category && (
                                 <Typography
-                                  {...blogStaticProps(block.id, `article-related-category-${index + 1}`, "Related article category")}
-                                  sx={{ ...badgeSx, fontSize: "0.72rem", py: 0.35, px: 1.05 }}
+                                  {...blogStaticProps(
+                                    block.id,
+                                    `article-related-category-${index + 1}`,
+                                    "Related article category",
+                                  )}
+                                  sx={{
+                                    ...badgeSx,
+                                    fontSize: "0.72rem",
+                                    py: 0.35,
+                                    px: 1.05,
+                                  }}
                                 >
                                   {article.category}
                                 </Typography>
                               )}
                               <Typography
-                                {...blogStaticProps(block.id, `article-related-heading-${index + 1}`, "Related article title")}
+                                {...blogStaticProps(
+                                  block.id,
+                                  `article-related-heading-${index + 1}`,
+                                  "Related article title",
+                                )}
                                 sx={{
                                   mt: 0.5,
                                   fontWeight: 600,
@@ -1717,8 +2101,16 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                                 {article.title}
                               </Typography>
                               <Typography
-                                {...blogStaticProps(block.id, `article-related-date-${index + 1}`, "Related article date")}
-                                sx={{ mt: 0.45, ...subtleTextSx, fontSize: "0.84rem" }}
+                                {...blogStaticProps(
+                                  block.id,
+                                  `article-related-date-${index + 1}`,
+                                  "Related article date",
+                                )}
+                                sx={{
+                                  mt: 0.45,
+                                  ...subtleTextSx,
+                                  fontSize: "0.84rem",
+                                }}
                               >
                                 {formatDate(article.publishedAt)}
                               </Typography>
@@ -1735,18 +2127,51 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
             {/* You might also like */}
             {!isLoading && recommendationArticles.length > 0 && (
               <>
-                <Divider className={FADE_IN_CLASS} sx={{ my: { xs: 3.2, md: 4.4 }, borderColor: ui.divider }} />
-                <Box className={FADE_IN_CLASS} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1.4, mb: 2.2 }}>
+                <Divider
+                  className={FADE_IN_CLASS}
+                  sx={{ my: { xs: 3.2, md: 4.4 }, borderColor: ui.divider }}
+                />
+                <Box
+                  className={FADE_IN_CLASS}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 1.4,
+                    mb: 2.2,
+                  }}
+                >
                   <Typography
-                    {...blogStaticProps(block.id, "article-recommendations-title", "Recommendations heading")}
-                    sx={{ fontWeight: 700, fontSize: { xs: "1.6rem", md: "2.2rem" } }}
+                    {...blogStaticProps(
+                      block.id,
+                      "article-recommendations-title",
+                      "Recommendations heading",
+                    )}
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: { xs: "1.6rem", md: "2.2rem" },
+                    }}
                   >
-                    You might also <Box component="span" sx={{ color: accent }}>like</Box>
+                    You might also{" "}
+                    <Box component="span" sx={{ color: accent }}>
+                      like
+                    </Box>
                   </Typography>
                   <Box
-                    {...blogStaticProps(block.id, "article-view-all-link", "View all link")}
+                    {...blogStaticProps(
+                      block.id,
+                      "article-view-all-link",
+                      "View all link",
+                    )}
                     onClick={goToBlog}
-                    sx={{ display: "inline-flex", alignItems: "center", gap: 0.7, color: accent, cursor: "pointer" }}
+                    sx={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 0.7,
+                      color: accent,
+                      cursor: "pointer",
+                    }}
                   >
                     <span>View All</span>
                     <ArrowForwardIcon sx={{ fontSize: "1rem" }} />
@@ -1754,12 +2179,25 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                 </Box>
                 <Box
                   className={FADE_IN_CLASS}
-                  sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" } }}
+                  sx={{
+                    display: "grid",
+                    gap: 3,
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "repeat(2, 1fr)",
+                      md: "repeat(3, 1fr)",
+                    },
+                  }}
                 >
                   {recommendationArticles.map((article, index) => (
                     <Box
                       key={`like-${article.id}`}
-                      {...blogStaticProps(block.id, `article-recommendation-card-${index + 1}`, "Recommendation card", "container")}
+                      {...blogStaticProps(
+                        block.id,
+                        `article-recommendation-card-${index + 1}`,
+                        "Recommendation card",
+                        "container",
+                      )}
                       onClick={() => openArticle(article)}
                       sx={{
                         cursor: "pointer",
@@ -1767,7 +2205,8 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                         border: `1px solid ${ui.panelBorder}`,
                         background: alpha("#ffffff", 0.92),
                         p: 1.2,
-                        transition: "transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease",
+                        transition:
+                          "transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease",
                         "&:hover": {
                           transform: "translateY(-6px)",
                           boxShadow: `0 16px 28px rgba(21, 45, 66, 0.2), 0 0 0 1px ${hexToRgba(accent, 0.24)}`,
@@ -1776,40 +2215,81 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
                       }}
                     >
                       <Box
-                        {...blogStaticProps(block.id, `article-recommendation-image-${index + 1}`, "Recommendation image", "media")}
+                        {...blogStaticProps(
+                          block.id,
+                          `article-recommendation-image-${index + 1}`,
+                          "Recommendation image",
+                          "media",
+                        )}
                         component="img"
                         src={resolveBlogImage(article.image)}
                         alt={article.title}
                         loading="lazy"
                         decoding="async"
-                        sx={{ width: "100%", height: { xs: 190, md: 200 }, borderRadius: "12px", objectFit: "cover", bgcolor: "#0a1825" }}
+                        sx={{
+                          width: "100%",
+                          height: { xs: 190, md: 200 },
+                          borderRadius: "12px",
+                          objectFit: "cover",
+                          bgcolor: "#0a1825",
+                        }}
                       />
                       <Box sx={{ mt: 1.2, px: 0.2, pb: 0.4 }}>
                         {article.category && (
                           <Typography
-                            {...blogStaticProps(block.id, `article-recommendation-category-${index + 1}`, "Recommendation category")}
+                            {...blogStaticProps(
+                              block.id,
+                              `article-recommendation-category-${index + 1}`,
+                              "Recommendation category",
+                            )}
                             sx={badgeSx}
                           >
                             {article.category}
                           </Typography>
                         )}
                         <Typography
-                          {...blogStaticProps(block.id, `article-recommendation-heading-${index + 1}`, "Recommendation title")}
-                          sx={{ mt: 0.8, fontWeight: 700, fontSize: { xs: "1.05rem", md: "1.24rem" }, lineHeight: 1.24 }}
+                          {...blogStaticProps(
+                            block.id,
+                            `article-recommendation-heading-${index + 1}`,
+                            "Recommendation title",
+                          )}
+                          sx={{
+                            mt: 0.8,
+                            fontWeight: 700,
+                            fontSize: { xs: "1.05rem", md: "1.24rem" },
+                            lineHeight: 1.24,
+                          }}
                         >
                           {article.title}
                         </Typography>
-                        <Box sx={{ mt: 1.1, display: "flex", alignItems: "center", gap: 1 }}>
-                          <PersonOutlineOutlinedIcon sx={{ fontSize: "1rem", color: ui.avatarIcon }} />
+                        <Box
+                          sx={{
+                            mt: 1.1,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                          }}
+                        >
+                          <PersonOutlineOutlinedIcon
+                            sx={{ fontSize: "1rem", color: ui.avatarIcon }}
+                          />
                           <Typography
-                            {...blogStaticProps(block.id, `article-recommendation-author-${index + 1}`, "Recommendation author")}
+                            {...blogStaticProps(
+                              block.id,
+                              `article-recommendation-author-${index + 1}`,
+                              "Recommendation author",
+                            )}
                             sx={subtleTextSx}
                           >
                             {authorName}
                           </Typography>
                         </Box>
                         <Typography
-                          {...blogStaticProps(block.id, `article-recommendation-date-${index + 1}`, "Recommendation date")}
+                          {...blogStaticProps(
+                            block.id,
+                            `article-recommendation-date-${index + 1}`,
+                            "Recommendation date",
+                          )}
                           sx={{ mt: 0.4, ...subtleTextSx, fontSize: "0.9rem" }}
                         >
                           {formatDate(article.publishedAt)}
@@ -1822,18 +2302,19 @@ const BlogArticleBlockBase: React.FC<BlogArticleBlockProps> = ({
             )}
 
             {/* Comments (real website-scoped posts only — never in template mode) */}
-            {!isLoading && !isTemplateMode && websiteId && post!.id != null && (
+            {/* {!isLoading && !isTemplateMode && websiteId && post!.id != null && (
               <Box sx={{ maxWidth: "1300px", mx: "auto", mt: { xs: 4, md: 6 } }}>
                 <BlogComments
                   websiteId={websiteId}
                   blogId={post!.id}
+                  editorBlockId={block.id}
                   postAuthorId={post!.author?.id}
                   primaryColor={accent}
                   headingColor={ui.headingText}
                   bodyColor={ui.bodyText}
                 />
               </Box>
-            )}
+            )} */}
           </Box>
         </Box>
       </Container>

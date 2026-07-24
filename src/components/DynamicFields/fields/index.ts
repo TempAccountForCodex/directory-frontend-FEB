@@ -31,6 +31,7 @@ export { default as Select } from "./Select";
 export { default as Toggle } from "./Toggle";
 export { default as RepeaterField } from "./RepeaterField";
 export { default as MenuSelectField } from "./MenuSelectField";
+export { default as BlogPostsSelectorField } from "./BlogPostsSelectorField";
 
 // Register fallback mappings for backend field types that have no dedicated component.
 // EMAIL reuses TextField — email validation comes from API metadata, not the component.

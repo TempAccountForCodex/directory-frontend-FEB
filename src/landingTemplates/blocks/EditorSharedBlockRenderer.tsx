@@ -47,6 +47,10 @@ import {
 import { galleryFallbackImages } from "../assets/shared/gallery/fallbackImages";
 import { sharedBlockAssets } from "../assets/shared";
 import BlogFeedBlock from "../../components/PublicWebsite/dynamic/BlogFeedBlock";
+import BlogShowcaseBlock from "../../components/PublicWebsite/dynamic/BlogShowcaseBlock";
+import BlogHeroBlock from "../../components/PublicWebsite/dynamic/BlogHeroBlock";
+import BlogFeaturedBlock from "../../components/PublicWebsite/dynamic/BlogFeaturedBlock";
+import BlogGridBlock from "../../components/PublicWebsite/dynamic/BlogGridBlock";
 
 const hexToRgb = (hex: string) => {
   const normalized = hex.replace("#", "");
@@ -287,6 +291,10 @@ export const EDITOR_SHARED_BLOCK_TYPES = new Set([
   "testimonials",
   "reviews",
   "blog_feed",
+  "blog_showcase",
+  "blog_hero",
+  "blog_featured",
+  "blog_grid",
   "stats",
   "logo_carousel",
   "map_location",
@@ -2974,6 +2982,51 @@ export const renderEditorSharedBlock = ({
           bodyColor={mutedTextColor}
           websiteId={websiteId}
         />
+      </Box>
+    );
+  }
+
+  if (
+    blockType === "blog_showcase" ||
+    blockType === "blog_hero" ||
+    blockType === "blog_featured" ||
+    blockType === "blog_grid"
+  ) {
+    const realBlogType = blockType.toUpperCase();
+    const blogBlock = {
+      id: Number(section.blockId || block.id || index),
+      blockType: realBlogType,
+      content: { ...(block.content || {}) },
+      sortOrder: index,
+    };
+    return (
+      <Box
+        key={String(block.id || `${blockType}-${index}`)}
+        {...compoundBlockSelectionProps}
+        data-preview-label={compoundBlockLabel}
+        sx={{ ...compoundCardSx, width: "100%", p: 0, overflow: "hidden" }}
+      >
+        {realBlogType === "BLOG_HERO" ? (
+          <BlogHeroBlock block={blogBlock} primaryColor={themeColor} />
+        ) : realBlogType === "BLOG_FEATURED" ? (
+          <BlogFeaturedBlock
+            block={blogBlock}
+            primaryColor={themeColor}
+            websiteId={websiteId}
+          />
+        ) : realBlogType === "BLOG_GRID" ? (
+          <BlogGridBlock
+            block={blogBlock}
+            primaryColor={themeColor}
+            websiteId={websiteId}
+          />
+        ) : (
+          <BlogShowcaseBlock
+            block={blogBlock}
+            primaryColor={themeColor}
+            websiteId={websiteId}
+          />
+        )}
       </Box>
     );
   }

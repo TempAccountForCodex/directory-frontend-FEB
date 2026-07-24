@@ -120,6 +120,8 @@ export interface BlockLibraryProps {
   currentUserRole?: string;
   historyPush?: (state: unknown, description: string) => void;
   onBlockDragChange?: (block: BlockLibraryItem | null) => void;
+  /** Block keys to hide for the current page (e.g. blog-only sections on a blog page). */
+  hiddenBlockKeys?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -300,6 +302,34 @@ const FRONTEND_BLOCKS: BlockLibraryItem[] = [
     },
     variants: [],
     searchKeywords: ["blog", "grid", "posts", "articles", "search", "filter", "insights"],
+  },
+  {
+    key: "BLOG_SHOWCASE",
+    label: "Blog Showcase Section",
+    description:
+      "Promote a few blog posts on any page — themed title, description, and cards",
+    category: "dynamic",
+    icon: "auto_stories",
+    capabilities: {
+      supportsBackground: false,
+      supportsVisibility: true,
+      supportsVariants: false,
+      supportsCustomCss: false,
+      isDynamic: true,
+      dataSource: "blog",
+    },
+    variants: [],
+    searchKeywords: [
+      "blog",
+      "section",
+      "showcase",
+      "posts",
+      "articles",
+      "featured",
+      "latest",
+      "insights",
+      "cards",
+    ],
   },
 ];
 
@@ -633,6 +663,7 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   currentUserRole,
   historyPush,
   onBlockDragChange,
+  hiddenBlockKeys,
 }) {
   const [blockTypes, setBlockTypes] = useState<BlockLibraryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -662,17 +693,33 @@ const BlockLibrary = React.memo<BlockLibraryProps>(function BlockLibrary({
   // Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const hiddenKeySet = useMemo(
+    () =>
+      new Set(
+        (hiddenBlockKeys || []).map((key) => normalizeBlockLibraryToken(key)),
+      ),
+    [hiddenBlockKeys],
+  );
+
+  const isPageHiddenBlock = useCallback(
+    (block?: Partial<BlockLibraryItem>) =>
+      hiddenKeySet.size > 0 &&
+      hiddenKeySet.has(normalizeBlockLibraryToken(block?.key)),
+    [hiddenKeySet],
+  );
+
   const mergedBlockTypes = useMemo(() => {
     const allExtras = [...FRONTEND_BLOCKS, ...extraBlocks];
     const extras = allExtras.filter(
       (extra) =>
         !shouldHideBlockLibraryItem(extra) &&
+        !isPageHiddenBlock(extra) &&
         !blockTypes.some((block) => block.key === extra.key),
     );
     return [...extras, ...blockTypes].filter(
-      (block) => !shouldHideBlockLibraryItem(block),
+      (block) => !shouldHideBlockLibraryItem(block) && !isPageHiddenBlock(block),
     );
-  }, [blockTypes, extraBlocks]);
+  }, [blockTypes, extraBlocks, isPageHiddenBlock]);
 
   // Fetch block types on mount
   useEffect(() => {

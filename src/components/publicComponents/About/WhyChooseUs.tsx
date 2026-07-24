@@ -294,6 +294,8 @@ export default function WhyChooseUs(): JSX.Element {
           playsInline
           preload="none"
           crossOrigin="anonymous"
+          aria-hidden="true"
+          tabIndex={-1}
           style={{ position: "absolute", width: 0, height: 0, opacity: 0, transform: "translateZ(0)" }}
         />
       )}

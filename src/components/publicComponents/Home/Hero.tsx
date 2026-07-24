@@ -236,6 +236,7 @@ export default function HeroDepthCarousel() {
           <video
             ref={videoRef}
             src={heroVideoSrc}
+            poster={heroPlaceholderSrc}
             autoPlay
             muted
             loop

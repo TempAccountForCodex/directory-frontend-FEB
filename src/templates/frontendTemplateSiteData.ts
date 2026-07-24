@@ -14,6 +14,7 @@ import { portfolioAssets } from "../landingTemplates/assets/portfolio/portfolio-
 
 type FrontendTemplateWebsite = {
   websiteId?: string | number;
+  slug?: string | null;
   name: string;
   primaryColor?: string | null;
   secondaryColor?: string | null;

@@ -72,6 +72,15 @@ const EXCLUDED_PREFIXES = [
   "/site/",
 ];
 
+// Video files that are never presented to a user as playable media — they are
+// decoded off-screen as canvas texture sources. Kept out of the crawl so
+// Google's video indexer does not flag them as thumbnail-less.
+const UNCRAWLABLE_VIDEOS = [
+  "/assets/publicAssets/videos/About/bg_test2_compressed.mp4",
+  "/assets/publicAssets/videos/About/why-choose-us-bg.webm",
+  "/assets/video/logoLoader.webm",
+];
+
 const MANUAL_ROUTES = [
   "/",
   "/about",
@@ -266,6 +275,12 @@ const buildSitemap = async () => {
   const robotsTxt = [
     "User-agent: *",
     "Allow: /",
+    "",
+    "# Videos rendered off-screen as canvas texture sources, never as playable",
+    "# content. Blocking them keeps Google's video crawler from reporting them",
+    '# as unindexable ("No thumbnail URL provided"). Every user-visible',
+    "# background video carries a poster instead and is left crawlable.",
+    ...UNCRAWLABLE_VIDEOS.map((p) => `Disallow: ${p}`),
     "",
     `Sitemap: ${SITE_URL}/sitemap.xml`,
     "",

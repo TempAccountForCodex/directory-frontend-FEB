@@ -142,7 +142,24 @@ const getBlockTypeKey = (
   }
 
   const rawType = block.blockType || ("type" in block ? block.type : "") || "";
-  return typeof rawType === "string" ? rawType.trim().toUpperCase() : "";
+  const normalizedType =
+    typeof rawType === "string" ? rawType.trim().toUpperCase() : "";
+
+  // The blog sections (BLOG_HERO/BLOG_FEATURED/BLOG_GRID/BLOG_SHOWCASE) are not
+  // in the backend block-type enum, so they persist as a BLOG_FEED carrier plus
+  // a `content._subType` discriminator. This module reads persisted blocks
+  // directly (it never runs the editor's normalizeLoadedBlock), so without this
+  // a reloaded blog section collapses to "BLOG_FEED" — its section then no
+  // longer matches its own inner block type and stops rendering after a save.
+  if (normalizedType === "BLOG_FEED") {
+    const subType = (block as { content?: { _subType?: unknown } })?.content
+      ?._subType;
+    if (typeof subType === "string" && subType.trim()) {
+      return subType.trim().toUpperCase();
+    }
+  }
+
+  return normalizedType;
 };
 
 const inferFrontendTemplateIdFromBlocks = (
@@ -3973,8 +3990,16 @@ const hydrateSeededPages = (
       persistedPage,
       schemaPage,
     );
+    // Only blocks claimed by one of the template's OWN seeded sections count as
+    // "used" (they are re-hydrated into the seeded block below, so keeping them
+    // here too would render them twice). Blocks mapped under a custom key —
+    // e.g. a Library section saved as `plan-<timestamp>` — are NOT consumed by
+    // seeded hydration, so treating them as used silently dropped them from the
+    // page on every reload.
     const usedPersistedBlocks = new Set(
-      Array.from(persistedSections.values()),
+      Array.from(persistedSections.entries())
+        .filter(([sectionKey]) => templateSectionKeys.has(sectionKey))
+        .map(([, block]) => block),
     );
 
     const customPersistedBlocks = (persistedPage?.blocks || []).filter(

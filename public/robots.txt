@@ -1,4 +1,12 @@
 User-agent: *
 Allow: /
 
+# Videos rendered off-screen as canvas texture sources, never as playable
+# content. Blocking them keeps Google's video crawler from reporting them
+# as unindexable ("No thumbnail URL provided"). Every user-visible
+# background video carries a poster instead and is left crawlable.
+Disallow: /assets/publicAssets/videos/About/bg_test2_compressed.mp4
+Disallow: /assets/publicAssets/videos/About/why-choose-us-bg.webm
+Disallow: /assets/video/logoLoader.webm
+
 Sitemap: https://www.techietribe.ai/sitemap.xml

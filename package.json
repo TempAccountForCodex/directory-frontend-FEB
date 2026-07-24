@@ -7,6 +7,7 @@
     "tw-init": "tailwindcss init -p",
     "dev": "vite --open",
     "generate:sitemap": "node scripts/generate-sitemap.js",
+    "generate:posters": "node scripts/generate-video-posters.mjs",
     "prebuild": "npm run generate:sitemap",
     "build": "tsc -b && vite build",
     "preview": "vite preview",

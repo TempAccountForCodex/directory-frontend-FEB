@@ -33,6 +33,10 @@ import { alpha } from "@mui/material/styles";
 import { Globe, Image as ImageIcon, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { apiClient } from "../../api/client";
 import { API_URL } from "@/config/api";
+import {
+  hasDirectoryListingIntent,
+  clearDirectoryListingIntent,
+} from "../../utils/directoryListingIntent";
 import { useTheme as useCustomTheme } from "../../context/ThemeContext";
 import { getDashboardColors } from "../../styles/dashboardTheme";
 import { useQueryClient } from "@tanstack/react-query";
@@ -75,6 +79,35 @@ type ListingStatus =
   | "NEEDS_COMPLETION"
   | "PUBLISHED"
   | "ARCHIVED";
+
+// Backend-decided directory eligibility (Website.aiContext.listingEligibility).
+// The backend is the source of truth: the AI judges whether the website is a
+// genuine business from its name + category + content at first opt-in.
+type EligibilityStatus =
+  | "NOT_CHECKED"
+  | "ELIGIBLE"
+  | "INELIGIBLE"
+  | "UNDER_REVIEW";
+
+interface ListingEligibility {
+  status: EligibilityStatus;
+  reason: string | null;
+  canAppeal: boolean;
+  checkedAt: string | null;
+}
+
+// Error code returned (HTTP 422) when the AI judges the site is not a business.
+const NOT_A_BUSINESS_CODE = "NOT_A_BUSINESS";
+
+// Rotating status lines shown while `extract` runs (pull content + AI eligibility
+// check) — a multi-second round-trip, so we narrate it instead of just disabling
+// the button. The last line holds once reached (no looping back).
+const OPT_IN_STEPS = [
+  "Pulling your website's content…",
+  "Reviewing your listing details…",
+  "Checking that it qualifies as a business…",
+  "Almost there…",
+];
 
 const STATUS_CONFIG: Record<
   ListingStatus,
@@ -143,6 +176,7 @@ export interface ListingEditTabProps {
     directoryOptedIn?: boolean;
     isPublic?: boolean;
     isDirectoryArchived?: boolean;
+    listingEligibility?: ListingEligibility | null;
   } | null;
   planCode: string;
   aiGenerationsUsed?: number;
@@ -381,8 +415,67 @@ const ListingEditTab = React.memo(function ListingEditTab({
   const [success, setSuccess] = useState("");
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  // Backend-decided business eligibility. Seeded from websiteData and updated
+  // whenever a write returns a NOT_A_BUSINESS block or an appeal succeeds.
+  const [eligibility, setEligibility] = useState<ListingEligibility | null>(
+    websiteData?.listingEligibility ?? null,
+  );
+  const [appealing, setAppealing] = useState(false);
+  // Nudge for users who ticked "list my business" in the creation wizard but
+  // haven't finished setup here yet (intent recorded client-side by the wizard).
+  const [showIntentNudge, setShowIntentNudge] = useState(() =>
+    hasDirectoryListingIntent(websiteId),
+  );
+  // Rotating status line index while the opt-in (extract + eligibility) runs.
+  const [optInStep, setOptInStep] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const richEditorRef = useRef<ReactQuill | null>(null);
+
+  // Keep local eligibility in sync if the parent reloads the website.
+  useEffect(() => {
+    if (websiteData?.listingEligibility) {
+      setEligibility(websiteData.listingEligibility);
+    }
+  }, [websiteData?.listingEligibility]);
+
+  // Advance the opt-in status line while extract runs; reset when it finishes.
+  useEffect(() => {
+    if (!optingIn) {
+      setOptInStep(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setOptInStep((step) => Math.min(step + 1, OPT_IN_STEPS.length - 1));
+    }, 1800);
+    return () => clearInterval(id);
+  }, [optingIn]);
+
+  const eligibilityStatus: EligibilityStatus =
+    eligibility?.status ?? "NOT_CHECKED";
+  const isIneligible = eligibilityStatus === "INELIGIBLE";
+  const isUnderReview = eligibilityStatus === "UNDER_REVIEW";
+  const listingBlocked = isIneligible || isUnderReview;
+
+  // Detect the NOT_A_BUSINESS 422 and surface its verdict. Returns true if handled.
+  // `persistVerdict` should only be true for the opt-in flow, where the backend
+  // actually persists the INELIGIBLE verdict and the whole tab flips to the
+  // blocked state. On save/publish/republish the backend rejects the write but
+  // keeps the prior approved content live, so we only show the reason inline.
+  const handleEligibilityBlock = useCallback(
+    (data: any, persistVerdict = false): boolean => {
+      if (data?.error?.code !== NOT_A_BUSINESS_CODE) return false;
+      if (persistVerdict && data.listingEligibility) {
+        setEligibility(data.listingEligibility);
+      }
+      setError(
+        data.error?.reason ||
+          data.error?.message ||
+          "You cannot add this listing because your website isn't a business.",
+      );
+      return true;
+    },
+    [],
+  );
 
   const status = useMemo(
     () => deriveStatus(websiteData, completeness),
@@ -763,7 +856,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
 
   // Save
   const handleOptIn = useCallback(async () => {
-    if (!isPaidPlan) return;
+    if (!isPaidPlan || listingBlocked) return;
     setOptingIn(true);
     setError("");
     try {
@@ -775,6 +868,8 @@ const ListingEditTab = React.memo(function ListingEditTab({
         {};
       setExtracted(true);
       setPageLoading(false);
+      clearDirectoryListingIntent(websiteId);
+      setShowIntentNudge(false);
       await fetchCompleteness();
       await refreshListingCaches({
         ...websiteData,
@@ -782,11 +877,14 @@ const ListingEditTab = React.memo(function ListingEditTab({
         directoryOptedIn: true,
       });
     } catch (err: any) {
-      setError(getApiErrorMessage(err.response?.data, "Failed to initialise directory listing"));
+      const data = err.response?.data;
+      // Opt-in rejection persists the INELIGIBLE verdict → flip to blocked state.
+      if (handleEligibilityBlock(data, true)) return;
+      setError(getApiErrorMessage(data, "Failed to initialise directory listing"));
     } finally {
       setOptingIn(false);
     }
-  }, [websiteId, isPaidPlan, fetchCompleteness, refreshListingCaches, websiteData]);
+  }, [websiteId, isPaidPlan, listingBlocked, handleEligibilityBlock, fetchCompleteness, refreshListingCaches, websiteData]);
 
   const handleSave = useCallback(async () => {
     if (!validateForm()) return;
@@ -834,6 +932,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
       });
     } catch (err: any) {
       const data = err.response?.data;
+      if (handleEligibilityBlock(data)) return;
       const validationErrors = getApiValidationErrors(data);
       if (Object.keys(validationErrors).length > 0) {
         setFormErrors(validationErrors);
@@ -842,10 +941,11 @@ const ListingEditTab = React.memo(function ListingEditTab({
     } finally {
       setSaving(false);
     }
-  }, [form, websiteData, websiteId, validateForm, fetchCompleteness, refreshListingCaches]);
+  }, [form, websiteData, websiteId, validateForm, handleEligibilityBlock, fetchCompleteness, refreshListingCaches]);
 
   // Publish
   const handlePublish = useCallback(async () => {
+    if (listingBlocked) return;
     if (!validateForm()) return;
     if (completeness && completeness.score < MIN_PUBLISH_COMPLETENESS) {
       setError(
@@ -867,6 +967,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
       }
     } catch (err: any) {
       const data = err.response?.data;
+      if (handleEligibilityBlock(data)) return;
       const validationErrors = getApiValidationErrors(data);
       if (Object.keys(validationErrors).length > 0) {
         setFormErrors(validationErrors);
@@ -879,7 +980,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
     } finally {
       setPublishing(false);
     }
-  }, [completeness, validateForm, websiteId, refreshListingCaches]);
+  }, [completeness, listingBlocked, handleEligibilityBlock, validateForm, websiteId, refreshListingCaches]);
 
   // Unpublish (uses archive endpoint)
   const handleUnpublish = useCallback(async () => {
@@ -901,6 +1002,7 @@ const ListingEditTab = React.memo(function ListingEditTab({
 
   // Republish (from ARCHIVED state)
   const handleRepublish = useCallback(async () => {
+    if (listingBlocked) return;
     if (!validateForm()) return;
     setPublishing(true);
     setError("");
@@ -910,11 +1012,13 @@ const ListingEditTab = React.memo(function ListingEditTab({
       setSuccess("Listing republished to directory");
       await refreshListingCaches();
     } catch (err: any) {
-      setError(getApiErrorMessage(err.response?.data, "Failed to republish listing"));
+      const data = err.response?.data;
+      if (handleEligibilityBlock(data)) return;
+      setError(getApiErrorMessage(data, "Failed to republish listing"));
     } finally {
       setPublishing(false);
     }
-  }, [validateForm, websiteId, refreshListingCaches]);
+  }, [listingBlocked, handleEligibilityBlock, validateForm, websiteId, refreshListingCaches]);
 
   // Archive
   const handleArchive = useCallback(async () => {
@@ -962,6 +1066,37 @@ const ListingEditTab = React.memo(function ListingEditTab({
     }
   }, [websiteId, fetchCompleteness]);
 
+  // Appeal an INELIGIBLE verdict for manual admin review.
+  const handleAppeal = useCallback(async () => {
+    setAppealing(true);
+    setError("");
+    setSuccess("");
+    try {
+      const res = await apiClient.post(
+        `/websites/${websiteId}/listing/eligibility/appeal`,
+        {},
+      );
+      const nextEligibility = res.data?.listingEligibility;
+      if (nextEligibility) {
+        setEligibility(nextEligibility);
+      } else {
+        // Fall back to an optimistic under-review state on a bare success.
+        setEligibility((prev) =>
+          prev
+            ? { ...prev, status: "UNDER_REVIEW", canAppeal: false }
+            : { status: "UNDER_REVIEW", reason: null, canAppeal: false, checkedAt: null },
+        );
+      }
+      setSuccess("Your website has been submitted for review.");
+    } catch (err: any) {
+      setError(
+        getApiErrorMessage(err.response?.data, "Failed to submit for review"),
+      );
+    } finally {
+      setAppealing(false);
+    }
+  }, [websiteId]);
+
   const aiRemaining = aiGenerationsLimit - aiGenerationsUsed;
   const isAnyActionRunning =
     saving ||
@@ -995,28 +1130,117 @@ const ListingEditTab = React.memo(function ListingEditTab({
     );
   }
 
+  // Business-eligibility block: the AI judged this website isn't a business
+  // (INELIGIBLE), or an appeal is pending (UNDER_REVIEW). This wins over the
+  // opt-in prompt because an ineligible site is never opted in.
+  if (listingBlocked) {
+    return (
+      <Box sx={{ py: 2 }}>
+        {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess("")}>{success}</Alert>}
+        <DashboardCard icon={Globe} title="Directory Listing">
+          {isUnderReview ? (
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              Your website is under review. Our team is checking whether it
+              qualifies for the Techietribe Directory, and we'll update this
+              page once a decision is made.
+            </Typography>
+          ) : (
+            <>
+              <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+                The Techietribe Directory is for businesses only, and this
+                website doesn't appear to be a business, so it can't be listed.
+              </Typography>
+              {eligibility?.reason && (
+                <Typography
+                  variant="body2"
+                  sx={{ color: "text.secondary", mb: 2, fontStyle: "italic" }}
+                >
+                  {eligibility.reason}
+                </Typography>
+              )}
+              {eligibility?.canAppeal && (
+                <DashboardGradientButton
+                  onClick={handleAppeal}
+                  disabled={appealing}
+                  startIcon={appealing ? <CircularProgress size={16} color="inherit" /> : undefined}
+                >
+                  {appealing ? "Submitting…" : "Request Review"}
+                </DashboardGradientButton>
+              )}
+            </>
+          )}
+        </DashboardCard>
+      </Box>
+    );
+  }
+
   // Opt-in prompt for not-yet-listed websites (bypass if extract already ran this session)
   if (!websiteData?.directoryOptedIn && status === "NOT_LISTED" && !extracted) {
     return (
       <Box sx={{ py: 2 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
         <DashboardCard icon={Globe} title="Directory Listing">
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-            List your business in the Techietribe Directory so customers can discover you.
-            {!isPaidPlan && " Upgrade to a paid plan to unlock this feature."}
-          </Typography>
-          {isPaidPlan ? (
-            <DashboardGradientButton
-              onClick={handleOptIn}
-              disabled={optingIn}
-              startIcon={optingIn ? <CircularProgress size={16} color="inherit" /> : undefined}
+          {optingIn ? (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+                gap: 2,
+                py: 4,
+                px: 2,
+              }}
             >
-              {optingIn ? "Setting up…" : "Set Up Directory Listing"}
-            </DashboardGradientButton>
+              <CircularProgress size={34} />
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>
+                  Setting up your directory listing…
+                </Typography>
+                <Typography
+                  key={optInStep}
+                  variant="body2"
+                  sx={{
+                    mt: 0.5,
+                    color: "text.secondary",
+                    animation: "listingOptInFade 300ms ease",
+                    "@keyframes listingOptInFade": {
+                      from: { opacity: 0 },
+                      to: { opacity: 1 },
+                    },
+                  }}
+                >
+                  {OPT_IN_STEPS[optInStep]}
+                </Typography>
+              </Box>
+              <Typography variant="caption" sx={{ color: "text.disabled" }}>
+                This can take a few seconds — please keep this tab open.
+              </Typography>
+            </Box>
           ) : (
-            <DashboardGradientButton href="/pricing">
-              Upgrade to Unlock
-            </DashboardGradientButton>
+            <>
+              {showIntentNudge && isPaidPlan && (
+                <Alert severity="info" sx={{ mb: 2 }} onClose={() => setShowIntentNudge(false)}>
+                  You chose to list this website when you created it. Finish setting
+                  it up below — we'll pull your site's content and check it's a
+                  business before it goes live.
+                </Alert>
+              )}
+              <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+                List your business in the Techietribe Directory so customers can discover you.
+                {!isPaidPlan && " Upgrade to a paid plan to unlock this feature."}
+              </Typography>
+              {isPaidPlan ? (
+                <DashboardGradientButton onClick={handleOptIn}>
+                  Set Up Directory Listing
+                </DashboardGradientButton>
+              ) : (
+                <DashboardGradientButton href="/pricing">
+                  Upgrade to Unlock
+                </DashboardGradientButton>
+              )}
+            </>
           )}
         </DashboardCard>
       </Box>

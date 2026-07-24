@@ -6,22 +6,11 @@ import {
   Grid,
   Button,
   Stack,
-  Divider,
   Chip,
 } from "@mui/material";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-
-/* Feature Icons */
-import LinkIcon from "@mui/icons-material/Link";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import BoltIcon from "@mui/icons-material/Bolt";
-import SearchIcon from "@mui/icons-material/Search";
-import SlideshowIcon from "@mui/icons-material/Slideshow";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import SupportAgentIcon from "@mui/icons-material/SupportAgent";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
-import InsightsIcon from "@mui/icons-material/Insights";
+import CheckIcon from "@mui/icons-material/Check";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { motion } from "framer-motion";
 
 const star = "/assets/publicAssets/images/common/star.svg";
 
@@ -36,22 +25,6 @@ const gradientText = {
   WebkitTextFillColor: "transparent",
   backgroundClip: "text",
   fontWeight: 700,
-  animation: "shimmer 3s ease-in-out infinite",
-  backgroundSize: "200% 200%",
-};
-const avatarStyle = {
-  width: 44,
-  height: 44,
-  borderRadius: "12px",
-  border: "3px solid #FFFFFF",
-  objectFit: "cover",
-  backgroundColor: "#fff",
-};
-
-const avatarWrapper = {
-  display: "flex",
-  alignItems: "center",
-  marginLeft: "-10px",
 };
 
 const COLORS = {
@@ -63,166 +36,392 @@ const COLORS = {
   border: "rgba(255,255,255,0.08)",
 };
 
-const BASE_FEATURES = [
-  "Custom Domain URLs",
-  "Premium Templates",
-  "Business Listing",
-  "Slideshows",
-  "SEO Structure",
-  "Forms",
+/* ============================
+   Plans
+
+   NOTE: Prices are PLACEHOLDERS pending final numbers.
+   Edit PLAN_PRICES to change pricing for every billing cycle.
+============================ */
+
+type BillingCycle = "monthly" | "annual";
+type PlanId = "free" | "pro" | "business";
+
+type Feature = string | { label: string; sub: string[] };
+
+type Plan = {
+  id: PlanId;
+  label: string;
+  tagline: string;
+  positioning: string;
+  free?: boolean;
+  recommended?: boolean;
+  cta: string;
+  features: Feature[];
+};
+
+const PLAN_PRICES: Record<PlanId, Record<BillingCycle, number>> = {
+  free: {
+    monthly: 0,
+    annual: 0,
+  },
+  pro: {
+    monthly: 15,
+    annual: 180,
+  },
+  business: {
+    monthly: 40,
+    annual: 480,
+  },
+};
+
+const PLANS: Plan[] = [
+  {
+    id: "free",
+    label: "Free",
+    tagline: "Get online",
+    positioning: "Establish a complete but simple online presence.",
+    free: true,
+    cta: "Get Started",
+    features: [
+      "1 single-page landing site",
+      "1 standard directory listing",
+      "1 form · 50 submissions/mo",
+      "5 blog posts",
+      "50 MB storage",
+      "10 AI actions/mo",
+      "Free techietribe.app subdomain",
+    ],
+  },
+  {
+    id: "pro",
+    label: "Pro",
+    tagline: "Look professional",
+    positioning: "A polished, fully branded presence on your own domain.",
+    recommended: true,
+    cta: "Get Started",
+    features: [
+      "Everything in Free, plus:",
+      {
+        label: "Up to 5 websites",
+        sub: [
+          "A directory listing for each",
+          "1 custom domain for each",
+          "5 forms per website",
+        ],
+      },
+      "500 form submissions/mo",
+      "50 blog posts/site",
+      "upto 500 MB storage",
+      "100 AI actions/mo",
+      "Premium templates · custom CSS",
+      "SEO optimization for your website",
+      "Detailed analytics · CSV exports",
+      "2 collaborators per website",
+    ],
+  },
+  {
+    id: "business",
+    label: "Business",
+    tagline: "Grow and scale",
+    positioning: "Scale a portfolio with maximum directory visibility.",
+    cta: "Get Started",
+    features: [
+      "Everything in Pro, plus:",
+      "Unlimited websites & directory listings*",
+      "Unlimited forms · 10,000 submissions/mo",
+      "Unlimited blog posts",
+      "1 GB storage",
+      "500 AI actions/mo",
+      "Custom code & embeds",
+      "SEO optimization for websites & blogs",
+      "Blog comments & moderation controls",
+      "Conversion, funnel & real-time analytics",
+      "Advanced integrations (GTM, Meta Pixel…)",
+      "10 collaborators per website",
+      "1 featured directory listing",
+      "Priority support",
+    ],
+  },
 ];
-const STANDARD_EXTRAS = ["Priority Support", "Verified Badge"];
-const PLUS_EXTRAS = ["AI Copywriter", "Analytics Dashboard"];
 
-const FEATURE_ICONS: Record<string, React.ReactNode> = {
-  "Custom Domain URLs": <LinkIcon />,
-  "Premium Templates": <ViewListIcon />,
-  "Business Listing": <ViewListIcon />,
-  Slideshows: <SlideshowIcon />,
-  "SEO Structure": <SearchIcon />,
-  Forms: <ViewListIcon />,
-  "Priority Support": <SupportAgentIcon />,
-  "Verified Badge": <VerifiedUserIcon />,
-  "AI Copywriter": <AutoAwesomeIcon />,
-  "Analytics Dashboard": <InsightsIcon />,
-};
+/* ============================
+   Feature comparison matrix
+============================ */
 
-type BillingCycle = "annual" | "monthly";
-type Plan = { label: string; price: number; sites: number };
+type Cell = string | boolean;
 
-const pricingConfig = {
-  lite: [
-    { label: "Pro Lite", price: 36, sites: 1 },
-    { label: "Pro Lite 5", price: 180, sites: 5 },
-    { label: "Pro Lite 10", price: 360, sites: 10 },
-  ],
+type CompareRow = { feature: string; free: Cell; pro: Cell; business: Cell };
 
-  standard: [
-    { label: "Pro Standard 25", price: 900, sites: 25 },
-    { label: "Pro Standard 50", price: 1800, sites: 50 },
-    { label: "Pro Standard 100", price: 3600, sites: 100 },
-    { label: "Pro Standard 150", price: 5400, sites: 150 },
-    { label: "Pro Standard 250", price: 9000, sites: 250 },
-  ],
-
-  plus: [
-    { label: "Pro Plus 50", price: 1800, sites: 50 },
-    { label: "Pro Plus 100", price: 3600, sites: 100 },
-    { label: "Pro Plus 150", price: 5400, sites: 150 },
-    { label: "Pro Plus 200", price: 7200, sites: 200 },
-  ],
-};
+const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
+  {
+    category: "Websites & content",
+    rows: [
+      { feature: "Landing pages", free: "1 single-page", pro: "Up to 5", business: "Unlimited*" },
+      { feature: "Directory listings", free: "1 standard", pro: "Up to 5", business: "Unlimited*" },
+      { feature: "Link-in-bio pages", free: "1", pro: "Up to 5", business: "Unlimited*" },
+      { feature: "Blog posts", free: "5", pro: "50 per website", business: "Unlimited" },
+      { feature: "Storage", free: "100 MB", pro: "500 MB", business: "1 GB" },
+    ],
+  },
+  {
+    category: "Forms & leads",
+    rows: [
+      { feature: "Forms", free: "1", pro: "5 per website", business: "Unlimited" },
+      { feature: "Form submissions", free: "50/month", pro: "500/month", business: "10,000/month" },
+      { feature: "Booking/reservation forms", free: false, pro: true, business: true },
+      { feature: "CSV lead export", free: false, pro: true, business: true },
+    ],
+  },
+  {
+    category: "AI tools",
+    rows: [
+      { feature: "AI actions", free: "10/month", pro: "100/month", business: "500/month" },
+      { feature: "AI listing enhancement", free: false, pro: true, business: true },
+    ],
+  },
+  {
+    category: "Domain & branding",
+    rows: [
+      { feature: "Techietribe subdomain", free: true, pro: true, business: true },
+      { feature: "Custom domains", free: false, pro: "1 per website", business: "1 per website" },
+      { feature: "Techietribe branding", free: "Displayed", pro: "Removed", business: "Removed" },
+    ],
+  },
+  {
+    category: "Design & editor",
+    rows: [
+      { feature: "Templates", free: "Free", pro: "Free & premium", business: "All templates" },
+      { feature: "Video blocks & uploads", free: false, pro: true, business: true },
+      { feature: "Custom CSS", free: false, pro: true, business: true },
+      { feature: "Custom code & embeds", free: false, pro: false, business: true },
+    ],
+  },
+  {
+    category: "Analytics",
+    rows: [
+      { feature: "Basic analytics", free: true, pro: true, business: true },
+      { feature: "Detailed traffic analytics", free: false, pro: true, business: true },
+      { feature: "Conversion & real-time analytics", free: false, pro: false, business: true },
+    ],
+  },
+  {
+    category: "Directory & reputation",
+    rows: [
+      { feature: "Directory ranking boost", free: "Standard", pro: "Enhanced", business: "Highest" },
+      { feature: "Featured directory listing", free: false, pro: false, business: "1 active" },
+      { feature: "Owner review replies", free: false, pro: true, business: true },
+    ],
+  },
+  {
+    category: "Team & integrations",
+    rows: [
+      { feature: "Collaborators", free: "0", pro: "2 per website", business: "10 per website" },
+      { feature: "Advanced integrations", free: false, pro: "Limited", business: true },
+      { feature: "Support", free: "Standard", pro: "Standard", business: "Priority" },
+    ],
+  },
+];
 
 /* ============================
    Sub-Components
 ============================ */
+
 const BillingToggle = ({
   value,
   onChange,
 }: {
   value: BillingCycle;
   onChange: (v: BillingCycle) => void;
-}) => (
-  <Box sx={{ textAlign: "center", mb: 10 }}>
-    <Box
-      sx={{
-        display: "inline-flex",
-        background: "rgba(255,255,255,0.06)",
-        borderRadius: "999px",
-        p: 0.5,
-      }}
-    >
-      {(["annual", "monthly"] as BillingCycle[]).map((type) => (
-        <Button
-          key={type}
-          onClick={() => onChange(type)}
-          sx={{
-            px: 4,
-            py: 1.3,
-            borderRadius: "999px",
-            fontWeight: 700,
-            textTransform: "none",
-            background: value === type ? "white" : "transparent",
-            color: value === type ? "#000" : "rgba(255,255,255,0.7)",
-            "&:hover": {
-              background: value === type ? "white" : "rgba(255,255,255,0.08)",
-            },
-          }}
-        >
-          {type === "annual" ? "Pay annually" : "Pay monthly"}
-        </Button>
-      ))}
-    </Box>
-  </Box>
-);
+}) => {
+  const options: BillingCycle[] = ["monthly", "annual"];
+  const selectedIndex = options.indexOf(value);
 
-const PlanHeader = ({ plan, index, max, onPrev, onNext, billing }: any) => {
-  const displayPrice =
-    billing === "annual" ? plan.price : Math.round(plan.price / 12);
   return (
-    <Box sx={{ textAlign: "center", mb: 3 }}>
+    <Box sx={{ textAlign: "center", mb: 8 }}>
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: "inline-grid",
+          gridTemplateColumns: "repeat(2, minmax(142px, 190px))",
+          position: "relative",
+          background: "rgba(255,255,255,0.07)",
+          borderRadius: "999px",
+          p: 0.5,
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+          overflow: "hidden",
+          width: { xs: "min(100%, 300px)", sm: 388 },
         }}
       >
-        <Button
-          onClick={onPrev}
-          disabled={index === 0}
-          aria-label={`Previous ${plan.label} plan`}
-          title={`Previous ${plan.label} plan`}
-          sx={{ color: "white", minWidth: 40 }}
-        >
-          <ChevronLeftIcon />
-        </Button>
-        <Typography sx={{ fontWeight: 800 }}>{plan.label}</Typography>
-        <Button
-          onClick={onNext}
-          disabled={index === max - 1}
-          aria-label={`Next ${plan.label} plan`}
-          title={`Next ${plan.label} plan`}
-          sx={{ color: "white", minWidth: 40 }}
-        >
-          <ChevronRightIcon />
-        </Button>
+        <Box
+          component={motion.span}
+          aria-hidden
+          animate={{ x: `${selectedIndex * 100}%` }}
+          transition={{ type: "spring", stiffness: 360, damping: 32, mass: 0.9 }}
+          sx={{
+            position: "absolute",
+            top: 4,
+            bottom: 4,
+            left: 4,
+            zIndex: 0,
+            width: "calc((100% - 8px) / 2)",
+            borderRadius: "999px",
+            background: "#fff",
+            boxShadow:
+              "0 14px 34px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.72)",
+          }}
+        />
+
+        {options.map((type) => {
+          const selected = value === type;
+
+          return (
+            <Button
+              key={type}
+              onClick={() => onChange(type)}
+              disableRipple
+              sx={{
+                position: "relative",
+                zIndex: 1,
+                minWidth: 0,
+                px: { xs: 2, sm: 4 },
+                py: 1.3,
+                borderRadius: "999px",
+                fontWeight: 800,
+                textTransform: "none",
+                background: "transparent",
+                color: selected ? "#000" : "rgba(255,255,255,0.72)",
+                overflow: "hidden",
+                transition: "color 0.22s ease",
+                "&:hover": {
+                  background: "transparent",
+                  color: selected ? "#000" : "#fff",
+                },
+              }}
+            >
+              <Box
+                component={motion.span}
+                animate={{
+                  opacity: selected ? 1 : 0,
+                  y: selected ? 0 : 8,
+                }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "grid",
+                  placeItems: "center",
+                  color: "#000",
+                }}
+              >
+                {type === "annual" ? "Pay annually" : "Pay monthly"}
+              </Box>
+              <Box
+                component={motion.span}
+                animate={{
+                  opacity: selected ? 0 : 1,
+                  y: selected ? -8 : 0,
+                }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                sx={{
+                  display: "inline-block",
+                  color: "inherit",
+                }}
+              >
+                {type === "annual" ? "Pay annually" : "Pay monthly"}
+              </Box>
+            </Button>
+          );
+        })}
       </Box>
-      <Typography sx={{ fontSize: "2.2rem", fontWeight: 900, mt: 1 }}>
-        ${displayPrice}
-        <Box component="span" sx={{ opacity: 0.5, fontSize: "0.9rem" }}>
-          {" "}
-          /{billing === "annual" ? "year" : "month"}
-        </Box>
+    </Box>
+  );
+};
+
+const PlanHeader = ({
+  plan,
+  billing,
+}: {
+  plan: Plan;
+  billing: BillingCycle;
+}) => {
+  const displayPrice = PLAN_PRICES[plan.id][billing];
+  return (
+    <Box sx={{ textAlign: "center" }}>
+      <Typography sx={{ fontWeight: 800, fontSize: "1.15rem" }}>
+        {plan.label}
       </Typography>
-      <Typography sx={{ opacity: 0.78, mt: 0.5 }}>
-        {plan.sites} Sites
+      <Typography
+        sx={{
+          ...gradientText,
+          fontSize: "0.8rem",
+          mt: 0.5,
+          letterSpacing: 0.3,
+        }}
+      >
+        {plan.tagline}
+      </Typography>
+
+      <Box
+        sx={{
+          mt: 2,
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "center",
+          gap: 0.5,
+        }}
+      >
+        <Typography
+          component="span"
+          sx={{ fontSize: "2.6rem", fontWeight: 900, lineHeight: 1 }}
+        >
+          {plan.free ? "$0" : `$${displayPrice}`}
+        </Typography>
+        <Typography
+          component="span"
+          sx={{ opacity: 0.5, fontSize: "0.85rem", fontWeight: 500 }}
+        >
+          {plan.free
+            ? "/forever"
+            : `/${billing === "annual" ? "year" : "month"}`}
+        </Typography>
+      </Box>
+
+      <Typography
+        sx={{
+          opacity: 0.6,
+          mt: 1.5,
+          fontSize: "0.85rem",
+          lineHeight: 1.5,
+          minHeight: 54,
+          px: 1,
+        }}
+      >
+        {plan.positioning}
       </Typography>
     </Box>
   );
 };
 
 /* ============================
-   Main Pricing Card
+   Pricing Card
 ============================ */
+
 const PricingCard = ({
   plan,
-  index,
-  max,
-  onPrev,
-  onNext,
   billing,
-  tier,
-  recommended,
-}: any) => {
-  const features =
-    tier === "lite"
-      ? BASE_FEATURES
-      : tier === "standard"
-        ? [...BASE_FEATURES, ...STANDARD_EXTRAS]
-        : [...BASE_FEATURES, ...STANDARD_EXTRAS, ...PLUS_EXTRAS];
-  const displayPrice =
-    billing === "annual" ? plan.price : Math.round(plan.price / 12);
+}: {
+  plan: Plan;
+  billing: BillingCycle;
+}) => {
+  const recommended = !!plan.recommended;
+  const displayPrice = PLAN_PRICES[plan.id][billing];
+
+  const firstIsHeading =
+    typeof plan.features[0] === "string" &&
+    (plan.features[0] as string).endsWith("plus:");
+  const sectionLabel = firstIsHeading
+    ? (plan.features[0] as string).replace(/,?\s*plus:$/, "")
+    : "What's included";
+  const items = firstIsHeading ? plan.features.slice(1) : plan.features;
 
   return (
     <Grid item xs={12} sm={6} md={4} sx={{ display: "flex" }}>
@@ -230,17 +429,19 @@ const PricingCard = ({
         sx={{
           flexGrow: 1,
           position: "relative",
-          mt: recommended ? 0 : 4,
+          mt: 3,
           background: recommended ? COLORS.card : "#03181a",
           borderRadius: "24px",
           border: recommended
-            ? `1px solid ${COLORS.tealSoft}`
+            ? `1px solid rgba(47,184,179,0.5)`
             : `1px solid ${COLORS.border}`,
+          boxShadow: recommended
+            ? "0 0 50px rgba(47,184,179,0.12)"
+            : "none",
           display: "flex",
           flexDirection: "column",
         }}
       >
-        {/* RECOMMENDED CHIP */}
         {recommended && (
           <Chip
             label="MOST POPULAR"
@@ -260,7 +461,6 @@ const PricingCard = ({
           />
         )}
 
-        {/* INTERNAL CONTENT WRAPPER */}
         <Box
           sx={{
             position: "relative",
@@ -290,10 +490,9 @@ const PricingCard = ({
               whiteSpace: "nowrap",
             }}
           >
-            ${displayPrice}
+            {plan.free ? "$0" : `$${displayPrice}`}
           </Typography>
 
-          {/* CONTENT LAYERS */}
           <Box
             sx={{
               position: "relative",
@@ -303,41 +502,130 @@ const PricingCard = ({
               height: "100%",
             }}
           >
-            <PlanHeader
-              plan={plan}
-              index={index}
-              max={max}
-              onPrev={onPrev}
-              onNext={onNext}
-              billing={billing}
-            />
+            <PlanHeader plan={plan} billing={billing} />
 
-            <Stack spacing={1.6} sx={{ my: 4 }}>
-              {features.map((item) => (
-                <React.Fragment key={item}>
-                  <Stack
-                    direction="row"
-                    spacing={1.5}
-                    alignItems="center"
-                    sx={{
-                      marginTop: "5.8px !important",
-                    }}
-                  >
-                    <Box sx={{ "& svg": { fontSize: 18 } }}>
-                      {FEATURE_ICONS[item] ?? <BoltIcon />}
+            {/* Section divider label */}
+            <Box
+              sx={{
+                mt: 3,
+                mb: 2.5,
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.45)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {sectionLabel}
+              </Typography>
+              <Box
+                sx={{ flexGrow: 1, height: "1px", background: COLORS.border }}
+              />
+            </Box>
+
+            <Stack spacing={1.4} sx={{ mb: 4 }}>
+              {items.map((item) => {
+                if (typeof item !== "string") {
+                  return (
+                    <Box key={item.label}>
+                      <Stack
+                        direction="row"
+                        spacing={1.4}
+                        alignItems="flex-start"
+                      >
+                        <CheckIcon
+                          sx={{
+                            fontSize: 18,
+                            color: COLORS.teal,
+                            mt: "1px",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: "0.92rem",
+                            opacity: 0.92,
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {item.label}
+                        </Typography>
+                      </Stack>
+                      <Stack
+                        spacing={0.8}
+                        sx={{
+                          mt: 1,
+                          ml: "8px",
+                          pl: 2.2,
+                          borderLeft: `1px solid ${COLORS.border}`,
+                        }}
+                      >
+                        {item.sub.map((s) => (
+                          <Stack
+                            key={s}
+                            direction="row"
+                            spacing={1}
+                            alignItems="flex-start"
+                          >
+                            <CheckIcon
+                              sx={{
+                                fontSize: 14,
+                                color: COLORS.teal,
+                                mt: "1px",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <Typography
+                              sx={{
+                                fontSize: "0.82rem",
+                                opacity: 0.68,
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              {s}
+                            </Typography>
+                          </Stack>
+                        ))}
+                      </Stack>
                     </Box>
-                    <Typography sx={{ fontSize: "0.95rem", opacity: 0.9 }}>
+                  );
+                }
+
+                return (
+                  <Stack
+                    key={item}
+                    direction="row"
+                    spacing={1.4}
+                    alignItems="flex-start"
+                  >
+                    <CheckIcon
+                      sx={{
+                        fontSize: 18,
+                        color: COLORS.teal,
+                        mt: "1px",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: "0.92rem",
+                        opacity: 0.92,
+                        lineHeight: 1.4,
+                      }}
+                    >
                       {item}
                     </Typography>
                   </Stack>
-                  {/* <Divider
-                    sx={{
-                      borderColor: COLORS.border,
-                      marginTop: "5.8px !important",
-                    }}
-                  /> */}
-                </React.Fragment>
-              ))}
+                );
+              })}
             </Stack>
 
             <Button
@@ -361,7 +649,7 @@ const PricingCard = ({
                 },
               }}
             >
-              Get Started
+              {plan.cta}
             </Button>
           </Box>
         </Box>
@@ -371,196 +659,475 @@ const PricingCard = ({
 };
 
 /* ============================
-   Main Section
+   Comparison Table
 ============================ */
-const PricingSection: React.FC = () => {
-  const [billing, setBilling] = React.useState<BillingCycle>("annual");
-  const [indices, setIndices] = React.useState({
-    lite: 0,
-    standard: 0,
-    plus: 0,
-  });
 
-  const updateIdx = (tier: string, delta: number) => {
-    setIndices((prev) => ({
-      ...prev,
-      [tier]: Math.max(
-        0,
-        Math.min(
-          (pricingConfig as any)[tier].length - 1,
-          (prev as any)[tier] + delta,
-        ),
-      ),
-    }));
-  };
-
-  return (
-    <>
+const CompareCell = ({
+  value,
+  highlight,
+}: {
+  value: Cell;
+  highlight?: boolean;
+}) => {
+  if (value === true)
+    return (
       <Box
         sx={{
-          backgroundColor: "#041e18",
-          backgroundImage: `url(${star})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          width: 24,
+          height: 24,
+          borderRadius: "50%",
+          mx: "auto",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: highlight ? COLORS.teal : "rgba(47,184,179,0.15)",
         }}
       >
-        <Box>
-          <Container maxWidth="lg" sx={{ pt: 6, pb: { xs: 2, lg: 6 } }}>
-            {/* Header */}
+        <CheckIcon
+          sx={{ fontSize: 15, color: highlight ? "#04201f" : COLORS.teal }}
+        />
+      </Box>
+    );
+  if (value === false)
+    return (
+      <Box
+        component="span"
+        sx={{
+          display: "inline-block",
+          width: 12,
+          height: "2px",
+          borderRadius: 2,
+          background: "rgba(255,255,255,0.2)",
+        }}
+      />
+    );
+  return (
+    <Typography
+      sx={{
+        fontSize: "0.85rem",
+        fontWeight: highlight ? 700 : 500,
+        color: highlight ? "#fff" : "rgba(255,255,255,0.85)",
+      }}
+    >
+      {value}
+    </Typography>
+  );
+};
 
-            <Box textAlign="center" mb={6}>
-              <Box
+const PLAN_COL_WIDTH = "17%";
+
+const ComparisonTable = () => {
+  const [expanded, setExpanded] = React.useState(false);
+
+  return (
+  <Container maxWidth="lg" sx={{ mt: 14, pb: 4 }}>
+    <Box sx={{ textAlign: "center", mb: 7 }}>
+      <Typography
+        sx={{
+          fontSize: "0.72rem",
+          fontWeight: 700,
+          letterSpacing: 2,
+          textTransform: "uppercase",
+          color: COLORS.teal,
+          mb: 1.5,
+        }}
+      >
+        Full breakdown
+      </Typography>
+      <Typography
+        variant="h4"
+        sx={{
+          fontWeight: 900,
+          fontSize: { xs: "1.7rem", md: "2.4rem" },
+          letterSpacing: "-0.02em",
+        }}
+      >
+        Compare every feature
+      </Typography>
+    </Box>
+
+    <Box sx={{ position: "relative" }}>
+      <Box
+        sx={{
+          borderRadius: "24px",
+          border: `1px solid ${COLORS.border}`,
+          background: "rgba(3,24,26,0.6)",
+          overflow: "hidden",
+          boxShadow: expanded
+            ? "0 22px 70px rgba(47,184,179,0.14)"
+            : "0 14px 44px rgba(0,0,0,0.22)",
+          transition: "box-shadow 0.35s ease, border-color 0.35s ease",
+        }}
+      >
+        <motion.div
+          initial={false}
+          animate={{
+            height: expanded ? "auto" : 360,
+            filter: expanded ? "saturate(1.08)" : "saturate(0.96)",
+          }}
+          transition={{
+            height: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+            filter: { duration: 0.35, ease: "easeOut" },
+          }}
+          style={{ overflow: "hidden" }}
+        >
+          <Box
+            sx={{
+              overflowX: "auto",
+              transform: expanded ? "translateY(0)" : "translateY(-2px)",
+              transition: "transform 0.35s ease",
+            }}
+          >
+            <Box
+              component="table"
+              sx={{
+                width: "100%",
+                minWidth: 720,
+                borderCollapse: "separate",
+                borderSpacing: 0,
+                tableLayout: "fixed",
+              }}
+            >
+        {/* Header */}
+        <Box component="thead">
+          <Box component="tr">
+            <Box
+              component="th"
+              sx={{
+                textAlign: "left",
+                p: "22px 24px",
+                position: "sticky",
+                top: 0,
+                background: COLORS.cardDark,
+              }}
+            >
+              <Typography
                 sx={{
-                  textAlign: "center",
-                  display: "flex",
-                  justifyContent: "center",
-                  position: "relative",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  color: "rgba(255,255,255,0.5)",
                 }}
               >
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: "-21%",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    width: "100%",
-                    height: "100%",
-                    backgroundImage: `radial-gradient(circle at 50% -20%, rgba(55, 140, 146, 0.33) 0%, transparent 50%)`,
-                    zIndex: 0,
-                    display: { xs: "none", lg: "block" },
-                  }}
-                />
-                <Typography
-                  variant="h3"
-                  component="h1"
-                  fontWeight={700}
-                  sx={{
-                    color: "white",
-                    fontSize: {
-                      xs: "25px",
-                      sm: "35px",
-                      md: "45px",
-                      lg: "55px",
-                    },
-                    marginTop: { xs: "30px", md: "50px", lg: "90px" },
-                    display: "flex",
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                    gap: "10px",
-                    lineHeight: 0.9,
-                    justifyContent: "center",
-                    fontFamily: "Plus Jakarta Sans",
-                  }}
-                >
-                  Plans that grow with your business needs.
-                  <Box component="span" sx={{ width: "100%" }} />
-                  Start with a{" "}
-                  <Box component="span" sx={gradientText}>
-                    FREE
-                  </Box>{" "}
-                  {/* Avatars */}
-                  <Box sx={{ display: "flex", alignItems: "center", ml: 0 }}>
-                    <Box sx={{ ...avatarWrapper, marginLeft: 0 }}>
-                      <Box
-                        component="img"
-                        src="https://img.freepik.com/free-photo/portrait-pretty-girl-with-bun-denim-jacket-white-t-shirt-with-gentle-smile-pink_176532-13857.jpg?t=st=1767881978~exp=1767885578~hmac=92b5bc141cfed93ec4655f092cc42c81dfc337287c34e1163a5a71529be0ba07&w=2000"
-                        alt="user"
-                        sx={{
-                          ...avatarStyle,
-                          transform: "rotate(352deg)",
-                          zIndex: 10,
-                        }}
-                      />
-                    </Box>
-
-                    <Box sx={avatarWrapper}>
-                      <Box
-                        component="img"
-                        src="https://img.freepik.com/free-photo/confident-young-brunette-caucasian-girl-looks-camera-isolated-green-background-with-copy-space_141793-67067.jpg?t=st=1767882034~exp=1767885634~hmac=ffb030c651276a576d561203a6213dca6ac21dd0a099cdc97064088a764f647a&w=2000"
-                        alt="user"
-                        sx={{
-                          ...avatarStyle,
-                          zIndex: 9,
-                          marginTop: "-10px",
-                        }}
-                      />
-                    </Box>
-
-                    <Box sx={avatarWrapper}>
-                      <Box
-                        component="img"
-                        src="https://img.freepik.com/free-photo/medium-shot-man-sticking-out-tongue_23-2150171206.jpg?uid=R205766258&ga=GA1.1.355267885.1764683677&semt=ais_hybrid&w=740&q=80"
-                        alt="user"
-                        sx={{
-                          ...avatarStyle,
-                          transform: "rotate(12deg)",
-                          zIndex: 1,
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                  landing page.
-                </Typography>
-              </Box>
-
-              <Typography
-                variant="h6"
-                maxWidth="800px"
-                mx="auto"
-                sx={{ color: "white", marginTop: "30px" }}
-              >
-                Build for free, upgrade when your website grows.
+                FEATURES
               </Typography>
             </Box>
-          </Container>
+            {PLANS.map((p) => (
+              <Box
+                component="th"
+                key={p.id}
+                sx={{
+                  width: PLAN_COL_WIDTH,
+                  p: "18px 12px",
+                  textAlign: "center",
+                  background: p.recommended
+                    ? "rgba(47,184,179,0.08)"
+                    : COLORS.cardDark,
+                  borderTop: p.recommended
+                    ? `2px solid ${COLORS.teal}`
+                    : "2px solid transparent",
+                  borderLeft: p.recommended
+                    ? `1px solid ${COLORS.tealSoft}`
+                    : "none",
+                  borderRight: p.recommended
+                    ? `1px solid ${COLORS.tealSoft}`
+                    : "none",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: 800,
+                    fontSize: "1rem",
+                    color: p.recommended ? COLORS.teal : "#fff",
+                  }}
+                >
+                  {p.label}
+                </Typography>
+                {p.recommended && (
+                  <Typography
+                    sx={{
+                      fontSize: "0.6rem",
+                      fontWeight: 700,
+                      letterSpacing: 1,
+                      color: COLORS.teal,
+                      opacity: 0.8,
+                    }}
+                  >
+                    MOST POPULAR
+                  </Typography>
+                )}
+              </Box>
+            ))}
+          </Box>
         </Box>
 
-        <Box
+        <Box component="tbody">
+          {COMPARISON_GROUPS.map((group) => (
+            <React.Fragment key={group.category}>
+              {/* Category header row */}
+              <Box component="tr">
+                <Box
+                  component="td"
+                  sx={{
+                    p: "18px 24px 8px",
+                    background: "rgba(255,255,255,0.015)",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: "0.7rem",
+                      fontWeight: 800,
+                      letterSpacing: 1.2,
+                      textTransform: "uppercase",
+                      color: "rgba(255,255,255,0.4)",
+                    }}
+                  >
+                    {group.category}
+                  </Typography>
+                </Box>
+                {PLANS.map((p) => (
+                  <Box
+                    component="td"
+                    key={p.id}
+                    sx={{
+                      background: p.recommended
+                        ? "rgba(47,184,179,0.05)"
+                        : "rgba(255,255,255,0.015)",
+                      borderLeft: p.recommended
+                        ? `1px solid ${COLORS.tealSoft}`
+                        : "none",
+                      borderRight: p.recommended
+                        ? `1px solid ${COLORS.tealSoft}`
+                        : "none",
+                    }}
+                  />
+                ))}
+              </Box>
+
+              {group.rows.map((row) => (
+                <Box
+                  component="tr"
+                  key={row.feature}
+                  sx={{
+                    "&:hover td": { background: "rgba(255,255,255,0.03)" },
+                  }}
+                >
+                  <Box
+                    component="td"
+                    sx={{
+                      p: "13px 24px",
+                      fontSize: "0.9rem",
+                      color: "rgba(255,255,255,0.82)",
+                      borderTop: `1px solid ${COLORS.border}`,
+                    }}
+                  >
+                    {row.feature}
+                  </Box>
+                  {(["free", "pro", "business"] as const).map((col) => {
+                    const recommended = col === "pro";
+                    return (
+                      <Box
+                        component="td"
+                        key={col}
+                        sx={{
+                          p: "13px 12px",
+                          textAlign: "center",
+                          borderTop: `1px solid ${COLORS.border}`,
+                          background: recommended
+                            ? "rgba(47,184,179,0.05)"
+                            : "transparent",
+                          borderLeft: recommended
+                            ? `1px solid ${COLORS.tealSoft}`
+                            : "none",
+                          borderRight: recommended
+                            ? `1px solid ${COLORS.tealSoft}`
+                            : "none",
+                        }}
+                      >
+                        <CompareCell value={row[col]} highlight={recommended} />
+                      </Box>
+                    );
+                  })}
+                </Box>
+              ))}
+            </React.Fragment>
+          ))}
+        </Box>
+            </Box>
+          </Box>
+        </motion.div>
+      </Box>
+
+      {/* Fade overlay when collapsed */}
+      <motion.div
+        initial={false}
+        animate={{
+          opacity: expanded ? 0 : 1,
+          y: expanded ? 18 : 0,
+        }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 140,
+          borderRadius: "0 0 24px 24px",
+          background:
+            "linear-gradient(180deg, rgba(4,30,24,0) 0%, rgba(4,30,24,0.92) 58%, #041e18 100%)",
+          pointerEvents: "none",
+        }}
+      />
+    </Box>
+
+    {/* Toggle button */}
+    <Box sx={{ textAlign: "center", mt: 3 }}>
+      <Box
+        component={motion.div}
+        animate={{ y: expanded ? 0 : -8 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        sx={{ display: "inline-flex" }}
+      >
+        <Button
+          onClick={() => setExpanded((v) => !v)}
+          endIcon={
+            <ExpandMoreIcon
+              sx={{
+                transition: "transform 0.35s ease",
+                transform: expanded ? "rotate(180deg)" : "none",
+              }}
+            />
+          }
           sx={{
-            pb: 10,
-            pt: 0,
+            px: 4,
+            py: 1.4,
+            borderRadius: "999px",
+            fontWeight: 700,
+            textTransform: "none",
             color: "white",
-            minHeight: "100vh",
+            border: `1px solid ${COLORS.tealSoft}`,
+            background: expanded
+              ? "rgba(255,255,255,0.08)"
+              : "rgba(47,184,179,0.1)",
+            boxShadow: expanded
+              ? "none"
+              : "0 12px 34px rgba(47,184,179,0.18)",
+            transition:
+              "background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
+            "&:hover": {
+              background: "rgba(47,184,179,0.16)",
+              borderColor: COLORS.teal,
+              boxShadow: "0 14px 40px rgba(47,184,179,0.22)",
+            },
           }}
         >
-          <Container maxWidth="lg">
-            <BillingToggle value={billing} onChange={setBilling} />
-
-            {/* Grid Container Fixed for Alignment */}
-            <Grid container spacing={4} alignItems="stretch">
-              <PricingCard
-                tier="lite"
-                plan={pricingConfig.lite[indices.lite]}
-                index={indices.lite}
-                max={pricingConfig.lite.length}
-                onPrev={() => updateIdx("lite", -1)}
-                onNext={() => updateIdx("lite", 1)}
-                billing={billing}
-              />
-              <PricingCard
-                recommended
-                tier="standard"
-                plan={pricingConfig.standard[indices.standard]}
-                index={indices.standard}
-                max={pricingConfig.standard.length}
-                onPrev={() => updateIdx("standard", -1)}
-                onNext={() => updateIdx("standard", 1)}
-                billing={billing}
-              />
-              <PricingCard
-                tier="plus"
-                plan={pricingConfig.plus[indices.plus]}
-                index={indices.plus}
-                max={pricingConfig.plus.length}
-                onPrev={() => updateIdx("plus", -1)}
-                onNext={() => updateIdx("plus", 1)}
-                billing={billing}
-              />
-            </Grid>
-          </Container>
-        </Box>
+          {expanded ? "Show less" : "Show full comparison"}
+        </Button>
       </Box>
-    </>
+    </Box>
+
+    <Typography
+      sx={{ mt: 3, fontSize: "0.8rem", opacity: 0.5, textAlign: "center" }}
+    >
+      *Unlimited is subject to a reasonable fair-use policy and platform-abuse
+      protections.
+    </Typography>
+  </Container>
+  );
+};
+
+/* ============================
+   Main Section
+============================ */
+
+const PricingSection: React.FC = () => {
+  const [billing, setBilling] = React.useState<BillingCycle>("monthly");
+
+  return (
+    <Box
+      sx={{
+        backgroundColor: "#041e18",
+        backgroundImage: `url(${star})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <Container maxWidth="lg" sx={{ pt: 6, pb: { xs: 2, lg: 6 } }}>
+        <Box textAlign="center" mb={6}>
+          <Box
+            sx={{
+              textAlign: "center",
+              display: "flex",
+              justifyContent: "center",
+              position: "relative",
+            }}
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                top: "-21%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: "100%",
+                height: "100%",
+                backgroundImage: `radial-gradient(circle at 50% -20%, rgba(55, 140, 146, 0.33) 0%, transparent 50%)`,
+                zIndex: 0,
+                display: { xs: "none", lg: "block" },
+              }}
+            />
+            <Typography
+              variant="h3"
+              component="h1"
+              fontWeight={700}
+              sx={{
+                color: "white",
+                fontSize: { xs: "25px", sm: "35px", md: "45px", lg: "55px" },
+                marginTop: { xs: "30px", md: "50px", lg: "90px" },
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: "10px",
+                lineHeight: 0.9,
+                justifyContent: "center",
+                fontFamily: "Plus Jakarta Sans",
+              }}
+            >
+              Plans that grow with your business needs.
+              <Box component="span" sx={{ width: "100%" }} />
+              Start with a{" "}
+              <Box component="span" sx={gradientText}>
+                FREE
+              </Box>{" "}
+              landing page.
+            </Typography>
+          </Box>
+
+          <Typography
+            variant="h6"
+            maxWidth="800px"
+            mx="auto"
+            sx={{ color: "white", marginTop: "30px" }}
+          >
+            Free gets you online. Pro makes you look professional. Business helps
+            you grow and scale.
+          </Typography>
+        </Box>
+      </Container>
+
+      <Box sx={{ pb: 10, pt: 0, color: "white" }}>
+        <Container maxWidth="lg">
+          <BillingToggle value={billing} onChange={setBilling} />
+
+          <Grid container spacing={4} alignItems="stretch">
+            {PLANS.map((plan) => (
+              <PricingCard key={plan.id} plan={plan} billing={billing} />
+            ))}
+          </Grid>
+        </Container>
+
+        <ComparisonTable />
+      </Box>
+    </Box>
   );
 };
 

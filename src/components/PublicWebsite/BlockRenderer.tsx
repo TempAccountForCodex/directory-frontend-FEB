@@ -34,6 +34,7 @@ const BlogArticleBlock = lazy(() => import("./dynamic/BlogArticleBlock"));
 const BlogHeroBlock = lazy(() => import("./dynamic/BlogHeroBlock"));
 const BlogFeaturedBlock = lazy(() => import("./dynamic/BlogFeaturedBlock"));
 const BlogGridBlock = lazy(() => import("./dynamic/BlogGridBlock"));
+const BlogShowcaseBlock = lazy(() => import("./dynamic/BlogShowcaseBlock"));
 
 // Lazy-load ProductShowcaseBlock for code splitting (Step 2.26)
 const ProductShowcaseBlock = lazy(
@@ -440,6 +441,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
     blog_hero: "BLOG_HERO",
     blog_featured: "BLOG_FEATURED",
     blog_grid: "BLOG_GRID",
+    blog_showcase: "BLOG_SHOWCASE",
   };
   const renderBlockType =
     blockType === "BLOG_FEED" && content?._subType
@@ -1029,6 +1031,30 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({
             }
           >
             <BlogGridBlock
+              block={block}
+              websiteId={websiteId}
+              primaryColor={primaryColor}
+              onCtaClick={onCtaClick}
+            />
+          </Suspense>
+        </BlockWrapper>
+      );
+
+    case "BLOG_SHOWCASE":
+      return withBlogStaticStyles(
+        <BlockWrapper fields={blogFlushWrapperFields}>
+          <Suspense
+            fallback={
+              <Box sx={{ py: 8 }}>
+                <Container maxWidth="lg">
+                  <Typography variant="body2" color="text.secondary">
+                    Loading articles…
+                  </Typography>
+                </Container>
+              </Box>
+            }
+          >
+            <BlogShowcaseBlock
               block={block}
               websiteId={websiteId}
               primaryColor={primaryColor}
