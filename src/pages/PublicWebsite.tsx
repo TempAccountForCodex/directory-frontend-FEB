@@ -920,7 +920,8 @@ h1, h2, h3, h4, h5, h6 {
   // own persisted blocks — never fall through to the template Home body.
   const templateOwnsPublicPageBodies =
     resolvedFrontendTemplateId === "education-pro" ||
-    resolvedFrontendTemplateId === "gardening-pro";
+    resolvedFrontendTemplateId === "gardening-pro" ||
+    resolvedFrontendTemplateId === "plumbing-pro";
   const templateOwnsCurrentPage =
     templateOwnsPublicPageBodies &&
     isFrontendTemplateOwnedPagePath(

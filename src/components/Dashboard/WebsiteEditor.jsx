@@ -2315,6 +2315,28 @@ const sanitizeBlockContentForSave = (blockType, content) => {
     );
   }
 
+  if (
+    (rawBlockType === "FEATURES" || Array.isArray(sanitizedContent.features)) &&
+    Array.isArray(sanitizedContent.features)
+  ) {
+    sanitizedContent.features = sanitizedContent.features.map(
+      (feature, index) => {
+        const title =
+          (typeof feature?.title === "string" && feature.title.trim()) ||
+          `Feature ${index + 1}`;
+        const description =
+          (typeof feature?.description === "string" &&
+            feature.description.trim()) ||
+          title;
+        return {
+          ...feature,
+          title,
+          description,
+        };
+      },
+    );
+  }
+
   if (rawBlockType === "CTA" || rawBlockType === "HERO") {
     truncateContentFields(
       sanitizedContent,

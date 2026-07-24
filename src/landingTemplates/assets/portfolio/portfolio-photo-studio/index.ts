@@ -1,4 +1,5 @@
 import photoStudioHero from "./images/photo-studio-hero.jpg";
+import hero from "./images/Hero.webp";
 import portraitNatural from "./images/portrait-natural.jpg";
 import portraitProfessional from "./images/portrait-professional.jpg";
 import weddingMoment from "./images/wedding-moment.jpg";
@@ -11,6 +12,8 @@ import creativeMakeup from "./images/creative-makeup.jpg";
 import pinkHairPortrait from "./images/pink-hair-portrait.jpg";
 
 export const portfolioAssets = {
+  /** Primary cinematic hero (local Hero.webp — no third-party URLs). */
+  hero,
   photoStudioHero,
   portraitNatural,
   portraitProfessional,

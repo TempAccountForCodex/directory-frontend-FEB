@@ -24,7 +24,14 @@ export const TemplateHeaderWrapper: React.FC<TemplateChromeWrapperProps> = ({
 }) => (
   <Box
     data-template-shared-header="true"
-    sx={{ flex: "0 0 auto", position: "relative", zIndex: 20 }}
+    sx={{
+      flex: "0 0 auto",
+      position: "relative",
+      zIndex: 20,
+      // Allow absolute overlay headers (e.g. Photo Studio Pro) to collapse out
+      // of flow so page heroes start at the viewport top behind the chrome.
+      minHeight: 0,
+    }}
   >
     {children}
   </Box>

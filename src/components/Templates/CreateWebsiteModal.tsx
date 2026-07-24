@@ -401,14 +401,20 @@ const buildFallbackFrontendTemplatePages = (
   const featureItems =
     (data.features || []).slice(0, 6).map((feature, index) => ({
       title: feature?.title || `Feature ${index + 1}`,
-      description: feature?.description || "",
+      description:
+        feature?.description?.trim() ||
+        feature?.title ||
+        `Feature ${index + 1} details`,
       icon: feature?.icon || `feature-${index + 1}`,
     })) || [];
 
   const serviceItems =
     (data.services || []).slice(0, 6).map((service, index) => ({
       title: service?.name || `Service ${index + 1}`,
-      description: service?.description || "",
+      description:
+        service?.description?.trim() ||
+        service?.name ||
+        `Service ${index + 1} details`,
       icon: `service-${index + 1}`,
     })) || [];
 
@@ -416,14 +422,21 @@ const buildFallbackFrontendTemplatePages = (
     (data.products || []).slice(0, 6).map((product, index) => ({
       title: product?.name || `Product ${index + 1}`,
       description:
-        product?.description || product?.price || product?.category || "",
+        product?.description?.trim() ||
+        product?.price ||
+        product?.category ||
+        product?.name ||
+        `Product ${index + 1} details`,
       icon: `product-${index + 1}`,
     })) || [];
 
   const articleItems =
     (data.blogPosts || []).slice(0, 6).map((post, index) => ({
       title: post?.title || `Article ${index + 1}`,
-      description: post?.description || "",
+      description:
+        post?.description?.trim() ||
+        post?.title ||
+        `Article ${index + 1} overview`,
       icon: post?.category || `article-${index + 1}`,
     })) || [];
 

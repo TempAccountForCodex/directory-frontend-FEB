@@ -236,10 +236,13 @@ const PagesTab = memo(({ website, websiteId, onSaved }) => {
           ? 'education-pro'
           : rawFrontendTemplateId === 'static-gardening-pro'
             ? 'gardening-pro'
-            : rawFrontendTemplateId;
+            : rawFrontendTemplateId === 'static-plumbing-pro'
+              ? 'plumbing-pro'
+              : rawFrontendTemplateId;
       const isMultiPageTemplate =
         frontendTemplateId === 'education-pro' ||
-        frontendTemplateId === 'gardening-pro';
+        frontendTemplateId === 'gardening-pro' ||
+        frontendTemplateId === 'plumbing-pro';
       const snapshotPages = website?.templateSnapshot?.pages;
       const defaultPages =
         Array.isArray(snapshotPages) && snapshotPages.length > 0

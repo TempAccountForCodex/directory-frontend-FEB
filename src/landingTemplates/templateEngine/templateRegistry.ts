@@ -265,6 +265,12 @@ const EducationProTemplate = lazy(
 const GardeningProTemplate = lazy(
   () => import("../templates/gardening/GardeningProTemplate"),
 );
+const PlumbingProTemplate = lazy(
+  () => import("../templates/plumbing/PlumbingProTemplate"),
+);
+const PhotoStudioProTemplate = lazy(
+  () => import("../templates/portfolio/PhotoStudioProTemplate"),
+);
 
 const templateRegistry: Record<string, TemplateDefinition> = {
   // --- Service business ---
@@ -291,6 +297,14 @@ const templateRegistry: Record<string, TemplateDefinition> = {
       "Multi-page landscape studio template with project showcases, team profiles, services, and a dedicated contact page.",
     tags: ["service", "gardening", "editorial", "nature", "multi-page"],
     component: GardeningProTemplate,
+  },
+  "plumbing-pro": {
+    id: "plumbing-pro",
+    name: "Plumbing Pro",
+    description:
+      "Multi-page plumbing service template with home, about, services, and contact pages in a modern blue and yellow QuickFix style.",
+    tags: ["service", "plumbing", "multi-page"],
+    component: PlumbingProTemplate,
   },
   gardening: {
     id: "gardening",
@@ -381,6 +395,14 @@ const templateRegistry: Record<string, TemplateDefinition> = {
       "Editorial photographer portfolio with bold hero typography, collaboration logos, works grid, FAQ, and cinematic footer CTA.",
     tags: ["portfolio", "photography", "editorial", "studio"],
     component: PortfolioPhotoStudioTemplate,
+  },
+  "photo-studio-pro": {
+    id: "photo-studio-pro",
+    name: "Photo Studio Pro",
+    description:
+      "New-architecture upgrade of the editorial photo studio portfolio — cinematic hero, works grid, enquiry contact, and dynamic page support.",
+    tags: ["portfolio", "photography", "editorial", "studio", "pro"],
+    component: PhotoStudioProTemplate,
   },
 
   // --- Store ---

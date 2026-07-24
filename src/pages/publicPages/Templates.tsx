@@ -89,6 +89,18 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
       "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
   },
   {
+    id: "static-photo-studio-pro",
+    slug: "photo-studio-pro",
+    name: "Photo Studio Pro",
+    description:
+      "Editorial photo studio template on the new architecture — cinematic hero, works showcase, enquiry contact, and support for user-added pages.",
+    type: "website",
+    category: "portfolio",
+    version: "1.0.0",
+    previewImage:
+      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
+  },
+  {
     id: "static-store-basic",
     slug: "store-basic",
     name: "Store Basic",
@@ -261,6 +273,17 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
       "Service template for plumbing businesses with emergency and booking focus.",
     type: "website",
     category: "business",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/plumbing.webp",
+  },
+  {
+    id: "static-plumbing-pro",
+    slug: "plumbing-pro",
+    name: "Plumbing Pro",
+    description:
+      "Multi-page plumbing service template with home, about, services, and contact pages in a modern blue and yellow QuickFix style.",
+    type: "website",
+    category: "plumbing",
     version: "1.0.0",
     previewImage: "/assets/templateAssets/images/dummy/plumbing.webp",
   },

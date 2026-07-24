@@ -21,6 +21,7 @@ import {
   getIndustryEntry,
   getIndustryKeys,
 } from "../components/publicComponents/Home/industryPreview/industryRegistry";
+import { photoStudioProAssets } from "../landingTemplates/assets/portfolio/photo-studio-pro";
 
 // ─── Sample data per template category ────────────────────────────────────────
 
@@ -434,8 +435,7 @@ const PHOTO_STUDIO_DATA: BusinessData = {
   tagline: "Portrait and lifestyle photography",
   description:
     "Tim Joel is a portrait and lifestyle photographer focused on expressive editorial imagery, family storytelling, and premium studio sessions with clean visual direction.",
-  heroBannerUrl:
-    "https://framerusercontent.com/images/prLWrousqsCtNYW0tDFZqBVBBY.png?width=1320&height=992",
+  heroBannerUrl: photoStudioProAssets.hero,
   primaryColor: "#111111",
   secondaryColor: "#ff7a1a",
   contact: {
@@ -484,103 +484,59 @@ const PHOTO_STUDIO_DATA: BusinessData = {
     },
   ],
   gallery: [
-    {
-      url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://thanksfortoday.studio/veren/wp-content/uploads/sites/95/2026/02/beauty-in-red-attractive-young-lady-with-glamorou-2026-01-09-00-22-56-utc-1.jpg",
-    },
-    {
-      url: "https://thanksfortoday.studio/veren/wp-content/uploads/sites/95/2026/02/portrait-fashion-and-mock-up-with-a-woman-on-a-re-2026-01-09-10-10-22-utc-1.jpg",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=1200&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1516589091380-5d8e87df6999?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80",
-    },
+    { url: photoStudioProAssets.hero },
+    { url: photoStudioProAssets.creativeMakeup },
+    { url: photoStudioProAssets.pinkHairPortrait },
+    { url: photoStudioProAssets.portraitNatural },
+    { url: photoStudioProAssets.portraitProfessional },
+    { url: photoStudioProAssets.portraitLifestyle },
+    { url: photoStudioProAssets.travelLandscape },
+    { url: photoStudioProAssets.weddingEvening },
+    { url: photoStudioProAssets.fashionEditorial },
+    { url: photoStudioProAssets.malePortrait },
+    { url: photoStudioProAssets.weddingMoment },
+    { url: photoStudioProAssets.photoStudioHero },
   ],
   portfolioItems: [
     {
       title: "Winter Veiling",
       description:
         "Portrait story built around texture, shadow, and strong eye contact.",
-      image:
-        "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+      image: photoStudioProAssets.hero,
     },
     {
       title: "Newborn Soft Light",
       description:
         "A calm newborn session with delicate tones and intimate composition.",
-      image:
-        "https://static.wixstatic.com/media/960c32_3f98285ed5d746af9ae48fa0f82100b5~mv2.jpg",
+      image: photoStudioProAssets.portraitNatural,
     },
     {
       title: "Morning Bloom",
       description:
         "Lifestyle portrait with floral framing and soft natural highlights.",
-      image:
-        "https://img.freepik.com/free-photo/chromatic-glow-portrait-medium-shot_23-2151911132.jpg",
+      image: photoStudioProAssets.creativeMakeup,
     },
     {
       title: "Cinematic Skincare",
       description:
         "Product-focused campaign imagery with warm studio color and detail.",
-      image:
-        "https://img.freepik.com/free-photo/beautiful-portrait-teenager-woman_23-2149453480.jpg",
+      image: photoStudioProAssets.pinkHairPortrait,
     },
     {
       title: "Landscape Story",
-      image:
-        "https://img.freepik.com/free-photo/beautiful-young-woman-wearing-professional-makeup_23-2150165293.jpg",
+      image: photoStudioProAssets.travelLandscape,
     },
     {
       title: "Editorial Ensemble",
-      image:
-        "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=900&q=80",
+      image: photoStudioProAssets.fashionEditorial,
     },
     {
       title: "Night City",
-      image:
-        "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+      image: photoStudioProAssets.weddingEvening,
     },
     {
       title: "Street Mood",
-      image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80",
+      image: photoStudioProAssets.malePortrait,
     },
   ],
 };
@@ -1244,7 +1200,10 @@ const buildEducationProPreviewData = (): BusinessData => {
     primaryColor: "#0f9c8f",
     secondaryColor: "#eaf7f4",
   };
-  const seededPages = buildFrontendTemplateEditorPages("education-pro", website);
+  const seededPages = buildFrontendTemplateEditorPages(
+    "education-pro",
+    website,
+  );
   const previewData = buildTemplatePreviewBusinessData(
     "education-pro",
     website,
@@ -1275,7 +1234,10 @@ const buildGardeningProPreviewData = (): BusinessData => {
     primaryColor: "#2D3E2F",
     secondaryColor: "#C8E06A",
   };
-  const seededPages = buildFrontendTemplateEditorPages("gardening-pro", website);
+  const seededPages = buildFrontendTemplateEditorPages(
+    "gardening-pro",
+    website,
+  );
   const previewData = buildTemplatePreviewBusinessData(
     "gardening-pro",
     website,
@@ -1297,6 +1259,67 @@ const buildGardeningProPreviewData = (): BusinessData => {
 
 const GARDENING_PRO_DATA: BusinessData = buildGardeningProPreviewData();
 
+const buildPlumbingProPreviewData = (): BusinessData => {
+  const website = {
+    name: "QuickFix",
+    slug: "plumbing-pro",
+    primaryColor: "#1D7BFF",
+    secondaryColor: "#F5C518",
+  };
+  const seededPages = buildFrontendTemplateEditorPages("plumbing-pro", website);
+  const previewData = buildTemplatePreviewBusinessData(
+    "plumbing-pro",
+    website,
+    seededPages,
+  );
+  if (!previewData) {
+    return { ...COMPANY_DATA, name: "QuickFix" };
+  }
+  const templateContent = {
+    ...((previewData.templateContent as Record<string, unknown>) || {}),
+  };
+  delete templateContent.__editorSectionVisibility;
+  templateContent.__editorSectionVisibilityAuthoritative = false;
+  return {
+    ...previewData,
+    templateContent,
+  } as BusinessData;
+};
+
+const PLUMBING_PRO_DATA: BusinessData = buildPlumbingProPreviewData();
+
+const buildPhotoStudioProPreviewData = (): BusinessData => {
+  const website = {
+    name: "TARGET",
+    slug: "photo-studio-pro",
+    primaryColor: "#111111",
+    secondaryColor: "#ff7a1a",
+  };
+  const seededPages = buildFrontendTemplateEditorPages(
+    "photo-studio-pro",
+    website,
+  );
+  const previewData = buildTemplatePreviewBusinessData(
+    "photo-studio-pro",
+    website,
+    seededPages,
+  );
+  if (!previewData) {
+    return { ...PHOTO_STUDIO_DATA, name: "TARGET" };
+  }
+  const templateContent = {
+    ...((previewData.templateContent as Record<string, unknown>) || {}),
+  };
+  delete templateContent.__editorSectionVisibility;
+  templateContent.__editorSectionVisibilityAuthoritative = false;
+  return {
+    ...previewData,
+    templateContent,
+  } as BusinessData;
+};
+
+const PHOTO_STUDIO_PRO_DATA: BusinessData = buildPhotoStudioProPreviewData();
+
 // ─── Template slug → data mapping ─────────────────────────────────────────────
 
 const TEMPLATE_DATA_MAP: Record<
@@ -1313,6 +1336,10 @@ const TEMPLATE_DATA_MAP: Record<
   "portfolio-photo-studio": {
     templateId: "portfolio-photo-studio",
     data: PHOTO_STUDIO_DATA,
+  },
+  "photo-studio-pro": {
+    templateId: "photo-studio-pro",
+    data: PHOTO_STUDIO_PRO_DATA,
   },
   "store-basic": { templateId: "store-basic", data: STORE_DATA },
   "store-premium": { templateId: "store-premium", data: STORE_PREMIUM_DATA },
@@ -1334,6 +1361,7 @@ const TEMPLATE_DATA_MAP: Record<
   "company-pro": { templateId: "company-pro", data: COMPANY_PRO_DATA },
   "education-pro": { templateId: "education-pro", data: EDUCATION_PRO_DATA },
   "gardening-pro": { templateId: "gardening-pro", data: GARDENING_PRO_DATA },
+  "plumbing-pro": { templateId: "plumbing-pro", data: PLUMBING_PRO_DATA },
 };
 
 const ALL_TEMPLATE_SLUGS = Object.keys(TEMPLATE_DATA_MAP);
@@ -1347,7 +1375,12 @@ const TEMPLATE_GROUPS = [
   },
   {
     label: "Portfolio",
-    slugs: ["portfolio-creative", "portfolio-agency", "portfolio-photo-studio"],
+    slugs: [
+      "portfolio-creative",
+      "portfolio-agency",
+      "portfolio-photo-studio",
+      "photo-studio-pro",
+    ],
   },
   {
     label: "Store",
@@ -1370,6 +1403,10 @@ const TEMPLATE_GROUPS = [
   {
     label: "Gardening",
     slugs: ["gardening-pro"],
+  },
+  {
+    label: "Plumbing",
+    slugs: ["plumbing-pro"],
   },
 ];
 
@@ -1834,6 +1871,7 @@ const COMPANY_TEMPLATE_SLUGS = [
 
 const EDUCATION_TEMPLATE_SLUGS = ["education-pro"] as const;
 const GARDENING_TEMPLATE_SLUGS = ["gardening-pro"] as const;
+const PLUMBING_TEMPLATE_SLUGS = ["plumbing-pro"] as const;
 
 const STORE_TEMPLATE_SLUGS = [
   "store-basic",
@@ -2001,11 +2039,15 @@ const LandingPreview: React.FC = () => {
   const isGardeningCategory = GARDENING_TEMPLATE_SLUGS.includes(
     slug as (typeof GARDENING_TEMPLATE_SLUGS)[number],
   );
+  const isPlumbingCategory = PLUMBING_TEMPLATE_SLUGS.includes(
+    slug as (typeof PLUMBING_TEMPLATE_SLUGS)[number],
+  );
   const isTemplateCustomizerCategory =
     isCompanyCategory ||
     isStoreCategory ||
     isEducationCategory ||
-    isGardeningCategory;
+    isGardeningCategory ||
+    isPlumbingCategory;
   const previewMode = searchParams.get("mode");
   const selectedPalette =
     COMPANY_EXECUTIVE_PALETTES.find(
@@ -2040,7 +2082,9 @@ const LandingPreview: React.FC = () => {
       ? "Education Pro"
       : isGardeningCategory
         ? "Gardening Pro"
-        : storeCustomizerLabel;
+        : isPlumbingCategory
+          ? "Plumbing Pro"
+          : storeCustomizerLabel;
   const data = React.useMemo<BusinessData>(() => {
     if (!isTemplateCustomizerCategory) return resolvedData;
 

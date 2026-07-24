@@ -14,6 +14,8 @@ import { companyStudioAssets } from "../landingTemplates/assets/company/company-
 import { companyProAssets } from "../landingTemplates/assets/company/company-pro";
 import { educationProAssets } from "../landingTemplates/assets/education/education-pro/index";
 import { gardeningProAssets } from "../landingTemplates/assets/gardening/gardening-pro/index";
+import { plumbingProAssets } from "../landingTemplates/assets/plumbing/plumbing-pro/index";
+import { photoStudioProAssets } from "../landingTemplates/assets/portfolio/photo-studio-pro";
 
 export type TemplateThemeSettings = {
   primaryColor?: string;
@@ -109,6 +111,8 @@ const LOCAL_TEMPLATE_EDITOR_IDS = new Set([
   "company-pro",
   "education-pro",
   "gardening-pro",
+  "plumbing-pro",
+  "photo-studio-pro",
   "education",
   "gardening",
   "plumbing",
@@ -188,25 +192,39 @@ const makeBlock = (
   localOnly: true,
 });
 
+const nonEmptyText = (...candidates: unknown[]): string => {
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+  return "";
+};
+
 const postsToFeatures = (posts: BlogPost[] = []) =>
   posts.slice(0, 6).map((post, index) => ({
     icon: post.category || `Article ${index + 1}`,
     title: post.title,
-    description: post.description || "",
+    description:
+      nonEmptyText(post.description, post.title) || "Article overview",
   }));
 
 const featuresToFeatureItems = (features: Feature[] = []) =>
   features.slice(0, 6).map((feature, index) => ({
     icon: feature.icon || `feature-${index + 1}`,
     title: feature.title,
-    description: feature.description,
+    description:
+      nonEmptyText(feature.description, feature.title) ||
+      `Feature ${index + 1} details`,
   }));
 
 const servicesToFeatureItems = (services: BusinessData["services"] = []) =>
   (services || []).slice(0, 6).map((service, index) => ({
     icon: `service-${index + 1}`,
     title: service?.name || `Service ${index + 1}`,
-    description: service?.description || service?.price || "",
+    description:
+      nonEmptyText(service?.description, service?.price, service?.name) ||
+      `Service ${index + 1} details`,
   }));
 
 const productsToFeatureItems = (products: BusinessData["products"] = []) =>
@@ -214,18 +232,21 @@ const productsToFeatureItems = (products: BusinessData["products"] = []) =>
     icon: `product-${index + 1}`,
     title: product?.name || `Product ${index + 1}`,
     description:
-      product?.description ||
-      product?.price ||
-      product?.category ||
-      product?.badge ||
-      "",
+      nonEmptyText(
+        product?.description,
+        product?.price,
+        product?.category,
+        product?.badge,
+        product?.name,
+      ) || `Product ${index + 1} details`,
   }));
 
 const statsToFeatureItems = (stats: BusinessData["stats"] = []) =>
   (stats || []).slice(0, 6).map((stat, index) => ({
     icon: `stat-${index + 1}`,
     title: stat?.label || `Metric ${index + 1}`,
-    description: stat?.value || "",
+    description:
+      nonEmptyText(stat?.value, stat?.label) || `Metric ${index + 1}`,
   }));
 
 const resolveFeatureItems = (data: BusinessData) => {
@@ -1485,7 +1506,7 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
               },
             ],
             buttonLabel: "Submit Message",
-            buttonLink: `mailto:${data.contact.email || "hello@edcare.com"}`,
+            buttonLink: "/contact",
             // Persisted, editable contact fields — the canvas renders these
             // dynamically (see PRD §9.1.1), so editor and canvas stay in sync.
             formFields: [
@@ -1998,6 +2019,661 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
       ],
     },
   ],
+  "plumbing-pro": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "navbar",
+          label: "Header",
+          blockType: "NAVBAR",
+          optional: true,
+          buildContent: (data) => ({
+            brandName: data.name || "QuickFix",
+            navigationItems: [
+              { label: "Home", link: "/" },
+              { label: "About", link: "/about" },
+              { label: "Services", link: "/services" },
+              { label: "Contact", link: "/contact" },
+            ],
+            ctaText: "Book A Plumber",
+            ctaLink: "/contact",
+          }),
+        },
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            eyebrow: "24/7 Plumber Service",
+            heading: "Your affordable plumbing service",
+            subheading:
+              data.description ||
+              "High-quality, cost-effective plumbing for homes and businesses — licensed techs, fair pricing, same-day response.",
+            ctaText: "+1 234 567 8910",
+            phone: "+1 234 567 8910",
+            ctaLink: "/contact",
+            ctaSecondaryText: "Work with us",
+            ctaSecondaryLink: "/contact",
+            image: plumbingProAssets.hero,
+            headingStyle: {
+              fontSize: { xs: "2.4rem", sm: "3.2rem", md: "3.8rem" },
+            },
+          }),
+        },
+        {
+          key: "trust",
+          label: "Trust bar",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            heading: "325k+ Happy Customers in USA",
+            quote: "I had great QuickFix team! Fast, friendly, and reliable.",
+            image: plumbingProAssets.trustAvatar,
+          }),
+        },
+        {
+          key: "servicesList",
+          label: "Services overview",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "Services",
+            heading: "We are expert in all plumber solution",
+            body: "From emergency repairs to full installs, our licensed plumbers deliver clean workmanship every visit.",
+            features: [
+              {
+                icon: "01",
+                title: "Repair & Install",
+                description:
+                  "Leak fixes, fixture installs, and reliable part replacements.",
+                image: plumbingProAssets.service1,
+              },
+              {
+                icon: "02",
+                title: "Commercial Plumbing",
+                description:
+                  "Scalable plumbing support for offices, retail, and facilities.",
+                image: plumbingProAssets.service2,
+              },
+              {
+                icon: "03",
+                title: "Residential Boiler",
+                description:
+                  "Boiler inspection, repair, and efficient home heating support.",
+                image: plumbingProAssets.service3,
+              },
+            ],
+          }),
+        },
+        {
+          key: "intro",
+          label: "About teaser",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "About Us",
+            heading: "Smart plumber solution for you 24/7 hours.",
+            ctaText: "Read More",
+            ctaLink: "/about",
+            ctaSecondaryText: "Call Anytime",
+            ctaSecondaryLink: "/contact",
+            phone: "+1 234 567 8910",
+            image: plumbingProAssets.aboutImage,
+            features: [
+              {
+                title: "Fastest Repair Service",
+                description:
+                  "Same-day response for urgent leaks, clogs, and fixture failures.",
+              },
+              {
+                title: "Licensed & Certified",
+                description:
+                  "Fully trained technicians you can trust in your home or business.",
+              },
+              {
+                title: "24/7 Emergency Support",
+                description:
+                  "Round-the-clock help when plumbing emergencies strike.",
+              },
+            ],
+          }),
+        },
+        {
+          key: "whyChoose",
+          label: "Why choose us",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "Why Choose Us",
+            heading: "Why choose our Services",
+            body: "We combine expertise, reliability, and care to deliver the best experience every time.",
+            image: plumbingProAssets.plumberService,
+            features: [
+              {
+                icon: "team",
+                title: "Insured Professionals",
+                description:
+                  "Our plumbers are trained experts who follow industry standards on every job.",
+              },
+              {
+                icon: "pricing",
+                title: "Transparent Pricing",
+                description:
+                  "We believe in honesty. Every service comes with upfront pricing before work begins.",
+              },
+            ],
+            detailGroups: [
+              {
+                heading: "Work Backed by Customer Satisfaction",
+                description:
+                  "We ensure everything works perfectly and you're completely satisfied before we leave.",
+              },
+            ],
+            ctaText: "Explore all our services",
+            ctaLink: "/services",
+          }),
+        },
+        {
+          key: "members",
+          label: "Team",
+          blockType: "TEAM",
+          buildContent: () => ({
+            eyebrow: "Plumber Team",
+            heading: "Our hard working members",
+            members: [
+              {
+                name: "Sonu Maahi",
+                role: "Plumber",
+                photo: plumbingProAssets.member1,
+              },
+              {
+                name: "Alex Rivera",
+                role: "Chief Plumber",
+                photo: plumbingProAssets.member2,
+              },
+              {
+                name: "Jordan Lee",
+                role: "Technician",
+                photo: plumbingProAssets.member3,
+              },
+              {
+                name: "Morgan Blake",
+                role: "Installer",
+                photo: plumbingProAssets.founder,
+              },
+            ],
+          }),
+        },
+        {
+          key: "promo",
+          label: "Promo video",
+          blockType: "TEXT",
+          buildContent: () => ({
+            heading: "Perfect solution for all plumbing service",
+            ctaText: "Watch Video",
+            ctaLink: "/contact",
+            image: plumbingProAssets.promoImage,
+            items: [
+              { title: "Best Response" },
+              { title: "Expert Team" },
+              { title: "Satisfaction Guaranteed" },
+            ],
+          }),
+        },
+        {
+          key: "testimonials",
+          label: "Testimonials",
+          blockType: "REVIEWS",
+          buildContent: () => ({
+            eyebrow: "Customer Says",
+            heading: "315k+ Positive Reviews",
+            testimonials: [
+              {
+                name: "Leslie Alexander",
+                role: "Homeowner",
+                quote:
+                  "I had a great QuickFix team! Fast, friendly, and the leak was fixed the same day.",
+                photo: plumbingProAssets.clientAlex,
+              },
+              {
+                name: "Cameron West",
+                role: "Business Owner",
+                quote:
+                  "Professional plumbers who explained every step. Highly recommend QuickFix.",
+                photo: plumbingProAssets.clientJordan,
+              },
+            ],
+          }),
+        },
+        {
+          key: "contactStrip",
+          label: "Contact strip",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            addressHeading: "Our Address",
+            address:
+              data.contact.address || "455 West Orchard Street, Light City, UK",
+            contactHeading: "Contact Info",
+            phone: data.contact.phone || "+1 234 567 8910",
+            email: data.contact.email || "hello@quickfix.com",
+            hoursHeading: "Opening Hours",
+            hours: "Mon - Sat 8am - 10pm",
+            image: plumbingProAssets.contactImage,
+            items: [
+              { value: "125k+", heading: "Completed Project" },
+              { value: "324k+", heading: "Work Per Month" },
+              { value: "250+", heading: "Expert Plumbers" },
+            ],
+          }),
+        },
+        {
+          key: "footer",
+          label: "Footer",
+          blockType: "FOOTER",
+          optional: true,
+          buildContent: (data) => ({
+            logoText: data.name || "QuickFix",
+            description:
+              "QuickFix provides reliable electrical and plumbing services for homes and businesses with licensed technicians on call.",
+            linksHeading: "LINKS",
+            infoHeading: "INFO",
+            newsletterHeading: "NEWSLETTER",
+            newsletterBody: "Sign up to get updates & news.",
+            ctaText: "SUBSCRIBE NOW",
+            address:
+              data.contact.address || "455 West Orchard Street, Light City, UK",
+            phone: data.contact.phone || "+1 (123) 005 763",
+            email: data.contact.email || "hello@quickfix.com",
+            links: [
+              { label: "About Us", url: "/about" },
+              { label: "Services", url: "/services" },
+              { label: "Blog", url: "/blog" },
+              { label: "Contact", url: "/contact" },
+              { label: "License", url: "/" },
+            ],
+            copyright: `© ${new Date().getFullYear()} All Right Reserved by ${data.name || "QuickFix"}`,
+            legalText: "Privacy Policy | Terms of Use",
+          }),
+        },
+      ],
+    },
+    {
+      key: "about",
+      title: "About",
+      path: "/about",
+      isHome: false,
+      sections: [
+        {
+          key: "banner",
+          label: "About banner",
+          blockType: "TEXT",
+          buildContent: () => ({
+            heading: "About Us",
+            body: "Professional, dependable, and affordable plumbing solutions for your home or business.",
+          }),
+        },
+        {
+          key: "valueCards",
+          label: "Value cards",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            features: [
+              {
+                title: "Affordable Price",
+                description:
+                  "Transparent rates with no surprise fees on residential or commercial jobs.",
+                image: plumbingProAssets.service1,
+              },
+              {
+                title: "Expert Plumber",
+                description:
+                  "Licensed technicians trained for repairs, installs, and emergencies.",
+                image: plumbingProAssets.service2,
+              },
+              {
+                title: "Quality Improve",
+                description:
+                  "Durable parts and careful workmanship that last for years.",
+                image: plumbingProAssets.service3,
+              },
+              {
+                title: "100% Certified",
+                description:
+                  "Fully insured, bonded, and certified for peace of mind.",
+                image: plumbingProAssets.service4,
+              },
+            ],
+          }),
+        },
+        {
+          key: "intro",
+          label: "About intro",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "ABOUT US",
+            heading: "Smart plumber solution for you 24/7 hours",
+            body: "We combine modern tools with trusted craftsmanship to keep water flowing safely in homes and workplaces.",
+            ctaText: "Learn More",
+            ctaLink: "/services",
+            badgeValue: "25+",
+            badgeLabel: "Years Of Experience",
+            image: plumbingProAssets.aboutImage,
+            items: [
+              { title: "Residential and Commercial Services" },
+              { title: "Highly skilled and experienced plumbers" },
+              { title: "Immediate 24/7 Emergency Service" },
+            ],
+          }),
+        },
+        {
+          key: "members",
+          label: "Team members",
+          blockType: "TEAM",
+          buildContent: () => ({
+            eyebrow: "— TEAM MEMBER —",
+            heading: "Our hard working members",
+            members: [
+              {
+                name: "Sonu Maahi",
+                role: "Plumber",
+                photo: plumbingProAssets.member1,
+              },
+              {
+                name: "Alex Rivera",
+                role: "Chief Plumber",
+                photo: plumbingProAssets.member2,
+              },
+              {
+                name: "Jordan Lee",
+                role: "Technician",
+                photo: plumbingProAssets.member3,
+              },
+              {
+                name: "Morgan Blake",
+                role: "Installer",
+                photo: plumbingProAssets.founder,
+              },
+            ],
+          }),
+        },
+        {
+          key: "stats",
+          label: "About stats",
+          blockType: "TEXT",
+          buildContent: () => ({
+            items: [
+              { value: "324k", heading: "Satisfied Customer" },
+              { value: "250+", heading: "Expert Plumbers" },
+              { value: "125k", heading: "Successful Projects" },
+              { value: "100%", heading: "Quality Service" },
+            ],
+          }),
+        },
+        {
+          key: "why",
+          label: "Why choose us",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "WHY CHOOSE US",
+            heading: "We're experience of 24 years in plumbing service",
+            ctaText: "(+1) 234 567 890",
+            phone: "(+1) 234 567 890",
+            ctaLink: "/contact",
+            image: plumbingProAssets.whyImage,
+            features: [
+              {
+                icon: "experience",
+                title: "Experience Team",
+                description:
+                  "Seasoned plumbers who diagnose fast and fix it right the first time.",
+              },
+              {
+                icon: "delivery",
+                title: "On-time Delivery",
+                description:
+                  "Clear arrival windows and methodical work that respects your schedule.",
+              },
+            ],
+          }),
+        },
+        {
+          key: "testimonials",
+          label: "Testimonials",
+          blockType: "REVIEWS",
+          buildContent: () => ({
+            eyebrow: "CLIENT FEEDBACK",
+            heading: "315k+ Positive Reviews",
+            testimonials: [
+              {
+                name: "Leslie Alexander",
+                role: "Homeowner",
+                quote:
+                  "QuickFix restored our kitchen plumbing overnight. Professional and courteous.",
+                photo: plumbingProAssets.clientMorgan,
+              },
+              {
+                name: "Cameron West",
+                role: "Property Manager",
+                quote:
+                  "Reliable commercial support with clear pricing and excellent follow-through.",
+                photo: plumbingProAssets.clientTaylor,
+              },
+            ],
+          }),
+        },
+        {
+          key: "cta",
+          label: "CTA banner",
+          blockType: "TEXT",
+          buildContent: () => ({
+            heading: "Looking for a reliable plumbing service?",
+            ctaText: "GET A FREE QUOTE",
+            phone: "+1 394 598 4958",
+            ctaLink: "/contact",
+          }),
+        },
+      ],
+    },
+    {
+      key: "services",
+      title: "Services",
+      path: "/services",
+      isHome: false,
+      sections: [
+        {
+          key: "banner",
+          label: "Services banner",
+          blockType: "TEXT",
+          buildContent: () => ({
+            heading: "Our Services",
+            body: "Reliable, trustworthy, and affordable plumbing solutions for your home or business",
+          }),
+        },
+        {
+          key: "why",
+          label: "Why choose us",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "— WHY CHOOSE US",
+            heading: "We're experience of 24 years in plumbing service",
+            image: plumbingProAssets.servicesWhy,
+            features: [
+              {
+                icon: "experience",
+                title: "Experience Team",
+                description:
+                  "Our plumbers handle a wide range of residential and commercial tasks with care.",
+              },
+              {
+                icon: "delivery",
+                title: "On-time Delivery",
+                description:
+                  "Methodical scheduling and clear communication keep every project on track.",
+              },
+            ],
+          }),
+        },
+        {
+          key: "features",
+          label: "Service cards",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "— SERVICES",
+            heading: "We are expert in all plumber solution",
+            features: [
+              {
+                title: "Repair & Install",
+                description:
+                  "Leak fixes, fixture installs, and reliable part replacements.",
+                image: plumbingProAssets.service1,
+              },
+              {
+                title: "Commercial Plumbing",
+                description:
+                  "Scalable plumbing support for offices, retail, and facilities.",
+                image: plumbingProAssets.service2,
+              },
+              {
+                title: "Residential Boiler",
+                description:
+                  "Boiler inspection, repair, and efficient home heating support.",
+                image: plumbingProAssets.service3,
+              },
+              {
+                title: "All Drain Cleaning",
+                description:
+                  "Powerful drain clearing that restores flow and prevents backups.",
+                image: plumbingProAssets.service4,
+              },
+              {
+                title: "Kitchen Plumbing",
+                description:
+                  "Sink, disposal, and supply-line work done cleanly and quickly.",
+                image: plumbingProAssets.service5,
+              },
+              {
+                title: "Bathroom Fitting",
+                description:
+                  "Faucet, shower, and bathroom fixture fitting with tidy finish work.",
+                image: plumbingProAssets.service6,
+              },
+            ],
+          }),
+        },
+        {
+          key: "cta",
+          label: "Services CTA",
+          blockType: "TEXT",
+          buildContent: () => ({
+            heading: "Looking for a reliable plumbing service?",
+            ctaText: "BOOK A FREE VISITING",
+            phone: "+1 394 598 4958",
+            ctaLink: "/contact",
+          }),
+        },
+      ],
+    },
+    {
+      key: "contact",
+      title: "Contact",
+      path: "/contact",
+      isHome: false,
+      sections: [
+        {
+          key: "banner",
+          label: "Contact banner",
+          blockType: "TEXT",
+          buildContent: () => ({
+            heading: "Contact Us",
+            body: "Reliable, trustworthy, and affordable plumbing solutions for your home or business",
+          }),
+        },
+        {
+          key: "cards",
+          label: "Contact cards",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            contactCards: [
+              {
+                title: "Office address",
+                description:
+                  data.contact.address || "Moonshine St. 14/05 Light City, UK",
+                icon: "address",
+              },
+              {
+                title: "Call us",
+                description: data.contact.phone || "+1-394-598-4958",
+                icon: "phone",
+              },
+              {
+                title: "Send us email",
+                description: data.contact.email || "hello@quickfix.com",
+                icon: "email",
+              },
+            ],
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Send us a message",
+            email: data.contact.email || "hello@quickfix.com",
+            phone: data.contact.phone || "+1-394-598-4958",
+            address:
+              data.contact.address || "Moonshine St. 14/05 Light City, UK",
+            buttonLabel: "SEND MESSAGE",
+            formFields: [
+              {
+                _id: "full-name",
+                label: "Full Name",
+                placeholder: "Full Name",
+                fieldType: "text",
+                required: true,
+                options: "",
+              },
+              {
+                _id: "email",
+                label: "Email address",
+                placeholder: "Email address",
+                fieldType: "email",
+                required: true,
+                options: "",
+              },
+              {
+                _id: "subject",
+                label: "Subject",
+                placeholder: "Subject",
+                fieldType: "text",
+                required: false,
+                options: "",
+              },
+              {
+                _id: "message",
+                label: "Message",
+                placeholder: "Message",
+                fieldType: "textarea",
+                required: true,
+                options: "",
+              },
+            ],
+          }),
+        },
+        {
+          key: "cta",
+          label: "Contact CTA",
+          blockType: "TEXT",
+          buildContent: () => ({
+            heading: "Looking for a reliable plumbing service?",
+            ctaText: "BOOK A FREE VISITING",
+            phone: "+1 394 598 4958",
+            ctaLink: "/contact",
+          }),
+        },
+      ],
+    },
+  ],
   education: [
     {
       key: "home",
@@ -2428,6 +3104,256 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
       ],
     },
   ],
+  "photo-studio-pro": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "navbar",
+          label: "Header",
+          blockType: "NAVBAR",
+          optional: true,
+          buildContent: (data) => ({
+            brandName: data.name || "TARGET",
+            eyebrow: "Photographer",
+            subheading: "Nigeria, Netherlands.",
+            email: data.contact?.email || "hello@studio.com",
+            phone: data.contact?.phone || "+234 123 456 7890",
+            instagramLabel: "↗ Instagram",
+            navigationItems: [
+              { label: "Portfolio", link: "#works" },
+              { label: "About me", link: "#about" },
+              { label: "My shots", link: "#works" },
+              { label: "Contact", link: "#contact" },
+            ],
+            ctaText: "Book a shoot",
+            ctaLink: "#contact",
+          }),
+        },
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            heading: "Photographer",
+            subheading:
+              data.description ||
+              "Capturing timeless moments that tell stories of emotion, beauty, and truth in every frame and every pose.",
+            image: photoStudioProAssets.hero,
+            heroImage: photoStudioProAssets.hero,
+            secondaryImage: photoStudioProAssets.photoStudioHero,
+            ctaText: "View works",
+            ctaLink: "#works",
+            ctaSecondaryText: "Recent Work",
+          }),
+        },
+        {
+          key: "intro",
+          label: "Intro showcase",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "Snapify Photography",
+            heading: "Capturing",
+            subheading: "The Moment",
+            body: "Light, mood, and composition shaped into lasting frames.",
+            image: photoStudioProAssets.creativeMakeup,
+            features: [
+              {
+                title: "Editorial portrait",
+                description: "Bold color and cinematic makeup storytelling.",
+                image: photoStudioProAssets.creativeMakeup,
+              },
+              {
+                title: "Fashion study",
+                description: "High-contrast fashion frames with strong direction.",
+                image: photoStudioProAssets.pinkHairPortrait,
+              },
+            ],
+          }),
+        },
+        {
+          key: "about",
+          label: "About",
+          blockType: "TEXT",
+          buildContent: (data) => ({
+            heading: "About",
+            body:
+              data.description ||
+              "A photography practice focused on people, atmosphere, and clean editorial storytelling.",
+            description:
+              "From portraits to campaigns, every frame is shaped with intention, contrast, and a calm editorial rhythm.",
+            image: photoStudioProAssets.portraitLifestyle,
+            ctaText: "More about me",
+            ctaLink: "#works",
+            features: [
+              {
+                title: "Studio portrait",
+                description: "Secondary about portrait.",
+                image: photoStudioProAssets.portraitProfessional,
+              },
+            ],
+          }),
+        },
+        {
+          key: "works",
+          label: "My Works",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "Selected Portfolio",
+            heading: "My Works",
+            body: "A curated selection of portraits, editorial studies, and visual stories shaped through light, mood, and clean composition.",
+            ctaText: "See all projects",
+            ctaLink: "#contact",
+            features: [
+              {
+                title: "Featured frame",
+                description: "Signature editorial portrait for campaigns.",
+                image: photoStudioProAssets.hero,
+              },
+              {
+                title: "Editorial Figure",
+                description: "Graphic color and sculpted silhouette work.",
+                image: photoStudioProAssets.travelLandscape,
+              },
+              {
+                title: "Soft Motion",
+                description: "Natural light portraiture with quiet motion.",
+                image: photoStudioProAssets.portraitNatural,
+              },
+              {
+                title: "Golden Hour",
+                description: "Warm lifestyle frames for story-led brands.",
+                image: photoStudioProAssets.weddingEvening,
+              },
+              {
+                title: "Studio Light",
+                description: "Controlled studio looks with crisp finish.",
+                image: photoStudioProAssets.fashionEditorial,
+              },
+            ],
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            eyebrow: "Let's Work Together",
+            heading: "Start Your Next Shoot",
+            description:
+              "Share your concept, timeline, and the kind of visuals you want to create. We'll shape the right direction for the shoot.",
+            buttonLabel: "Get in touch",
+            email: data.contact?.email || "hello@studio.com",
+            phone: data.contact?.phone || "+1 (555) 220 1188",
+            address:
+              data.contact?.address || "245 Mercer Street, New York, NY",
+            formFields: [
+              {
+                _id: "full-name",
+                label: "Full Name",
+                placeholder: "Full Name",
+                fieldType: "text",
+                required: true,
+                options: "",
+              },
+              {
+                _id: "email",
+                label: "Email Address",
+                placeholder: "Email Address",
+                fieldType: "email",
+                required: true,
+                options: "",
+              },
+              {
+                _id: "message",
+                label: "Message",
+                placeholder: "Message",
+                fieldType: "textarea",
+                required: true,
+                options: "",
+              },
+            ],
+          }),
+        },
+        {
+          key: "lens",
+          label: "Lens gallery",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            heading: "See Through My Lens",
+            features: [
+              {
+                title: "Travel frame",
+                description: "Landscape storytelling from the road.",
+                image: photoStudioProAssets.travelLandscape,
+              },
+              {
+                title: "Wedding evening",
+                description: "Quiet celebration moments after dark.",
+                image: photoStudioProAssets.weddingEvening,
+              },
+              {
+                title: "Natural portrait",
+                description: "Soft daylight portraits with honest tone.",
+                image: photoStudioProAssets.portraitNatural,
+              },
+              {
+                title: "Fashion editorial",
+                description: "Campaign-ready fashion imagery.",
+                image: photoStudioProAssets.fashionEditorial,
+              },
+              {
+                title: "Studio portrait",
+                description: "Controlled lighting with editorial finish.",
+                image: photoStudioProAssets.malePortrait,
+              },
+              {
+                title: "Lifestyle",
+                description: "Everyday scenes with cinematic polish.",
+                image: photoStudioProAssets.portraitLifestyle,
+              },
+              {
+                title: "Creative makeup",
+                description: "Color-forward beauty storytelling.",
+                image: photoStudioProAssets.creativeMakeup,
+              },
+              {
+                title: "Pink hair study",
+                description: "Bold fashion color and attitude.",
+                image: photoStudioProAssets.pinkHairPortrait,
+              },
+              {
+                title: "Wedding moment",
+                description: "Intimate celebration frames.",
+                image: photoStudioProAssets.weddingMoment,
+              },
+              {
+                title: "Photo studio hero",
+                description: "Signature studio atmosphere.",
+                image: photoStudioProAssets.photoStudioHero,
+              },
+            ],
+          }),
+        },
+        {
+          key: "footer",
+          label: "Footer",
+          blockType: "FOOTER",
+          optional: true,
+          buildContent: (data) => ({
+            heading: "Every Frame Tells a Story; Let's Tell Yours.",
+            email: data.contact?.email || "hello@studio.com",
+            body: `${data.contact?.phone || "+1 (555) 220 1188"}\n${
+              data.contact?.address || "245 Mercer Street, New York, NY"
+            }`,
+          }),
+        },
+      ],
+    },
+  ],
 };
 
 const normalizePersistedPages = (
@@ -2843,6 +3769,65 @@ const getTemplateSectionMap = (
   return map;
 };
 
+/** Required nested keys that must survive AI/persisted shallow merges. */
+const REQUIRED_NESTED_ARRAY_FIELDS: Record<string, string[]> = {
+  features: ["title", "description"],
+  members: ["name", "role"],
+};
+
+const mergeNestedArrayItemsPreservingRequired = (
+  seededItems: unknown,
+  persistedItems: unknown,
+  requiredKeys: string[],
+): unknown => {
+  if (!Array.isArray(persistedItems)) {
+    return seededItems;
+  }
+  if (!Array.isArray(seededItems)) {
+    return persistedItems;
+  }
+
+  return persistedItems.map((item, index) => {
+    const seededItem =
+      seededItems[index] &&
+      typeof seededItems[index] === "object" &&
+      !Array.isArray(seededItems[index])
+        ? (seededItems[index] as Record<string, unknown>)
+        : {};
+    const persistedItem =
+      item && typeof item === "object" && !Array.isArray(item)
+        ? (item as Record<string, unknown>)
+        : {};
+    const merged: Record<string, unknown> = {
+      ...seededItem,
+      ...persistedItem,
+    };
+
+    requiredKeys.forEach((key) => {
+      const current = merged[key];
+      if (typeof current === "string" && current.trim()) {
+        return;
+      }
+      const fallback = seededItem[key];
+      if (typeof fallback === "string" && fallback.trim()) {
+        merged[key] = fallback;
+        return;
+      }
+      if (key === "description") {
+        merged[key] =
+          nonEmptyText(merged.title, `Item ${index + 1} details`) ||
+          `Item ${index + 1} details`;
+        return;
+      }
+      if (key === "title" || key === "name" || key === "role") {
+        merged[key] = `${key === "role" ? "Team member" : "Item"} ${index + 1}`;
+      }
+    });
+
+    return merged;
+  });
+};
+
 const mergeTemplateBlockContent = (
   seededContent: Record<string, unknown>,
   persistedContent: Record<string, unknown>,
@@ -2850,27 +3835,41 @@ const mergeTemplateBlockContent = (
   const normalizedPersistedContent = normalizeAIFlatStyleFields(persistedContent);
   const persistedTheme =
     normalizedPersistedContent?.[TEMPLATE_THEME_CONTENT_KEY];
+
+  const merged: Record<string, unknown> = {
+    ...seededContent,
+    ...normalizedPersistedContent,
+  };
+
   if (
     persistedTheme &&
     typeof persistedTheme === "object" &&
     !Array.isArray(persistedTheme)
   ) {
-    return {
-      ...seededContent,
-      ...normalizedPersistedContent,
-      [TEMPLATE_THEME_CONTENT_KEY]: {
-        ...(seededContent[TEMPLATE_THEME_CONTENT_KEY] as
-          | Record<string, unknown>
-          | undefined),
-        ...(persistedTheme as Record<string, unknown>),
-      },
+    merged[TEMPLATE_THEME_CONTENT_KEY] = {
+      ...(seededContent[TEMPLATE_THEME_CONTENT_KEY] as
+        | Record<string, unknown>
+        | undefined),
+      ...(persistedTheme as Record<string, unknown>),
     };
   }
 
-  return {
-    ...seededContent,
-    ...normalizedPersistedContent,
-  };
+  Object.entries(REQUIRED_NESTED_ARRAY_FIELDS).forEach(
+    ([arrayKey, requiredKeys]) => {
+      if (
+        arrayKey in normalizedPersistedContent ||
+        arrayKey in seededContent
+      ) {
+        merged[arrayKey] = mergeNestedArrayItemsPreservingRequired(
+          seededContent[arrayKey],
+          merged[arrayKey],
+          requiredKeys,
+        );
+      }
+    },
+  );
+
+  return merged;
 };
 
 // Build a section map (sectionKey -> persisted block) scoped to a SINGLE page.
@@ -3834,6 +4833,105 @@ const buildTemplatePreviewBusinessDataImpl = (
     };
   }
 
+  if (templateId === "plumbing-pro") {
+    const getPageSection = (
+      path: string,
+      sectionKey: string,
+    ): { id?: string | number; content: Record<string, unknown> } => {
+      const page = pages.find((candidate) => candidate.path === path);
+      const block = page?.blocks.find(
+        (candidate) =>
+          candidate.content &&
+          typeof candidate.content === "object" &&
+          !Array.isArray(candidate.content) &&
+          (candidate.content as Record<string, unknown>).editorSection ===
+            sectionKey,
+      );
+
+      return {
+        id: block?.id,
+        content:
+          block?.content &&
+          typeof block.content === "object" &&
+          !Array.isArray(block.content)
+            ? (block.content as Record<string, unknown>)
+            : {},
+      };
+    };
+    const withBlock = (
+      section: { id?: string | number; content: Record<string, unknown> },
+    ): Record<string, unknown> => ({
+      ...section.content,
+      blockId: section.id,
+      sectionStyle: getSectionStyleValue(section.content),
+      outerSectionStyle: getSectionStyleValue(
+        section.content,
+        "outerSectionStyle",
+      ),
+    });
+    const homeNavbar = getPageSection("/", "navbar");
+    const homeFooter = getPageSection("/", "footer");
+    const pageBodies = {
+      home: {
+        hero: withBlock(getPageSection("/", "hero")),
+        trust: withBlock(getPageSection("/", "trust")),
+        servicesList: withBlock(getPageSection("/", "servicesList")),
+        intro: withBlock(getPageSection("/", "intro")),
+        whyChoose: withBlock(getPageSection("/", "whyChoose")),
+        members: withBlock(getPageSection("/", "members")),
+        promo: withBlock(getPageSection("/", "promo")),
+        testimonials: withBlock(getPageSection("/", "testimonials")),
+        contactStrip: withBlock(getPageSection("/", "contactStrip")),
+      },
+      about: {
+        banner: withBlock(getPageSection("/about", "banner")),
+        valueCards: withBlock(getPageSection("/about", "valueCards")),
+        intro: withBlock(getPageSection("/about", "intro")),
+        members: withBlock(getPageSection("/about", "members")),
+        stats: withBlock(getPageSection("/about", "stats")),
+        why: withBlock(getPageSection("/about", "why")),
+        testimonials: withBlock(getPageSection("/about", "testimonials")),
+        cta: withBlock(getPageSection("/about", "cta")),
+      },
+      services: {
+        banner: withBlock(getPageSection("/services", "banner")),
+        why: withBlock(getPageSection("/services", "why")),
+        features: withBlock(getPageSection("/services", "features")),
+        cta: withBlock(getPageSection("/services", "cta")),
+      },
+      contact: {
+        banner: withBlock(getPageSection("/contact", "banner")),
+        cards: withBlock(getPageSection("/contact", "cards")),
+        contact: withBlock(getPageSection("/contact", "contact")),
+        cta: withBlock(getPageSection("/contact", "cta")),
+      },
+    };
+
+    return {
+      ...themedBase,
+      tagline: readString(
+        pageBodies.home.hero,
+        ["heading"],
+        String(themedBase.tagline || themedBase.name),
+      ),
+      description: readString(
+        pageBodies.home.hero,
+        ["subheading", "body", "description"],
+        String(themedBase.description),
+      ),
+      templateContent: {
+        __siteSlug: website.slug || undefined,
+        navbar: {
+          ...homeNavbar.content,
+          blockId: homeNavbar.id,
+          ctaText: readString(homeNavbar.content, ["ctaText"], ""),
+        },
+        footer: withBlock(homeFooter),
+        pageBodies,
+      },
+    };
+  }
+
   if (templateId === "company-pro") {
     const sectionMap = getTemplateSectionMap(templateId, pages);
     const navbar = getSectionContent("navbar");
@@ -3936,6 +5034,70 @@ const buildTemplatePreviewBusinessDataImpl = (
         contact: withBlock("contact", contact, {
           ...buildContactFormConfig(contact),
         }),
+        footer: withBlock("footer", footer),
+        sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
+      },
+    };
+  }
+
+  if (templateId === "photo-studio-pro") {
+    const sectionMap = getTemplateSectionMap(templateId, pages);
+    const getSection = (key: string) => getSectionContent(key);
+    const withBlock = (
+      sectionKey: string,
+      rawContent: Record<string, unknown>,
+      additions: Record<string, unknown> = {},
+    ): Record<string, unknown> => ({
+      ...rawContent,
+      ...additions,
+      blockId: sectionMap.get(sectionKey)?.id,
+      sectionStyle: getSectionStyleValue(rawContent),
+      outerSectionStyle: getSectionStyleValue(
+        rawContent,
+        "outerSectionStyle",
+      ),
+    });
+    const navbar = getSection("navbar");
+    const hero = getSection("hero");
+    const intro = getSection("intro");
+    const about = getSection("about");
+    const works = getSection("works");
+    const contact = getSection("contact");
+    const lens = getSection("lens");
+    const footer = getSection("footer");
+    const workItems = readArray<Record<string, unknown>>(works, ["features"]);
+    const introItems = readArray<Record<string, unknown>>(intro, ["features"]);
+    const lensItems = readArray<Record<string, unknown>>(lens, ["features"]);
+
+    return {
+      ...themedBase,
+      tagline: readString(
+        hero,
+        ["heading"],
+        String(themedBase.tagline || themedBase.name),
+      ),
+      description: readString(
+        about,
+        ["body", "description"],
+        String(themedBase.description),
+      ),
+      portfolioItems: workItems.map((item, index) => ({
+        title: readString(item, ["title"], `Work ${index + 1}`),
+        description: readString(item, ["description"], ""),
+        image: readString(item, ["image"], ""),
+        category: readString(item, ["icon"], "Portfolio"),
+      })),
+      templateContent: {
+        __siteSlug: website.slug || undefined,
+        navbar: buildNavbarContent(sectionMap.get("navbar"), navbar),
+        hero: withBlock("hero", hero),
+        intro: withBlock("intro", intro, { features: introItems }),
+        about: withBlock("about", about),
+        works: withBlock("works", works, { features: workItems }),
+        contact: withBlock("contact", contact, {
+          ...buildContactFormConfig(contact),
+        }),
+        lens: withBlock("lens", lens, { features: lensItems }),
         footer: withBlock("footer", footer),
         sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
       },

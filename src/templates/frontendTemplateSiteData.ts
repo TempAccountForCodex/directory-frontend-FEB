@@ -9,6 +9,7 @@ import { companyStudioAssets } from "../landingTemplates/assets/company/company-
 import { companyProAssets } from "../landingTemplates/assets/company/company-pro";
 import { educationProAssets } from "../landingTemplates/assets/education/education-pro";
 import { gardeningProAssets } from "../landingTemplates/assets/gardening/gardening-pro";
+import { plumbingProAssets } from "../landingTemplates/assets/plumbing/plumbing-pro";
 import { portfolioAssets } from "../landingTemplates/assets/portfolio/portfolio-agency";
 
 type FrontendTemplateWebsite = {
@@ -381,6 +382,43 @@ const baseGardeningProData: BusinessData = {
   ],
 };
 
+const basePlumbingProData: BusinessData = {
+  name: "QuickFix",
+  tagline: "Your affordable plumbing service",
+  description:
+    "Reliable, trustworthy, and affordable plumbing solutions for your home or business.",
+  primaryColor: "#1D7BFF",
+  secondaryColor: "#F5C518",
+  contact: {
+    email: "hello@quickfix.com",
+    phone: "+1 234 567 8910",
+    address: "455 West Orchard Street, Light City, UK",
+  },
+  heroBannerUrl: plumbingProAssets.hero,
+  stats: [
+    { label: "Happy Customers", value: "325k+" },
+    { label: "Completed Projects", value: "125k+" },
+    { label: "Expert Plumbers", value: "250+" },
+  ],
+  features: [
+    {
+      title: "Repair & Install",
+      description:
+        "Fast residential and commercial plumbing repairs with licensed technicians.",
+    },
+    {
+      title: "Commercial Plumbing",
+      description:
+        "Dependable plumbing systems for offices, retail, and industrial sites.",
+    },
+    {
+      title: "Drain Cleaning",
+      description:
+        "Thorough drain clearing that restores flow and prevents repeat backups.",
+    },
+  ],
+};
+
 const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
   blog: baseBlogData,
   "blog-premium": baseBlogPremiumData,
@@ -395,10 +433,18 @@ const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
   minimal: baseMinimalData,
   modern: baseModernData,
   plumbing: plumbingData,
+  "plumbing-pro": basePlumbingProData,
   premium: basePremiumData,
   "portfolio-creative": basePortfolioData,
   "portfolio-agency": basePortfolioAgencyData,
   "portfolio-photo-studio": basePortfolioPhotoStudioData,
+    "photo-studio-pro": {
+    ...basePortfolioPhotoStudioData,
+    name: "TARGET",
+    tagline: "Photographer",
+    description:
+      "Portrait and lifestyle photography with an editorial eye — cinematic storytelling for brands and people.",
+  },
   restaurant: restaurantData,
   "store-basic": baseStoreData,
   "store-fit": baseStoreFitData,

@@ -11,12 +11,14 @@ import { blendHex, isLightColor, rgba } from "../templates/company/theme";
  * Style priority (highest → lowest):
  *   1. saved manual header style — `sectionStyle`/`outerSectionStyle`/
  *      `containerStyles` `backgroundColor` persisted from the editor
- *   2. saved themeSettings palette color (`themeSettings.primaryColor` /
- *      `primaryColor`)
- *   3. the template's default primary color
+ *   2. template `defaultBackground` when provided (e.g. transparent overlay)
+ *   3. saved themeSettings palette color (`themeSettings.primaryColor` /
+ *      `primaryColor`) / template default primary
  *
  * Keeping this in one helper means palette changes update the Header
  * consistently across all templates, while a manual editor override still wins.
+ * Templates may opt into a transparent default via `defaultBackground` without
+ * changing other templates' solid primary behavior.
  */
 
 const asRecord = (value: unknown): Record<string, any> =>
@@ -27,13 +29,26 @@ const asRecord = (value: unknown): Record<string, any> =>
 export interface SharedHeaderThemeOptions {
   /** Template default primary, used only when no palette/theme color exists. */
   defaultPrimary?: string;
+  /**
+   * Template-specific default header background when no manual editor
+   * background is saved. Use `"transparent"` for overlays (e.g. Plumbing Pro).
+   * When unset, the resolved primary/theme color is used (existing behavior).
+   */
+  defaultBackground?: string;
+  /**
+   * When the resolved background is transparent, which text contrast to use:
+   * `"light"` = white nav/CTA (dark hero imagery), `"dark"` = dark nav.
+   */
+  transparentText?: "light" | "dark";
 }
 
 export interface SharedHeaderTheme {
   /** Resolved primary palette color (theme-driven). */
   primary: string;
-  /** Header bar background (manual override → primary → default). */
+  /** Header bar background (manual → defaultBackground → primary). */
   bgColor: string;
+  /** True when a manual editor backgroundColor is persisted on the header. */
+  hasManualBackground: boolean;
   /** True when the resolved background is light and needs dark text. */
   isLightHeader: boolean;
   /** Nav link / logo text color, readable on `bgColor`. */
@@ -54,7 +69,9 @@ export interface SharedHeaderTheme {
   mobileTextColor: string;
 }
 
-const readManualHeaderBackground = (navbar: Record<string, any>): string => {
+export const readManualHeaderBackground = (
+  navbar: Record<string, any>,
+): string => {
   const candidates = [
     asRecord(navbar.sectionStyle).backgroundColor,
     asRecord(navbar.outerSectionStyle).backgroundColor,
@@ -66,6 +83,16 @@ const readManualHeaderBackground = (navbar: Record<string, any>): string => {
     }
   }
   return "";
+};
+
+const isTransparentBackground = (value: string): boolean => {
+  const normalized = value.trim().toLowerCase();
+  return (
+    !normalized ||
+    normalized === "transparent" ||
+    normalized === "rgba(0,0,0,0)" ||
+    normalized === "rgba(0, 0, 0, 0)"
+  );
 };
 
 export const resolveHeaderPrimaryColor = (
@@ -83,22 +110,27 @@ export const buildSharedHeaderTheme = (
 ): SharedHeaderTheme => {
   const primary = resolveHeaderPrimaryColor(data, options.defaultPrimary);
   const manualBg = readManualHeaderBackground(navbar);
-  const bgColor = manualBg || primary;
-  const isLightHeader = isLightColor(bgColor);
+  const hasManualBackground = Boolean(manualBg);
+  // Priority: manual editor bg → template defaultBackground → theme primary.
+  const bgColor = manualBg || options.defaultBackground || primary;
+  const transparentOverlay = isTransparentBackground(bgColor);
+  const isLightHeader = transparentOverlay
+    ? options.transparentText === "dark"
+    : isLightColor(bgColor);
   const contrastDark = blendHex(primary, "#050505", 0.84);
   const navLinkColor = isLightHeader ? contrastDark : "#ffffff";
 
   return {
     primary,
     bgColor,
+    hasManualBackground,
     isLightHeader,
     navLinkColor,
     ctaColor: navLinkColor,
     themeColor: isLightHeader ? primary : contrastDark,
-    borderColor: rgba(
-      isLightHeader ? "#000000" : "#ffffff",
-      isLightHeader ? 0.1 : 0.16,
-    ),
+    borderColor: transparentOverlay
+      ? "transparent"
+      : rgba(isLightHeader ? "#000000" : "#ffffff", isLightHeader ? 0.1 : 0.16),
     ctaHoverTextColor: isLightHeader ? "#ffffff" : contrastDark,
     mobileCtaColor: contrastDark,
     mobileCtaHoverTextColor: isLightHeader ? contrastDark : "#ffffff",

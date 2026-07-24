@@ -86,6 +86,26 @@ const GardeningProFooter = lazy(() =>
     default: module.GardeningProTemplateFooter,
   })),
 );
+const PlumbingProHeader = lazy(() =>
+  import("../templates/plumbing/PlumbingProTemplate").then((module) => ({
+    default: module.PlumbingProTemplateHeader,
+  })),
+);
+const PlumbingProFooter = lazy(() =>
+  import("../templates/plumbing/PlumbingProTemplate").then((module) => ({
+    default: module.PlumbingProTemplateFooter,
+  })),
+);
+const PhotoStudioProHeader = lazy(() =>
+  import("../templates/portfolio/PhotoStudioProTemplate").then((module) => ({
+    default: module.PhotoStudioProTemplateHeader,
+  })),
+);
+const PhotoStudioProFooter = lazy(() =>
+  import("../templates/portfolio/PhotoStudioProTemplate").then((module) => ({
+    default: module.PhotoStudioProTemplateFooter,
+  })),
+);
 
 const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   minimal: {
@@ -115,6 +135,14 @@ const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   "gardening-pro": {
     Header: GardeningProHeader,
     Footer: GardeningProFooter,
+  },
+  "plumbing-pro": {
+    Header: PlumbingProHeader,
+    Footer: PlumbingProFooter,
+  },
+  "photo-studio-pro": {
+    Header: PhotoStudioProHeader,
+    Footer: PhotoStudioProFooter,
   },
 };
 

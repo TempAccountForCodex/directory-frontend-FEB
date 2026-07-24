@@ -78,6 +78,19 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     pageCount: 4,
   },
   {
+    id: "photo-studio-pro",
+    slug: "photo-studio-pro",
+    name: "Photo Studio Pro",
+    description:
+      "Editorial photo studio template upgraded to the new architecture — cinematic hero, works showcase, enquiry contact, and dynamic page support.",
+    type: "website",
+    category: "portfolio",
+    version: "1.0.0",
+    previewImage:
+      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
+    pageCount: 1,
+  },
+  {
     id: "store-basic",
     slug: "store-basic",
     name: "Store Basic",
@@ -256,6 +269,18 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     version: "1.0.0",
     previewImage: "/assets/templateAssets/images/dummy/plumbing.webp",
     pageCount: 3,
+  },
+  {
+    id: "plumbing-pro",
+    slug: "plumbing-pro",
+    name: "Plumbing Pro",
+    description:
+      "Multi-page plumbing service template with home, about, services, and contact pages in a modern blue and yellow QuickFix style.",
+    type: "website",
+    category: "plumbing",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/plumbing.webp",
+    pageCount: 4,
   },
 ];
 

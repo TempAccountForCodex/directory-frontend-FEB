@@ -63,6 +63,21 @@ A new template must explicitly declare one of these page models:
   must open the currently selected page at its resolved public path (for
   example, `/site/:siteSlug/about`), not always Home.
 
+When upgrading old templates to the new standard, preserve existing approved
+visual design and assets, but refactor content/styling/navigation into
+backend-safe editable persisted fields.
+
+**Visual fidelity rule:** When upgrading an old approved template, visual
+fidelity must be preserved. Refactor logic/editability only; do not change
+approved design, layout, spacing, typography, image composition, or mood
+unless explicitly requested.
+
+**Strict upgrade rule:** Old template code may only be used as visual
+reference/assets. It must not be reused if it produces static/style-only
+editor elements. Every upgraded template must pass an editability audit after
+website creation (text, images, backgrounds, buttons, and form fields must
+open real persisted content paths — not “Static style / not saved”).
+
 For both models, Header and Footer are shared/global components rendered on
 every page. Editing shared chrome from any page updates every page; do not
 duplicate Header/Footer inside page bodies.
@@ -373,19 +388,28 @@ public rendering.
   shared `TemplateNavbarHeader`. It centralizes the working Education Pro logic:
   the header background follows the palette's primary color, and nav/CTA text
   flips light-on-dark or dark-on-light for readability.
+- Templates **may** define a transparent header default via
+  `defaultBackground: "transparent"` (and `transparentText: "light" | "dark"`)
+  so the Header can sit over a hero/banner. Transparent defaults must keep
+  logo/nav/CTA readable on the hero, and may use a scrolled solid/readable
+  variant when the page body is light.
 - **Style priority (highest → lowest):**
   1. saved manual header style — `sectionStyle`/`outerSectionStyle`/
      `containerStyles` `backgroundColor` persisted from the editor
-  2. saved `themeSettings` palette color (`themeSettings.primaryColor` /
-     `primaryColor`)
-  3. template default primary color
-- A manual editor background override on the Header must always win over the
-  theme default and must persist across Save, editor refresh, Live Preview, and
-  public output.
+  2. theme/header style when the template uses palette-driven solid headers
+     (`themeSettings.primaryColor` / `primaryColor`) — or the template's
+     explicit `defaultBackground` when that opt-in is set (e.g. transparent)
+  3. template default primary color (solid) when no transparent default is set
+- A manual editor background override on the Header must always win over both
+  transparent template defaults and theme/palette colors, and must persist
+  across Save, editor refresh, Live Preview, and public output.
 - **Acceptance:** change the palette on any template in landing-preview and in
-  the editor — the Header background must update immediately; then set a manual
-  Header background from the right editor and confirm it overrides the palette
-  color and persists after reload/public render.
+  the editor — the Header background must update immediately (unless the
+  template uses a transparent default and no manual bg is set); then set a
+  manual Header background from the right editor and confirm it overrides the
+  palette/transparent default and persists after reload/public render.
+  Plumbing Pro: default Header is transparent over Home hero and inner-page
+  blue banners; manual Header background still overrides.
 
 ### 9.2 Template internal links must stay inside the website
 
@@ -404,7 +428,9 @@ Rules:
   1. Public site: `/site/:slug` + path
   2. Landing preview: `/landing-preview/:templateId` + path
   3. Optional `__siteSlug` from `templateContent` when not on those routes
-- Absolute URLs, `#` anchors, `mailto:`, and `tel:` pass through unchanged.
+- Absolute URLs, `#` anchors, `mailto:`, and `tel:` pass through unchanged **at
+  render time only**. Seed/default content in the creation payload must still
+  obey §9.2.1 (backend `url-or-path` validation).
 - Shared Header (`TemplateNavbarHeader`) and every section CTA / Footer column
   link must use the same resolver. Header-only fixes are not enough — body
   buttons like “Read More”, “Get Started”, and “Request a Quote” must also
@@ -415,6 +441,45 @@ Rules:
   nav and body CTAs — status URLs must show `/site/:slug/...` (or the
   landing-preview equivalent), never bare `/about` or `/contact` on the
   platform root. Verify landing-preview, editor Live Preview, and public site.
+
+### 9.2.1 Template Link Validation Rule
+
+All template default CTA/link fields that are included in the creation payload
+must be valid backend `url-or-path` values. Do not use empty strings, placeholder
+text, raw labels, or unsupported schemes. Prefer internal paths like
+`/contact`, `/about`, `/services`, or `/booking`. If a link is optional and
+empty values are not accepted by backend validation, omit the field instead of
+sending an empty string. Before adding a new template, validate all CTA fields
+in HERO, CTA, NAVBAR, FOOTER, CONTACT, SERVICES, and FEATURE blocks.
+
+Additional rules for seed data (`frontendTemplateEditorSupport` /
+`buildContent`):
+
+- Do **not** put `tel:` or `mailto:` in default `ctaLink`, `ctaSecondaryLink`,
+  `buttonLink`, `primaryCtaLink`, `secondaryCtaLink`, or similar payload fields
+  unless the backend `url-or-path` format explicitly allows those schemes.
+- Phone/email may still appear as display text (`ctaText`, `phone`, `email`).
+  Templates may build `tel:`/`mailto:` hrefs at render time from those display
+  fields when the persisted link is a normal path.
+- Safe defaults: `/contact`, `/about`, `/services`, or `https://example.com`.
+
+### 9.2.2 Required Nested Content Rule
+
+All template default array items must include every backend-required field. For
+FEATURES blocks, each `content.features[]` item must include a non-empty
+`title` and `description`. AI-generated content must not replace a complete
+default item with an incomplete item. When AI output omits required nested
+fields, merge it over defaults and preserve required fallback values.
+
+Also verify other common nested arrays before shipping a template:
+
+- `features[].title` / `features[].description`
+- `members[].name` / `members[].role`
+- `items[].heading` / `items[].value` (when used as stats)
+- `cards[].description` (when present in creation payload)
+
+Do not send empty strings for required nested fields. Prefer a short real
+sentence over omitting `description`.
 
 ### 9.3 Header menu must sync with real website pages
 
@@ -475,6 +540,14 @@ Rules:
 - Save Changes must update the selected page by pageId.
 - **Acceptance:** open Blog from Header or editor page dropdown — canvas and
   `/site/:slug/blog` show Blog blocks (or empty Blog), not Home hero/content.
+
+**Shared overlay Header/Footer on dynamic pages:** Single-page templates with
+dynamic page support must apply their shared Header/Footer design consistently
+to user-added pages. If Home uses an overlay/transparent header, dynamic pages
+(Blog, custom pages, and any navigation-eligible path rendered via page-shell)
+must use the same shared header style unless the editor explicitly overrides
+header background/styling. Do not substitute a separate solid chrome bar for
+dynamic pages when Home’s approved design is an overlay.
 
 ### 9.1 Forms must be real, backend-connected inputs — never static-only
 
@@ -701,6 +774,17 @@ publicly rendered under the same stable identifier.
 - Template acceptance must include at least one saved text edit, media edit, card
   edit, section style edit, nested container style edit, delete/hide operation,
   refresh check, and Live Preview check.
+- **Premium redesigns must preserve full editability/persistence.** Visual
+  upgrades (spacing, cards, gradients, hover states, Framer Motion/CSS
+  animations, wrappers) must not convert real content into static/style-only
+  JSX. Animations and decorative wrappers must not break selection, Save,
+  Live Preview, refresh, delete/hide, or background replacement. Keep using
+  backend-safe field paths (`heading`, `subheading`, `body`/`description`,
+  `eyebrow`, `image`/`imageStyle`, `features[]`, `items[]`, `stats[]`,
+  `testimonials[]`, `members[]`, `detailGroups[]`, `sectionStyle`,
+  `containerStyles`, `hiddenElements`/`hiddenContainers`). Do not invent
+  frontend-only fake fields or reuse one field for unrelated elements.
+  Manual editor styling must still override template visual defaults.
 
 ### 11.5 New-template regression checklist
 

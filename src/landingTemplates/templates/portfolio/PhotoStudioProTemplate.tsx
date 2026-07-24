@@ -17,10 +17,18 @@ import { normalizeContactFormFields } from "../../../api/formSubmissions";
 import {
   getEditableSectionProps,
   getEditableTextProps,
+  getStaticSelectableProps,
 } from "../../utils/editableProps";
+import { renderEditableMedia } from "../../utils/editableComponents";
 import { useWebsiteMenuNavLinks } from "../../hooks/useWebsiteMenuNavLinks";
 import TemplatePageNavLinks from "../../components/TemplatePageNavLinks";
-import { portfolioAssets } from "../../assets/portfolio/portfolio-photo-studio";
+import { photoStudioProAssets as portfolioAssets } from "../../assets/portfolio/photo-studio-pro";
+import TemplatePageShell from "../../components/TemplatePageShell";
+import type { TemplateChromeProps } from "../../templateEngine/templateChromeRegistry";
+import { TemplateSectionBoundary } from "../../components/TemplateSectionLayout";
+import { resolveTemplateInternalLink } from "../../utils/resolveTemplateLink";
+import { isHeaderNavigationPage } from "../../utils/headerNavigationPages";
+import { buildSharedHeaderTheme } from "../../utils/headerTheme";
 
 const headingFont = '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif';
 const bodyFont = '"Inter", "Segoe UI", sans-serif';
@@ -138,10 +146,357 @@ const TextReveal: React.FC<{ text: string; sx?: Record<string, unknown> }> = ({
   </Box>
 );
 
-const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
+
+const asRecord = (value: unknown): Record<string, any> =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, any>)
+    : {};
+
+const asArray = <T,>(value: unknown, fallback: T[]): T[] =>
+  Array.isArray(value) && value.length ? (value as T[]) : fallback;
+
+const containerProps = (
+  blockId: string | number | undefined,
+  id: string,
+  label: string,
+  type: "container" | "card" = "container",
+) => getStaticSelectableProps(blockId, label, id, "containerStyles", type);
+
+const resolveLink = (href: string, siteSlug?: string) =>
+  resolveTemplateInternalLink(href, { siteSlug });
+
+/**
+ * Shared Photo Studio overlay header used by page-shell (Blog / user-added
+ * pages). Mirrors Home's transparent overlay: top contact/brand/role row +
+ * vertical right-side nav. Home itself keeps its in-hero markup so full-template
+ * mode returns null here (no duplicate chrome).
+ */
+export const PhotoStudioProTemplateHeader: React.FC<TemplateChromeProps> = ({
+  data,
+  mode,
+}) => {
+  if (mode === "full-template") return null;
+  const content = asRecord(data.templateContent);
+  const navbar = asRecord(content.navbar);
+  const blockId = navbar.blockId;
+  const siteSlug =
+    typeof content.__siteSlug === "string" ? content.__siteSlug : undefined;
+  const brandName = navbar.brandName || data.name || "TARGET";
+  const navEmail =
+    navbar.email || data.contact?.email || "hello@studio.com";
+  const navPhone =
+    navbar.phone || data.contact?.phone || "+234 123 456 7890";
+  const navRole = navbar.eyebrow || "Photographer";
+  const navLocation = navbar.subheading || "Nigeria, Netherlands.";
+  const defaultNavItems = asArray(navbar.navigationItems, [
+    { label: "Portfolio", link: "#works" },
+    { label: "About me", link: "#about" },
+    { label: "My shots", link: "#works" },
+    { label: "Contact", link: "#contact" },
+  ]);
+  const pageNavItems = Array.isArray(data.pages)
+    ? data.pages
+        .filter(
+          (page) =>
+            page &&
+            !page.isHome &&
+            String(page.path || "").trim() &&
+            String(page.path || "").trim() !== "/" &&
+            page.isPublished !== false &&
+            isHeaderNavigationPage(page),
+        )
+        .map((page) => ({
+          label: page.title || "Page",
+          link: String(page.path || "/"),
+        }))
+    : [];
+  const navItems = [...defaultNavItems, ...pageNavItems];
+  // Transparent overlay by default; persisted editor background still wins.
+  const headerTheme = buildSharedHeaderTheme(data, navbar, {
+    defaultPrimary: "#111111",
+    defaultBackground: "transparent",
+    transparentText: "light",
+  });
+  const overlayActive = !headerTheme.hasManualBackground;
+  const headerBg = overlayActive ? "transparent" : headerTheme.bgColor;
+  const textColor = overlayActive
+    ? "#ffffff"
+    : headerTheme.navLinkColor || "#ffffff";
+
+  const scrollToHash = (hash: string) => {
+    const id = hash.replace(/^#/, "");
+    if (!id) return;
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  return (
+    <Box
+      {...getEditableSectionProps(blockId, "Header", "sectionStyle")}
+      sx={{
+        // Collapse out of document flow so page heroes start at the viewport
+        // top and this chrome overlays them (same feel as Home).
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 40,
+        color: textColor,
+        bgcolor: headerBg,
+        pointerEvents: "none",
+        borderBottom: overlayActive
+          ? "none"
+          : `1px solid ${headerTheme.borderColor}`,
+      }}
+    >
+      <Box
+        sx={{
+          position: "relative",
+          maxWidth: 1440,
+          mx: "auto",
+          px: { xs: 2, md: 4 },
+          pt: { xs: 2, md: 2.2 },
+          pb: { xs: 1.5, md: 2 },
+          pointerEvents: "auto",
+        }}
+      >
+        <Box
+          component="header"
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1fr auto 1fr" },
+            alignItems: "start",
+            gap: 2,
+          }}
+        >
+          <Box>
+            <Typography
+              {...getEditableTextProps(blockId, "email", "single")}
+              sx={{
+                fontSize: { xs: "1rem", md: "1.05rem" },
+                lineHeight: 1.3,
+                color: textColor,
+              }}
+            >
+              {navEmail}
+            </Typography>
+            <Typography
+              {...getEditableTextProps(blockId, "phone", "single")}
+              sx={{
+                mt: 0.3,
+                fontSize: { xs: "1rem", md: "1.05rem" },
+                lineHeight: 1.3,
+                color: textColor,
+              }}
+            >
+              {navPhone}
+            </Typography>
+          </Box>
+
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            justifyContent="center"
+            sx={{ display: { xs: "none", md: "flex" } }}
+          >
+            <Camera size={20} color={textColor} />
+            <Typography
+              {...getEditableTextProps(blockId, "brandName", "single")}
+              sx={{
+                fontFamily: headingFont,
+                fontSize: "1.05rem",
+                fontWeight: 700,
+                color: textColor,
+              }}
+            >
+              {brandName}
+            </Typography>
+          </Stack>
+
+          <Box sx={{ textAlign: { xs: "left", md: "right" } }}>
+            <Typography
+              {...getEditableTextProps(
+                blockId,
+                "eyebrow",
+                "single",
+                "eyebrowStyle",
+              )}
+              sx={{
+                fontSize: { xs: "1rem", md: "1.05rem" },
+                color: textColor,
+              }}
+            >
+              {navRole}
+            </Typography>
+            <Typography
+              {...getEditableTextProps(blockId, "subheading", "single")}
+              sx={{
+                mt: 0.3,
+                fontSize: { xs: "1rem", md: "1.05rem" },
+                color: overlayActive
+                  ? "rgba(255,255,255,0.78)"
+                  : textColor,
+              }}
+            >
+              {navLocation}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Stack
+          spacing={3}
+          sx={{
+            display: { xs: "none", md: "flex" },
+            position: "absolute",
+            right: { md: 4 },
+            top: { md: 96 },
+            alignItems: "flex-end",
+            zIndex: 1,
+          }}
+        >
+          {navItems.map((item: Record<string, any>, index: number) => {
+            const link = String(item.link || "#works");
+            const isRoute = link.startsWith("/");
+            const isHash = link.startsWith("#");
+            const isSeedNav = index < defaultNavItems.length;
+            return (
+              <Box
+                key={`${item.label}-${index}`}
+                component={isRoute ? "a" : "button"}
+                type={isRoute ? undefined : "button"}
+                href={isRoute ? resolveLink(link, siteSlug) : undefined}
+                onClick={
+                  isRoute
+                    ? undefined
+                    : () => {
+                        if (isHash) scrollToHash(link);
+                        else if (link) {
+                          window.location.assign(resolveLink(link, siteSlug));
+                        }
+                      }
+                }
+                {...(isSeedNav
+                  ? getEditableTextProps(
+                      blockId,
+                      `navigationItems.${index}.label`,
+                      "single",
+                    )
+                  : {})}
+                sx={{
+                  border: 0,
+                  p: 0,
+                  bgcolor: "transparent",
+                  cursor: "pointer",
+                  color: textColor,
+                  textUnderlineOffset: "8px",
+                  fontFamily: headingFont,
+                  fontSize: "1.05rem",
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                  letterSpacing: "-0.03em",
+                  textDecoration: "none",
+                  textAlign: "right",
+                }}
+              >
+                {item.label}
+              </Box>
+            );
+          })}
+        </Stack>
+
+        {/* Mobile: compact horizontal nav under the top row */}
+        <Stack
+          direction="row"
+          spacing={2}
+          flexWrap="wrap"
+          sx={{
+            display: { xs: "flex", md: "none" },
+            mt: 2,
+            rowGap: 1,
+          }}
+        >
+          {navItems.map((item: Record<string, any>, index: number) => {
+            const link = String(item.link || "#works");
+            const isRoute = link.startsWith("/");
+            const isHash = link.startsWith("#");
+            return (
+              <Box
+                key={`m-${item.label}-${index}`}
+                component={isRoute ? "a" : "button"}
+                type={isRoute ? undefined : "button"}
+                href={isRoute ? resolveLink(link, siteSlug) : undefined}
+                onClick={
+                  isRoute
+                    ? undefined
+                    : () => {
+                        if (isHash) scrollToHash(link);
+                      }
+                }
+                sx={{
+                  border: 0,
+                  p: 0,
+                  bgcolor: "transparent",
+                  cursor: "pointer",
+                  color: textColor,
+                  fontFamily: headingFont,
+                  fontSize: "0.85rem",
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                  letterSpacing: "-0.02em",
+                  textDecoration: "none",
+                }}
+              >
+                {item.label}
+              </Box>
+            );
+          })}
+        </Stack>
+      </Box>
+    </Box>
+  );
+};
+
+export const PhotoStudioProTemplateFooter: React.FC<TemplateChromeProps> = ({
+  data,
+  mode,
+}) => {
+  if (mode === "full-template") return null;
+  const footer = asRecord(asRecord(data.templateContent).footer);
+  const blockId = footer.blockId;
+  return (
+    <Box
+      component="footer"
+      {...getEditableSectionProps(blockId, "Footer", "sectionStyle")}
+      sx={{ bgcolor: "#111", color: "#fff", py: 4, px: 2 }}
+    >
+      <Typography {...getEditableTextProps(blockId, "heading", "multi")}>
+        {footer.heading || "Every Frame Tells a Story; Let's Tell Yours."}
+      </Typography>
+      <Typography
+        {...getEditableTextProps(blockId, "email", "single")}
+        sx={{ color: "#ff7a1a", mt: 1 }}
+      >
+        {footer.email || data.contact?.email || "hello@studio.com"}
+      </Typography>
+    </Box>
+  );
+};
+
+const PhotoStudioProTemplate: React.FC<TemplateProps> = ({ data }) => {
   const pageNavLinks = useWebsiteMenuNavLinks(data.websiteId);
-  const contactContent =
-    (data.templateContent?.contact as Record<string, any>) || {};
+  const templateContent = asRecord(data.templateContent);
+  const siteSlug =
+    typeof templateContent.__siteSlug === "string"
+      ? templateContent.__siteSlug
+      : undefined;
+  const navbarContent = asRecord(templateContent.navbar);
+  const heroContent = asRecord(templateContent.hero);
+  const introContent = asRecord(templateContent.intro);
+  const aboutContent = asRecord(templateContent.about);
+  const worksContent = asRecord(templateContent.works);
+  const lensContent = asRecord(templateContent.lens);
+  const footerContent = asRecord(templateContent.footer);
+  const contactContent = asRecord(templateContent.contact);
   const contactFields = normalizeContactFormFields(
     contactContent.formFields,
     contactContent,
@@ -150,30 +505,49 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     useTemplateContactForm(
       contactFields,
       data.websiteId,
-      "portfolio-photo-form",
+      "photo-studio-pro-form",
       {
         formId: contactContent.blockId,
         formName: contactContent.heading || "Contact form",
       },
     );
   const gallery = data.gallery?.length ? data.gallery : [];
-  const portfolioItems = useMemo(
-    () =>
-      (data.portfolioItems?.length ? data.portfolioItems : [])
-        .slice(0, 8)
-        .map((item, index) => ({
-          ...item,
-          image:
-            item.image ||
-            [
-              fallbackImages.collageOne,
-              fallbackImages.collageTwo,
-              fallbackImages.collageThree,
-              fallbackImages.collageFour,
-            ][index % 4],
-        })),
-    [data.portfolioItems],
-  );
+  const worksFeatures = asArray(worksContent.features, []);
+  const introFeatures = asArray(introContent.features, []);
+  const aboutFeatures = asArray(aboutContent.features, []);
+  const lensFeatures = asArray(lensContent.features, []);
+  const portfolioItems = useMemo(() => {
+    const fromWorks = worksFeatures
+      .slice(0, 8)
+      .map((item: Record<string, any>, index: number) => ({
+        title: item.title || `Work ${index + 1}`,
+        description: item.description || "",
+        image:
+          item.image ||
+          [
+            fallbackImages.collageThree,
+            fallbackImages.collageOne,
+            fallbackImages.introOne,
+            fallbackImages.collageFour,
+            fallbackImages.story,
+            fallbackImages.collageTwo,
+          ][index % 6],
+      }));
+    if (fromWorks.length) return fromWorks;
+    return (data.portfolioItems?.length ? data.portfolioItems : [])
+      .slice(0, 8)
+      .map((item, index) => ({
+        ...item,
+        image:
+          item.image ||
+          [
+            fallbackImages.collageOne,
+            fallbackImages.collageTwo,
+            fallbackImages.collageThree,
+            fallbackImages.collageFour,
+          ][index % 4],
+      }));
+  }, [data.portfolioItems, worksFeatures]);
 
   const services = data.services?.slice(0, 5) || [
     {
@@ -221,9 +595,84 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   );
 
   const heroImage =
-    data.heroBannerUrl || gallery[0]?.url || fallbackImages.hero;
+    heroContent.heroImage ||
+    heroContent.image ||
+    data.heroBannerUrl ||
+    fallbackImages.hero;
   const recentWorkImage =
-    portfolioItems[0]?.image || fallbackImages.collageThree;
+    heroContent.secondaryImage ||
+    portfolioItems[0]?.image ||
+    fallbackImages.collageThree;
+  const introPrimary =
+    introFeatures[0]?.image || showcaseImages.primary;
+  const introSecondary =
+    introFeatures[1]?.image || showcaseImages.secondary;
+  const aboutImageOne =
+    aboutContent.image || gallery[1]?.url || fallbackImages.introOne;
+  const aboutImageTwo =
+    aboutFeatures[0]?.image || gallery[2]?.url || fallbackImages.introTwo;
+  const brandName = navbarContent.brandName || data.name || "TARGET";
+  const navEmail =
+    navbarContent.email || data.contact?.email || "hello@studio.com";
+  const navPhone =
+    navbarContent.phone || data.contact?.phone || "+234 123 456 7890";
+  const navRole = navbarContent.eyebrow || "Photographer";
+  const navLocation = navbarContent.subheading || "Nigeria, Netherlands.";
+  const heroHeading = heroContent.heading || "Photographer";
+  const heroBlurb =
+    heroContent.subheading ||
+    "Capturing timeless moments that tell stories of emotion, beauty, and truth in every frame and every pose.";
+  const introEyebrow = introContent.eyebrow || "Snapify Photography";
+  const introHeadingLeft = introContent.heading || "Capturing";
+  const introHeadingRight = introContent.subheading || "The Moment";
+  const introBody =
+    introContent.body ||
+    `Working with ${data.name || "this studio"}, you get bold portrait direction, cinematic beauty styling, and imagery built to feel striking, polished, and impossible to ignore.`;
+  const aboutHeading = aboutContent.heading || "About";
+  const aboutBody =
+    aboutContent.body ||
+    "We are a fashion-focused creative studio dedicated to delivering refined photography, visual direction, and bold portrait stories with a polished editorial finish.";
+  const aboutDescription =
+    aboutContent.description ||
+    "Specializing in high-end fashion photography and model development through concept-driven visual storytelling. We build imagery with clarity, discipline, and a carefully curated creative process.";
+  const aboutCta = aboutContent.ctaText || "More about me";
+  const worksEyebrow = worksContent.eyebrow || "Selected Portfolio";
+  const worksHeading = worksContent.heading || "My Works";
+  const worksBody =
+    worksContent.body ||
+    "A curated selection of portraits, editorial studies, and visual stories shaped through light, mood, and clean composition.";
+  const worksCta = worksContent.ctaText || "See all projects";
+  const lensHeading = lensContent.heading || "See Through My Lens";
+  const footerHeading =
+    footerContent.heading || "Every Frame Tells a Story; Let's Tell Yours.";
+  const footerEmail =
+    footerContent.email || data.contact?.email || "hello@studio.com";
+  const navItems = asArray(navbarContent.navigationItems, [
+    { label: "Portfolio", link: "#works" },
+    { label: "About me", link: "#about" },
+    { label: "My shots", link: "#works" },
+    { label: "Contact", link: "#contact" },
+  ]);
+  const pageNavFromPages = Array.isArray(data.pages)
+    ? data.pages
+        .filter(
+          (page) =>
+            page &&
+            !page.isHome &&
+            String(page.path || "").trim() &&
+            String(page.path || "").trim() !== "/" &&
+            page.isPublished !== false &&
+            isHeaderNavigationPage(page),
+        )
+        .map((page) => ({
+          label: page.title || "Page",
+          link: String(page.path || "/"),
+          id: `page-${String(page.id ?? page.path)}`,
+        }))
+    : [];
+  void services;
+  void stats;
+  void reviews;
   const indexedContactFields = contactFields.map((field, index) => ({
     field,
     index,
@@ -238,7 +687,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   const contactDescription =
     contactContent.description ||
     "Share your concept, timeline, and the kind of visuals you want to create. We'll shape the right direction for the shoot.";
-  const contactButton = contactContent.buttonLabel || "Send enquiry";
+  const contactButton = contactContent.buttonLabel || "Get in touch";
 
   const scrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId);
@@ -246,8 +695,18 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
   };
 
   return (
+    <TemplatePageShell
+      templateId="photo-studio-pro"
+      data={data}
+      mode="full-template"
+    >
     <Box sx={{ bgcolor: "#f3f3f3", color: "#111", fontFamily: bodyFont }}>
-      <Box
+      <TemplateSectionBoundary
+        blockId={heroContent.blockId}
+        label="Hero"
+        sectionKey="hero"
+        content={heroContent}
+        styleKey="sectionStyle"
         sx={{
           minHeight: { xs: "92vh", md: "100vh" },
           position: { xs: "relative", md: "sticky" },
@@ -258,6 +717,34 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           backgroundSize: "cover",
           backgroundPosition: "center",
           overflow: "hidden",
+        }}
+      >
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          width: 0,
+          height: 0,
+          overflow: "hidden",
+          opacity: 0,
+        }}
+        aria-hidden
+      >
+        {renderEditableMedia({
+          blockId: heroContent.blockId,
+          field: "heroImage",
+          label: "Hero background image",
+          src: heroImage,
+          alt: heroHeading,
+          style: heroContent.heroImageStyle || heroContent.imageStyle,
+          sx: { width: 1, height: 1 },
+        })}
+      </Box>
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          minHeight: { xs: "92vh", md: "100vh" },
         }}
       >
         <Box
@@ -296,21 +783,23 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <Box>
               <Typography
+                {...getEditableTextProps(navbarContent.blockId, "email", "single")}
                 sx={{
                   fontSize: { xs: "1rem", md: "1.05rem" },
                   lineHeight: 1.3,
                 }}
               >
-                {data.contact?.email || "hello@studio.com"}
+                {navEmail}
               </Typography>
               <Typography
+                {...getEditableTextProps(navbarContent.blockId, "phone", "single")}
                 sx={{
                   mt: 0.3,
                   fontSize: { xs: "1rem", md: "1.05rem" },
                   lineHeight: 1.3,
                 }}
               >
-                {data.contact?.phone || "+234 123 456 7890"}
+                {navPhone}
               </Typography>
             </Box>
 
@@ -323,28 +812,46 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <Camera size={20} />
               <Typography
+                {...getEditableTextProps(
+                  navbarContent.blockId,
+                  "brandName",
+                  "single",
+                )}
                 sx={{
                   fontFamily: headingFont,
                   fontSize: "1.05rem",
                   fontWeight: 700,
                 }}
               >
-                TARGET
+                {brandName}
               </Typography>
             </Stack>
 
             <Box sx={{ textAlign: { xs: "left", md: "right" } }}>
-              <Typography sx={{ fontSize: { xs: "1rem", md: "1.05rem" } }}>
-                Photographer
+              <Typography
+                {...getEditableTextProps(
+                  navbarContent.blockId,
+                  "eyebrow",
+                  "single",
+                  "eyebrowStyle",
+                )}
+                sx={{ fontSize: { xs: "1rem", md: "1.05rem" } }}
+              >
+                {navRole}
               </Typography>
               <Typography
+                {...getEditableTextProps(
+                  navbarContent.blockId,
+                  "subheading",
+                  "single",
+                )}
                 sx={{
                   mt: 0.3,
                   fontSize: { xs: "1rem", md: "1.05rem" },
                   color: "rgba(255,255,255,0.78)",
                 }}
               >
-                Nigeria, Netherlands.
+                {navLocation}
               </Typography>
             </Box>
           </Box>
@@ -374,6 +881,12 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   delay: 0.18,
                   ease: [0.22, 1, 0.36, 1],
                 }}
+                {...containerProps(
+                  heroContent.blockId,
+                  "hero.recent-work",
+                  "Recent work card",
+                  "card",
+                )}
                 sx={{
                   width: { xs: 220, md: 260 },
                   p: 1,
@@ -389,30 +902,34 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   },
                 }}
               >
-                <Box
-                  component="img"
-                  src={recentWorkImage}
-                  alt="Recent work"
-                  sx={{
+                {renderEditableMedia({
+                  blockId: heroContent.blockId,
+                  field: "secondaryImage",
+                  label: "Recent work image",
+                  src: recentWorkImage,
+                  alt: "Recent work",
+                  sx: {
                     width: "100%",
                     aspectRatio: "1.1 / 1",
                     objectFit: "cover",
                     borderRadius: 1.3,
                     objectPosition: "top",
-                    transition: "transform 500ms ease",
-                    ".MuiBox-root:hover &": {
-                      transform: "scale(1.04)",
-                    },
-                  }}
-                />
+                    display: "block",
+                  },
+                })}
                 <Typography
+                  {...getEditableTextProps(
+                    heroContent.blockId,
+                    "ctaSecondaryText",
+                    "single",
+                  )}
                   sx={{
                     mt: 1,
                     fontSize: "0.9rem",
                     color: "rgba(255,255,255,0.9)",
                   }}
                 >
-                  Recent Work
+                  {heroContent.ctaSecondaryText || "Recent Work"}
                 </Typography>
               </Box>
             </Box>
@@ -438,14 +955,18 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   }}
                 >
                   <Typography
+                    {...getEditableTextProps(
+                      heroContent.blockId,
+                      "subheading",
+                      "multi",
+                    )}
                     sx={{
                       fontSize: { xs: "1.15rem", md: "1rem" },
                       lineHeight: 1.65,
                       color: "rgba(255,255,255,0.9)",
                     }}
                   >
-                    Capturing timeless moments that tell stories of emotion,
-                    beauty, and truth in every frame and every pose.
+                    {heroBlurb}
                   </Typography>
                 </Box>
               </Box>
@@ -459,6 +980,11 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 }}
               >
                 <Typography
+                  {...getEditableTextProps(
+                    heroContent.blockId,
+                    "heading",
+                    "multi",
+                  )}
                   sx={{
                     fontFamily: headingFont,
                     fontSize: { xs: "4rem", sm: "5.5rem", md: "9.4rem" },
@@ -473,7 +999,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     textShadow: "0 0 28px rgba(255,255,255,0.08)",
                   }}
                 >
-                  Photographer
+                  {heroHeading}
                 </Typography>
               </Box>
             </Box>
@@ -486,47 +1012,68 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               }}
             >
               <Stack spacing={3} sx={{ pt: { md: 8 } }}>
-                {[
-                  { label: "Portfolio", id: "works" },
-                  { label: "About me", id: "about" },
-                  { label: "My shots", id: "works" },
-                  { label: "Contact", id: "contact" },
-                ].map((item, index) => (
-                  <Box
-                    key={item.label}
-                    component={motion.div}
-                    initial={{ opacity: 0, x: 56 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true, amount: 0.9 }}
-                    transition={{
-                      duration: 0.72,
-                      delay: 0.2 + index * 0.1,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
-                  >
-                    <Box
-                      component="button"
-                      type="button"
-                      onClick={() => scrollToSection(item.id)}
-                      sx={{
-                        border: 0,
-                        p: 0,
-                        bgcolor: "transparent",
-                        cursor: "pointer",
-                        color: "#fff",
-                        // textDecoration: "underline",
-                        textUnderlineOffset: "8px",
-                        fontFamily: headingFont,
-                        fontSize: { xs: "1.3rem", md: "1.05rem" },
-                        fontWeight: 500,
-                        textTransform: "uppercase",
-                        letterSpacing: "-0.03em",
-                      }}
-                    >
-                      {item.label}
-                    </Box>
-                  </Box>
-                ))}
+                {[...navItems, ...pageNavFromPages].map(
+                  (item: Record<string, any>, index: number) => {
+                    const link = String(item.link || item.id || "#works");
+                    const isHash = link.startsWith("#") || !link.startsWith("/");
+                    const targetId = link.startsWith("#")
+                      ? link.slice(1)
+                      : item.id || "works";
+                    return (
+                      <Box
+                        key={`${item.label}-${index}`}
+                        component={motion.div}
+                        initial={{ opacity: 0, x: 56 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, amount: 0.9 }}
+                        transition={{
+                          duration: 0.72,
+                          delay: 0.2 + index * 0.1,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                      >
+                        <Box
+                          component={link.startsWith("/") ? "a" : "button"}
+                          type={link.startsWith("/") ? undefined : "button"}
+                          href={
+                            link.startsWith("/")
+                              ? resolveLink(link, siteSlug)
+                              : undefined
+                          }
+                          onClick={
+                            link.startsWith("/")
+                              ? undefined
+                              : () =>
+                                  scrollToSection(
+                                    String(targetId).replace(/^#/, ""),
+                                  )
+                          }
+                          {...getEditableTextProps(
+                            navbarContent.blockId,
+                            `navigationItems.${index}.label`,
+                            "single",
+                          )}
+                          sx={{
+                            border: 0,
+                            p: 0,
+                            bgcolor: "transparent",
+                            cursor: "pointer",
+                            color: "#fff",
+                            textUnderlineOffset: "8px",
+                            fontFamily: headingFont,
+                            fontSize: { xs: "1.3rem", md: "1.05rem" },
+                            fontWeight: 500,
+                            textTransform: "uppercase",
+                            letterSpacing: "-0.03em",
+                            textDecoration: "none",
+                          }}
+                        >
+                          {item.label}
+                        </Box>
+                      </Box>
+                    );
+                  },
+                )}
                 <TemplatePageNavLinks
                   links={pageNavLinks}
                   itemSx={{
@@ -556,20 +1103,28 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             <Stack spacing={1}>
               <Box
                 component="a"
-                href="#"
+                href={data.socialLinks?.instagram || "#"}
+                target="_blank"
+                rel="noreferrer"
+                {...getEditableTextProps(
+                  navbarContent.blockId,
+                  "instagramLabel",
+                  "single",
+                )}
                 sx={{
                   color: "#fff",
                   fontSize: "0.95rem",
                   textDecoration: "none",
                 }}
               >
-                ↗ Instagram
+                {navbarContent.instagramLabel || "↗ Instagram"}
               </Box>
             </Stack>
             <Box sx={{ display: "none" }} />
           </Box>
         </Box>
       </Box>
+      </TemplateSectionBoundary>
 
       <Box
         sx={{
@@ -611,6 +1166,12 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             }}
           >
             <Typography
+              {...getEditableTextProps(
+                introContent.blockId,
+                "eyebrow",
+                "single",
+                "eyebrowStyle",
+              )}
               sx={{
                 textAlign: "center",
                 letterSpacing: { xs: "0.45em", md: "0.9em" },
@@ -621,7 +1182,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 pl: { md: "0.9em" },
               }}
             >
-              Snapify Photography
+              {introEyebrow}
             </Typography>
           </Box>
 
@@ -657,6 +1218,11 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 }}
               >
                 <Typography
+                  {...getEditableTextProps(
+                    introContent.blockId,
+                    "heading",
+                    "multi",
+                  )}
                   sx={{
                     fontFamily:
                       '"Barlow Condensed", "Arial Narrow", sans-serif',
@@ -667,7 +1233,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     textTransform: "uppercase",
                   }}
                 >
-                  Capturing
+                  {introHeadingLeft}
                 </Typography>
               </Box>
 
@@ -761,37 +1327,45 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               </Box>
             </Box>
 
-            <Box
-              component={motion.div}
-              initial={{ opacity: 0, y: 50, scale: 0.94 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, amount: 0.45 }}
-              transition={{
-                duration: 1.05,
-                delay: 0.18,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              sx={{
-                order: { xs: 1, md: 2 },
-                position: "relative",
-                mx: "auto",
-                width: "100%",
-                maxWidth: 560,
-                zIndex: 2,
-              }}
-            >
               <Box
-                component="img"
-                src={showcaseImages.primary}
-                alt="Creative beauty portrait"
-                sx={{
-                  width: "100%",
-                  aspectRatio: { xs: "0.8 / 1", md: "0.76 / 1" },
-                  objectFit: "cover",
-                  display: "block",
+                component={motion.div}
+                initial={{ opacity: 0, y: 50, scale: 0.94 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, amount: 0.45 }}
+                transition={{
+                  duration: 1.05,
+                  delay: 0.18,
+                  ease: [0.22, 1, 0.36, 1],
                 }}
-              />
-            </Box>
+                {...containerProps(
+                  introContent.blockId,
+                  "intro.features.0",
+                  "Intro primary image",
+                  "card",
+                )}
+                sx={{
+                  order: { xs: 1, md: 2 },
+                  position: "relative",
+                  mx: "auto",
+                  width: "100%",
+                  maxWidth: 560,
+                  zIndex: 2,
+                }}
+              >
+                {renderEditableMedia({
+                  blockId: introContent.blockId,
+                  field: "features.0.image",
+                  label: "Intro primary image",
+                  src: introPrimary,
+                  alt: "Creative beauty portrait",
+                  sx: {
+                    width: "100%",
+                    aspectRatio: { xs: "0.8 / 1", md: "0.76 / 1" },
+                    objectFit: "cover",
+                    display: "block",
+                  },
+                })}
+              </Box>
 
             <Box
               sx={{
@@ -826,21 +1400,34 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   boxShadow: "0 24px 70px rgba(0,0,0,0.45)",
                   opacity: 0.88,
                 }}
+                {...containerProps(
+                  introContent.blockId,
+                  "intro.features.1",
+                  "Intro rotated image",
+                  "card",
+                )}
               >
-                <Box
-                  component="img"
-                  src={showcaseImages.secondary}
-                  alt="Pink hair portrait"
-                  sx={{
+                {renderEditableMedia({
+                  blockId: introContent.blockId,
+                  field: "features.1.image",
+                  label: "Intro rotated image",
+                  src: introSecondary,
+                  alt: "Pink hair portrait",
+                  sx: {
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
                     display: "block",
-                  }}
-                />
+                  },
+                })}
               </Box>
 
               <Typography
+                {...getEditableTextProps(
+                  introContent.blockId,
+                  "subheading",
+                  "multi",
+                )}
                 sx={{
                   mt: { xs: 28, md: "auto" },
                   ml: { md: -110 },
@@ -855,7 +1442,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   whiteSpace: { md: "nowrap" },
                 }}
               >
-                The Moment
+                {introHeadingRight}
               </Typography>
 
               <Box
@@ -870,6 +1457,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 }}
               >
                 <Typography
+                  {...getEditableTextProps(introContent.blockId, "body", "multi")}
                   sx={{
                     mt: { xs: 2.5, md: 3 },
                     ml: { md: "auto" },
@@ -879,9 +1467,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     color: "rgba(255,255,255,0.72)",
                   }}
                 >
-                  Working with {data.name}, you get bold portrait direction,
-                  cinematic beauty styling, and imagery built to feel striking,
-                  polished, and impossible to ignore.
+                  {introBody}
                 </Typography>
               </Box>
             </Box>
@@ -900,6 +1486,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
           >
             <Box>
               <Typography
+                {...getEditableTextProps(aboutContent.blockId, "heading", "multi")}
                 sx={{
                   fontFamily: '"Cormorant Garamond", Georgia, serif',
                   fontSize: { xs: "4rem", md: "7.2rem" },
@@ -908,24 +1495,35 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   color: "rgb(255, 255, 255)",
                 }}
               >
-                About
+                {aboutHeading}
               </Typography>
 
               <Box
-                component="img"
-                src={gallery[1]?.url || fallbackImages.introOne}
-                alt="Studio portrait"
-                sx={{
-                  mt: 3,
-                  width: "100%",
-                  aspectRatio: "0.96 / 1",
-                  objectFit: "cover",
-                  display: "block",
-                  animation: `${driftUp} 8s ease-in-out infinite`,
-                }}
-              />
+                {...containerProps(
+                  aboutContent.blockId,
+                  "about.image",
+                  "About image one",
+                )}
+              >
+                {renderEditableMedia({
+                  blockId: aboutContent.blockId,
+                  field: "image",
+                  label: "About image one",
+                  src: aboutImageOne,
+                  alt: "Studio portrait",
+                  sx: {
+                    mt: 3,
+                    width: "100%",
+                    aspectRatio: "0.96 / 1",
+                    objectFit: "cover",
+                    display: "block",
+                    animation: `${driftUp} 8s ease-in-out infinite`,
+                  },
+                })}
+              </Box>
 
               <Typography
+                {...getEditableTextProps(aboutContent.blockId, "body", "multi")}
                 sx={{
                   mt: 3,
                   maxWidth: 350,
@@ -934,15 +1532,19 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   color: "rgb(255, 255, 255)",
                 }}
               >
-                We are a fashion-focused creative studio dedicated to delivering
-                refined photography, visual direction, and bold portrait stories
-                with a polished editorial finish.
+                {aboutBody}
               </Typography>
 
               <Button
                 variant="contained"
                 onClick={() => scrollToSection("works")}
                 endIcon={<ArrowUpRight size={16} />}
+                {...getEditableTextProps(
+                  aboutContent.blockId,
+                  "ctaText",
+                  "single",
+                  "ctaTextStyle",
+                )}
                 sx={{
                   mt: 3,
                   bgcolor: "#fff",
@@ -961,12 +1563,17 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   },
                 }}
               >
-                More about us
+                {aboutCta}
               </Button>
             </Box>
 
             <Box>
               <Typography
+                {...getEditableTextProps(
+                  aboutContent.blockId,
+                  "description",
+                  "multi",
+                )}
                 sx={{
                   maxWidth: 560,
                   ml: { md: "auto" },
@@ -975,13 +1582,15 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   color: "rgb(255, 255, 255)",
                 }}
               >
-                Specializing in high-end fashion photography and model
-                development through concept-driven visual storytelling. We build
-                imagery with clarity, discipline, and a carefully curated
-                creative process.
+                {aboutDescription}
               </Typography>
 
               <Box
+                {...containerProps(
+                  aboutContent.blockId,
+                  "about.features.0",
+                  "About image two",
+                )}
                 sx={{
                   mt: 3.5,
                   position: "relative",
@@ -990,19 +1599,21 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   overflow: "hidden",
                 }}
               >
-                <Box
-                  component="img"
-                  src={gallery[2]?.url || fallbackImages.introTwo}
-                  alt="Editorial portrait"
-                  sx={{
+                {renderEditableMedia({
+                  blockId: aboutContent.blockId,
+                  field: "features.0.image",
+                  label: "About image two",
+                  src: aboutImageTwo,
+                  alt: "Editorial portrait",
+                  sx: {
                     width: { xs: "100%", md: "92%" },
                     height: { xs: 420, md: 860 },
                     ml: { md: "auto" },
                     objectFit: "cover",
                     display: "block",
                     animation: `${driftDown} 10s ease-in-out infinite`,
-                  }}
-                />
+                  },
+                })}
               </Box>
             </Box>
           </Box>
@@ -1017,26 +1628,43 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
               }}
             >
               <Box>
-                <TextReveal
-                  text="Selected Portfolio"
-                  sx={{
-                    fontSize: "0.78rem",
-                    letterSpacing: "0.28em",
-                    textTransform: "uppercase",
-                    color: "rgb(255, 255, 255)",
-                  }}
-                />
-                <Box sx={{ mt: 1, maxWidth: 260 }}>
+                <Box
+                  {...getEditableTextProps(
+                    worksContent.blockId,
+                    "eyebrow",
+                    "single",
+                    "eyebrowStyle",
+                  )}
+                >
                   <TextReveal
-                    text="My Works"
+                    text={worksEyebrow}
                     sx={{
-                      fontFamily: '"Cormorant Garamond", Georgia, serif',
-                      fontSize: { xs: "3rem", md: "5.1rem" },
-                      lineHeight: 0.88,
-                      letterSpacing: "-0.05em",
+                      fontSize: "0.78rem",
+                      letterSpacing: "0.28em",
+                      textTransform: "uppercase",
                       color: "rgb(255, 255, 255)",
                     }}
                   />
+                </Box>
+                <Box sx={{ mt: 1, maxWidth: 260 }}>
+                  <Box
+                    {...getEditableTextProps(
+                      worksContent.blockId,
+                      "heading",
+                      "multi",
+                    )}
+                  >
+                    <TextReveal
+                      text={worksHeading}
+                      sx={{
+                        fontFamily: '"Cormorant Garamond", Georgia, serif',
+                        fontSize: { xs: "3rem", md: "5.1rem" },
+                        lineHeight: 0.88,
+                        letterSpacing: "-0.05em",
+                        color: "rgb(255, 255, 255)",
+                      }}
+                    />
+                  </Box>
                 </Box>
               </Box>
 
@@ -1049,19 +1677,27 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   flexWrap: "wrap",
                 }}
               >
-                <TextReveal
-                  text="A curated selection of portraits, editorial studies, and visual stories shaped through light, mood, and clean composition."
-                  sx={{
-                    maxWidth: 430,
-                    fontSize: { xs: "0.98rem", md: "1rem" },
-                    lineHeight: 1.8,
-                    color: "rgb(255, 255, 255)",
-                  }}
-                />
+                <Box {...getEditableTextProps(worksContent.blockId, "body", "multi")}>
+                  <TextReveal
+                    text={worksBody}
+                    sx={{
+                      maxWidth: 430,
+                      fontSize: { xs: "0.98rem", md: "1rem" },
+                      lineHeight: 1.8,
+                      color: "rgb(255, 255, 255)",
+                    }}
+                  />
+                </Box>
                 <Button
                   variant="contained"
                   onClick={() => scrollToSection("contact")}
                   endIcon={<ArrowUpRight size={16} />}
+                  {...getEditableTextProps(
+                    worksContent.blockId,
+                    "ctaText",
+                    "single",
+                    "ctaTextStyle",
+                  )}
                   sx={{
                     bgcolor: "#fff",
                     color: "#111",
@@ -1079,7 +1715,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     },
                   }}
                 >
-                  Start a project
+                  {worksCta}
                 </Button>
               </Box>
             </Box>
@@ -1095,6 +1731,12 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <FadeIn delay={0.02} direction="up">
                 <Box
+                  {...containerProps(
+                    worksContent.blockId,
+                    "works.features.0",
+                    "Featured work",
+                    "card",
+                  )}
                   sx={{
                     position: "relative",
                     overflow: "hidden",
@@ -1102,21 +1744,22 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     bgcolor: "#fff",
                   }}
                 >
-                  <Box
-                    component="img"
-                    src={
-                      portfolioItems[0]?.image || fallbackImages.collageThree
-                    }
-                    alt={portfolioItems[0]?.title || "Featured work"}
-                    sx={{
+                  {renderEditableMedia({
+                    blockId: worksContent.blockId,
+                    field: "features.0.image",
+                    label: "Featured work image",
+                    src:
+                      portfolioItems[0]?.image || fallbackImages.collageThree,
+                    alt: portfolioItems[0]?.title || "Featured work",
+                    sx: {
                       width: "100%",
                       height: { xs: 420, md: 700 },
                       objectFit: "cover",
                       display: "block",
                       transition: "transform 500ms ease",
                       "&:hover": { transform: "scale(1.04)" },
-                    }}
-                  />
+                    },
+                  })}
                   <Box
                     sx={{
                       position: "absolute",
@@ -1126,8 +1769,9 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       p: { xs: 2, md: 3 },
                       background:
                         "linear-gradient(180deg, rgba(0,0,0,0.04) 28%, rgba(0,0,0,0.6) 100%)",
+                      pointerEvents: "none",
                     }}
-                  ></Box>
+                  />
                 </Box>
               </FadeIn>
 
@@ -1138,11 +1782,13 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       portfolioItems[1]?.image || fallbackImages.collageOne,
                     title: portfolioItems[1]?.title || "Editorial Figure",
                     height: { xs: 300, md: 430 },
+                    index: 1,
                   },
                   {
                     image: portfolioItems[2]?.image || fallbackImages.introOne,
                     title: portfolioItems[2]?.title || "Soft Motion",
                     height: { xs: 260, md: 250 },
+                    index: 2,
                   },
                 ].map((item, index) => (
                   <FadeIn
@@ -1151,6 +1797,12 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     direction="up"
                   >
                     <Box
+                      {...containerProps(
+                        worksContent.blockId,
+                        `works.features.${item.index}`,
+                        item.title,
+                        "card",
+                      )}
                       sx={{
                         position: "relative",
                         overflow: "hidden",
@@ -1158,19 +1810,21 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         bgcolor: "#fff",
                       }}
                     >
-                      <Box
-                        component="img"
-                        src={item.image}
-                        alt={item.title}
-                        sx={{
+                      {renderEditableMedia({
+                        blockId: worksContent.blockId,
+                        field: `features.${item.index}.image`,
+                        label: `${item.title} image`,
+                        src: item.image,
+                        alt: item.title,
+                        sx: {
                           width: "100%",
                           height: item.height,
                           objectFit: "cover",
                           display: "block",
                           transition: "transform 500ms ease",
                           "&:hover": { transform: "scale(1.05)" },
-                        }}
-                      />
+                        },
+                      })}
                     </Box>
                   </FadeIn>
                 ))}
@@ -1183,11 +1837,13 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       portfolioItems[3]?.image || fallbackImages.collageFour,
                     title: portfolioItems[3]?.title || "Studio Mood",
                     height: { xs: 260, md: 250 },
+                    index: 3,
                   },
                   {
                     image: portfolioItems[4]?.image || fallbackImages.story,
                     title: portfolioItems[4]?.title || "Portrait Form",
                     height: { xs: 360, md: 430 },
+                    index: 4,
                   },
                 ].map((item, index) => (
                   <FadeIn
@@ -1196,6 +1852,12 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     direction="up"
                   >
                     <Box
+                      {...containerProps(
+                        worksContent.blockId,
+                        `works.features.${item.index}`,
+                        item.title,
+                        "card",
+                      )}
                       sx={{
                         position: "relative",
                         overflow: "hidden",
@@ -1203,19 +1865,21 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         bgcolor: "#fff",
                       }}
                     >
-                      <Box
-                        component="img"
-                        src={item.image}
-                        alt={item.title}
-                        sx={{
+                      {renderEditableMedia({
+                        blockId: worksContent.blockId,
+                        field: `features.${item.index}.image`,
+                        label: `${item.title} image`,
+                        src: item.image,
+                        alt: item.title,
+                        sx: {
                           width: "100%",
                           height: item.height,
                           objectFit: "cover",
                           display: "block",
                           transition: "transform 500ms ease",
                           "&:hover": { transform: "scale(1.05)" },
-                        }}
-                      />
+                        },
+                      })}
                     </Box>
                   </FadeIn>
                 ))}
@@ -1263,15 +1927,21 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               <FadeIn direction="up">
                 <Box>
-                  <TextReveal
-                    text="Let's Work Together"
+                  <Typography
+                    {...getEditableTextProps(
+                      contactContent.blockId,
+                      "eyebrow",
+                      "single",
+                    )}
                     sx={{
                       fontSize: "0.8rem",
                       letterSpacing: "0.28em",
                       textTransform: "uppercase",
                       color: "rgba(255,255,255,0.58)",
                     }}
-                  />
+                  >
+                    {contactContent.eyebrow || "Let's Work Together"}
+                  </Typography>
                   <Box
                     {...getEditableTextProps(
                       contactContent.blockId,
@@ -1320,22 +1990,51 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   </Box>
 
                   <Stack spacing={1.1} sx={{ mt: 3 }}>
-                    {[
-                      data.contact?.email || "hello@studio.com",
-                      data.contact?.phone || "+1 (555) 220 1188",
-                      data.contact?.address ||
-                        "245 Mercer Street, New York, NY",
-                    ].map((item) => (
-                      <Typography
-                        key={item}
-                        sx={{
-                          color: "rgba(255,255,255,0.84)",
-                          fontSize: "0.95rem",
-                        }}
-                      >
-                        {item}
-                      </Typography>
-                    ))}
+                    <Typography
+                      {...getEditableTextProps(
+                        contactContent.blockId,
+                        "email",
+                        "single",
+                      )}
+                      sx={{
+                        color: "rgba(255,255,255,0.84)",
+                        fontSize: "0.95rem",
+                      }}
+                    >
+                      {contactContent.email ||
+                        data.contact?.email ||
+                        "hello@studio.com"}
+                    </Typography>
+                    <Typography
+                      {...getEditableTextProps(
+                        contactContent.blockId,
+                        "phone",
+                        "single",
+                      )}
+                      sx={{
+                        color: "rgba(255,255,255,0.84)",
+                        fontSize: "0.95rem",
+                      }}
+                    >
+                      {contactContent.phone ||
+                        data.contact?.phone ||
+                        "+1 (555) 220 1188"}
+                    </Typography>
+                    <Typography
+                      {...getEditableTextProps(
+                        contactContent.blockId,
+                        "address",
+                        "single",
+                      )}
+                      sx={{
+                        color: "rgba(255,255,255,0.84)",
+                        fontSize: "0.95rem",
+                      }}
+                    >
+                      {contactContent.address ||
+                        data.contact?.address ||
+                        "245 Mercer Street, New York, NY"}
+                    </Typography>
                   </Stack>
                 </Box>
               </FadeIn>
@@ -1510,13 +2209,14 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         }}
       >
         <Typography
+          {...getEditableTextProps(lensContent.blockId, "heading", "multi")}
           sx={{
             fontFamily: headingFont,
             fontSize: "1.7rem",
             letterSpacing: "-0.04em",
           }}
         >
-          See Through My Lens
+          {lensHeading}
         </Typography>
         <Box
           sx={{
@@ -1526,31 +2226,48 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             gap: 1,
           }}
         >
-          {[
-            gallery[6]?.url || fallbackImages.collageOne,
-            gallery[7]?.url || fallbackImages.collageTwo,
-            gallery[8]?.url || fallbackImages.collageThree,
-            gallery[9]?.url || fallbackImages.collageFour,
-            gallery[10]?.url || fallbackImages.introOne,
-            gallery[11]?.url || fallbackImages.introTwo,
-            gallery[12]?.url || fallbackImages.service,
-            gallery[13]?.url || fallbackImages.story,
-            gallery[14]?.url || fallbackImages.collageOne,
-            gallery[15]?.url || fallbackImages.collageTwo,
-          ].map((image, index) => (
-            <Box
-              key={image + index}
-              component="img"
-              src={image}
-              alt="Lens work"
-              sx={{
-                width: "100%",
-                aspectRatio: index % 3 === 0 ? "0.8 / 1.1" : "1 / 1",
-                objectFit: "cover",
-                borderRadius: 1.5,
-              }}
-            />
-          ))}
+          {(lensFeatures.length
+            ? lensFeatures
+            : [
+                { image: fallbackImages.collageOne },
+                { image: fallbackImages.collageTwo },
+                { image: fallbackImages.collageThree },
+                { image: fallbackImages.collageFour },
+                { image: fallbackImages.introOne },
+                { image: fallbackImages.introTwo },
+                { image: fallbackImages.service },
+                { image: fallbackImages.story },
+                { image: fallbackImages.collageOne },
+                { image: fallbackImages.collageTwo },
+              ]
+          )
+            .slice(0, 10)
+            .map((item: Record<string, any>, index: number) => (
+              <Box
+                key={`lens-${index}`}
+                {...containerProps(
+                  lensContent.blockId,
+                  `lens.features.${index}`,
+                  item.title || `Lens ${index + 1}`,
+                  "card",
+                )}
+              >
+                {renderEditableMedia({
+                  blockId: lensContent.blockId,
+                  field: `features.${index}.image`,
+                  label: `Lens image ${index + 1}`,
+                  src: item.image || fallbackImages.collageOne,
+                  alt: item.title || "Lens work",
+                  sx: {
+                    width: "100%",
+                    aspectRatio: index % 3 === 0 ? "0.8 / 1.1" : "1 / 1",
+                    objectFit: "cover",
+                    borderRadius: 1.5,
+                    display: "block",
+                  },
+                })}
+              </Box>
+            ))}
         </Box>
       </Box>
 
@@ -1569,6 +2286,7 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         >
           <Box>
             <Typography
+              {...getEditableTextProps(footerContent.blockId, "heading", "multi")}
               sx={{
                 fontFamily: headingFont,
                 fontSize: { xs: "2rem", md: "3rem" },
@@ -1576,9 +2294,16 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                 letterSpacing: "-0.05em",
               }}
             >
-              Every Frame Tells a Story;
-              <br />
-              Let&apos;s Tell Yours.
+              {footerHeading.includes(";") ? (
+                <>
+                  {footerHeading.split(";")[0]};
+                  <br />
+                  {footerHeading.split(";").slice(1).join(";").trim() ||
+                    "Let's Tell Yours."}
+                </>
+              ) : (
+                footerHeading
+              )}
             </Typography>
             <Button
               variant="contained"
@@ -1598,22 +2323,28 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
             >
               Book now
             </Button>
-            <Typography sx={{ mt: 4, fontSize: "1.35rem", color: "#ff7a1a" }}>
-              {data.contact?.email || "hello@studio.com"}
+            <Typography
+              {...getEditableTextProps(footerContent.blockId, "email", "single")}
+              sx={{ mt: 4, fontSize: "1.35rem", color: "#ff7a1a" }}
+            >
+              {footerEmail}
             </Typography>
           </Box>
 
           <Box sx={{ textAlign: { xs: "left", md: "right" } }}>
             <Typography
+              {...getEditableTextProps(footerContent.blockId, "body", "multi")}
               sx={{
                 fontSize: "0.8rem",
                 color: "rgba(255,255,255,0.66)",
                 lineHeight: 1.9,
+                whiteSpace: "pre-line",
               }}
             >
-              {data.contact?.phone || "+1 (555) 220 1188"}
-              <br />
-              {data.contact?.address || "245 Mercer Street, New York, NY"}
+              {footerContent.body ||
+                `${data.contact?.phone || "+1 (555) 220 1188"}\n${
+                  data.contact?.address || "245 Mercer Street, New York, NY"
+                }`}
             </Typography>
             <Stack
               direction="row"
@@ -1654,7 +2385,8 @@ const PortfolioPhotoStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
         </Box>
       </Box>
     </Box>
+    </TemplatePageShell>
   );
 };
 
-export default PortfolioPhotoStudioTemplate;
+export default PhotoStudioProTemplate;

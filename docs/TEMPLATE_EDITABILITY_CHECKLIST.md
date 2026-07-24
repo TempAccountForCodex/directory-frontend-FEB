@@ -93,6 +93,17 @@ Use this checklist before adding or updating any landing template.
 - Reusing an existing persisted field is allowed only when it belongs to the same visual content group. Do not map a second visual subsection to another subsection's `features[]`, `items[]`, `body`, or similar fields just to force save/live preview behavior.
 - Any user-visible content/media without current schema support must be added to the backend follow-up list instead of being treated as complete.
 
+## Template Link Validation Rule
+
+All template default CTA/link fields that are included in the creation payload must be valid backend `url-or-path` values. Do not use empty strings, placeholder text, raw labels, or unsupported schemes. Prefer internal paths like `/contact`, `/about`, `/services`, or `/booking`. If a link is optional and empty values are not accepted by backend validation, omit the field instead of sending an empty string. Before adding a new template, validate all CTA fields in HERO, CTA, NAVBAR, FOOTER, CONTACT, SERVICES, and FEATURE blocks.
+
+- Do not seed `tel:` or `mailto:` in creation-payload link fields unless backend `url-or-path` explicitly allows them.
+- Phone/email may remain as display text; build `tel:`/`mailto:` at render time only if needed.
+
+## Required Nested Content Rule
+
+All template default array items must include every backend-required field. For FEATURES blocks, each `content.features[]` item must include a non-empty `title` and `description`. AI-generated content must not replace a complete default item with an incomplete item. When AI output omits required nested fields, merge it over defaults and preserve required fallback values.
+
 ## Structured Schema Checklist
 
 - Audit templates by section/block and reusable content group, not by arbitrary DOM node.
