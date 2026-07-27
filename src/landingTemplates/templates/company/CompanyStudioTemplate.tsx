@@ -103,6 +103,65 @@ const heroStagger = {
 
 const smoothEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
+/**
+ * HERO blocks persist `headingFontSize: "default"` (a preset token). If that
+ * value lands in `headingStyle.fontSize`, CSS gets an invalid size and the
+ * title falls back to body text after website creation. Keep only real CSS
+ * font-size values so template defaults remain.
+ */
+const NON_CSS_FONT_SIZE_TOKENS = new Set([
+  "default",
+  "large",
+  "xl",
+  "display",
+  "custom",
+  "small",
+  "medium",
+  "auto",
+  "none",
+  "inherit",
+  "initial",
+  "unset",
+]);
+
+const isCssFontSizeValue = (value: unknown): boolean => {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return true;
+  }
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return Object.values(value as Record<string, unknown>).some((entry) =>
+      isCssFontSizeValue(entry),
+    );
+  }
+  if (typeof value !== "string") {
+    return false;
+  }
+  const trimmed = value.trim();
+  if (!trimmed || NON_CSS_FONT_SIZE_TOKENS.has(trimmed.toLowerCase())) {
+    return false;
+  }
+  return (
+    /^-?[\d.]+(px|rem|em|%|vh|vw|ch|ex)$/i.test(trimmed) ||
+    /^clamp\(/i.test(trimmed) ||
+    /^calc\(/i.test(trimmed) ||
+    /^var\(/i.test(trimmed)
+  );
+};
+
+const sanitizeEditableTextStyle = (
+  style: Record<string, any> | undefined | null,
+): Record<string, any> => {
+  if (!style || typeof style !== "object" || Array.isArray(style)) {
+    return {};
+  }
+  if (isCssFontSizeValue(style.fontSize)) {
+    return style;
+  }
+  const next = { ...style };
+  delete next.fontSize;
+  return next;
+};
+
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 32, filter: "blur(10px)" },
   show: {
@@ -756,7 +815,9 @@ export const CompanyStudioTemplateFooter: React.FC<TemplateChromeProps> = ({
                     letterSpacing: "-0.07em",
                     fontWeight: 800,
                     mb: 2.5,
-                    ...(contactContent.headingStyle || {}),
+                    ...(contactContent.headingStyle
+                      ? sanitizeEditableTextStyle(contactContent.headingStyle)
+                      : {}),
                   }}
                 >
                   {contactContent.heading || "Drop us a line."}
@@ -992,6 +1053,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
     "Contact";
   const aboutHeading =
     aboutContent.heading ||
+    aboutContent.title ||
     "Driving innovation and excellence for corporate success worldwide.";
   const aboutBody =
     aboutContent.body ||
@@ -1923,7 +1985,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   fontWeight: 800,
                   color: palette.ink,
                   maxWidth: 880,
-                  ...(section.headingStyle || {}),
+                  ...(sanitizeEditableTextStyle(section.headingStyle)),
                 }}
               >
                 {section.heading}
@@ -2210,6 +2272,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                   variants={fadeUp}
                   data-editable="heading"
                   data-edit-type="single"
+                  data-edit-style-key="headingStyle"
                   data-block-id={overviewBlockId}
                   sx={{
                     fontFamily: headingFont,
@@ -2219,7 +2282,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     fontWeight: 800,
                     color: palette.white,
                     maxWidth: 880,
-                    ...(homeContent.headingStyle || {}),
+                    ...sanitizeEditableTextStyle(homeContent.headingStyle),
                   }}
                 >
                   {heroHeading}
@@ -2681,6 +2744,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                     <Typography
                       data-editable="heading"
                       data-edit-type="single"
+                      data-edit-style-key="headingStyle"
                       data-block-id={aboutBlockId}
                       sx={{
                         mt: 2.3,
@@ -2690,7 +2754,7 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         letterSpacing: "-0.07em",
                         fontWeight: 800,
                         maxWidth: 620,
-                        ...(aboutContent.headingStyle || {}),
+                        ...sanitizeEditableTextStyle(aboutContent.headingStyle),
                       }}
                     >
                       {aboutHeading}
@@ -2892,7 +2956,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         letterSpacing: "-0.07em",
                         fontWeight: 800,
                         maxWidth: 480,
-                        ...(featuresContent.headingStyle || {}),
+                        ...(sanitizeEditableTextStyle(
+                          featuresContent.headingStyle,
+                        )),
                       }}
                     >
                       {whyHeading}
@@ -3070,7 +3136,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                         letterSpacing: "-0.07em",
                         fontWeight: 800,
                         maxWidth: 680,
-                        ...(processContent.headingStyle || {}),
+                        ...(sanitizeEditableTextStyle(
+                          processContent.headingStyle,
+                        )),
                       }}
                     >
                       {processHeading}
@@ -3654,7 +3722,9 @@ const CompanyStudioTemplate: React.FC<TemplateProps> = ({ data }) => {
                       letterSpacing: "-0.07em",
                       fontWeight: 800,
                       mb: 2.5,
-                      ...(contactContent.headingStyle || {}),
+                      ...(sanitizeEditableTextStyle(
+                        contactContent.headingStyle,
+                      )),
                     }}
                   >
                     {contactContent.heading || "Drop us a line."}

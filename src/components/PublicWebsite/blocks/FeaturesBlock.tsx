@@ -19,7 +19,7 @@ import {
   Stack,
 } from "@mui/material";
 import { BlockWrapper } from "../BlockWrapper";
-import { getIconComponent } from "../utils/iconMap";
+import { renderSavedIcon } from "../../IconLibrary";
 import AnimatedList from "../utils/AnimatedList";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -46,7 +46,7 @@ interface FeaturesBlockProps {
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 /**
- * FeatureIcon — renders a coloured avatar with the mapped MUI icon.
+ * FeatureIcon — coloured avatar with Icon Library / legacy icon values.
  * Returns null when no icon name is provided.
  */
 const FeatureIcon: React.FC<{
@@ -56,7 +56,6 @@ const FeatureIcon: React.FC<{
   mb?: number;
 }> = memo(({ icon, bgcolor, size, mb = 2 }) => {
   if (!icon) return null;
-  const IconComponent = getIconComponent(icon);
   return (
     <Avatar
       sx={{
@@ -65,9 +64,10 @@ const FeatureIcon: React.FC<{
         height: size,
         mb,
         flexShrink: 0,
+        color: "#fff",
       }}
     >
-      <IconComponent />
+      {renderSavedIcon({ value: icon, size: Math.max(14, Math.round(size * 0.45)) })}
     </Avatar>
   );
 });
@@ -284,15 +284,13 @@ const BadgesVariant: React.FC<{
                   justifyContent: "center",
                 }}
               >
-                {feature.icon &&
-                  (() => {
-                    const IconComponent = getIconComponent(feature.icon);
-                    return (
-                      <IconComponent
-                        sx={{ fontSize: 20, color: primaryColor }}
-                      />
-                    );
-                  })()}
+                {feature.icon
+                  ? renderSavedIcon({
+                      value: feature.icon,
+                      size: 20,
+                      color: primaryColor,
+                    })
+                  : null}
                 <Typography
                   variant="body2"
                   component="span"

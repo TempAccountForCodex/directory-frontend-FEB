@@ -201,7 +201,16 @@ const TemplateEngine: React.FC<TemplateEngineProps> = ({
       };
 
       assign("fontFamily", patch.fontFamily);
-      assign("fontSize", patch.fontSize);
+      // Responsive MUI fontSize objects must not be String()'d — that yields
+      // "[object Object]" and clears a valid cascade size on public sites.
+      if (
+        patch.fontSize !== undefined &&
+        patch.fontSize !== null &&
+        patch.fontSize !== "" &&
+        (typeof patch.fontSize === "string" || typeof patch.fontSize === "number")
+      ) {
+        assign("fontSize", patch.fontSize);
+      }
       assign("color", patch.color);
       assign("backgroundColor", patch.backgroundColor);
       assign("fontWeight", patch.fontWeight);

@@ -10,6 +10,8 @@ const COMPANY_TEMPLATE_IDS = new Set([
   "gardening-pro",
   "plumbing-pro",
   "photo-studio-pro",
+  "link-hub-pro",
+  "link-hub-dark-pro",
 ]);
 const THEME_EDITOR_FONT = '"Poppins", "Inter", sans-serif';
 

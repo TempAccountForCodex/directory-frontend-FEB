@@ -537,7 +537,7 @@ const PHOTO_STUDIO_DATA: BusinessData = {
     {
       title: "Street Mood",
       image: photoStudioProAssets.malePortrait,
-    },
+     },
   ],
 };
 
@@ -1320,6 +1320,109 @@ const buildPhotoStudioProPreviewData = (): BusinessData => {
 
 const PHOTO_STUDIO_PRO_DATA: BusinessData = buildPhotoStudioProPreviewData();
 
+const buildCompanyExecutivePreviewData = (): BusinessData => {
+  const website = {
+    name: "Atelier North",
+    slug: "company-executive",
+    primaryColor: "#124d4e",
+    secondaryColor: "#ececec",
+  };
+  const seededPages = buildFrontendTemplateEditorPages(
+    "company-executive",
+    website,
+  );
+  const previewData = buildTemplatePreviewBusinessData(
+    "company-executive",
+    website,
+    seededPages,
+  );
+  if (!previewData) {
+    return { ...COMPANY_DATA };
+  }
+  const templateContent = {
+    ...((previewData.templateContent as Record<string, unknown>) || {}),
+  };
+  delete templateContent.__editorSectionVisibility;
+  templateContent.__editorSectionVisibilityAuthoritative = false;
+  return {
+    ...previewData,
+    templateContent,
+  } as BusinessData;
+};
+
+const COMPANY_EXECUTIVE_DATA: BusinessData = buildCompanyExecutivePreviewData();
+
+const buildLinkHubProPreviewData = (): BusinessData => {
+  const website = {
+    name: "Alex Rivera",
+    slug: "link-hub-pro",
+    primaryColor: "#7C5CFF",
+    secondaryColor: "#F7F5FF",
+  };
+  const seededPages = buildFrontendTemplateEditorPages("link-hub-pro", website);
+  const previewData = buildTemplatePreviewBusinessData(
+    "link-hub-pro",
+    website,
+    seededPages,
+  );
+  if (!previewData) {
+    return {
+      name: "Alex Rivera",
+      tagline: "@alexcreates",
+      description: "Creator, designer, and builder of calm digital products.",
+      primaryColor: "#7C5CFF",
+    };
+  }
+  const templateContent = {
+    ...((previewData.templateContent as Record<string, unknown>) || {}),
+  };
+  delete templateContent.__editorSectionVisibility;
+  templateContent.__editorSectionVisibilityAuthoritative = false;
+  return {
+    ...previewData,
+    templateContent,
+  } as BusinessData;
+};
+
+const LINK_HUB_PRO_DATA: BusinessData = buildLinkHubProPreviewData();
+
+const buildLinkHubDarkProPreviewData = (): BusinessData => {
+  const website = {
+    name: "Studio North",
+    slug: "link-hub-dark-pro",
+    primaryColor: "#FFFFFF",
+    secondaryColor: "#111111",
+  };
+  const seededPages = buildFrontendTemplateEditorPages(
+    "link-hub-dark-pro",
+    website,
+  );
+  const previewData = buildTemplatePreviewBusinessData(
+    "link-hub-dark-pro",
+    website,
+    seededPages,
+  );
+  if (!previewData) {
+    return {
+      name: "Studio North",
+      tagline: "@studionorth",
+      description: "Creator studio · products, drops, and collaborations.",
+      primaryColor: "#FFFFFF",
+    };
+  }
+  const templateContent = {
+    ...((previewData.templateContent as Record<string, unknown>) || {}),
+  };
+  delete templateContent.__editorSectionVisibility;
+  templateContent.__editorSectionVisibilityAuthoritative = false;
+  return {
+    ...previewData,
+    templateContent,
+  } as BusinessData;
+};
+
+const LINK_HUB_DARK_PRO_DATA: BusinessData = buildLinkHubDarkProPreviewData();
+
 // ─── Template slug → data mapping ─────────────────────────────────────────────
 
 const TEMPLATE_DATA_MAP: Record<
@@ -1341,6 +1444,14 @@ const TEMPLATE_DATA_MAP: Record<
     templateId: "photo-studio-pro",
     data: PHOTO_STUDIO_PRO_DATA,
   },
+  "link-hub-pro": {
+    templateId: "link-hub-pro",
+    data: LINK_HUB_PRO_DATA,
+  },
+  "link-hub-dark-pro": {
+    templateId: "link-hub-dark-pro",
+    data: LINK_HUB_DARK_PRO_DATA,
+  },
   "store-basic": { templateId: "store-basic", data: STORE_DATA },
   "store-premium": { templateId: "store-premium", data: STORE_PREMIUM_DATA },
   "store-performance": {
@@ -1357,7 +1468,10 @@ const TEMPLATE_DATA_MAP: Record<
   },
   company: { templateId: "company", data: COMPANY_DATA },
   "company-premium": { templateId: "company-premium", data: COMPANY_DATA },
-  "company-executive": { templateId: "company-executive", data: COMPANY_DATA },
+  "company-executive": {
+    templateId: "company-executive",
+    data: COMPANY_EXECUTIVE_DATA,
+  },
   "company-pro": { templateId: "company-pro", data: COMPANY_PRO_DATA },
   "education-pro": { templateId: "education-pro", data: EDUCATION_PRO_DATA },
   "gardening-pro": { templateId: "gardening-pro", data: GARDENING_PRO_DATA },
@@ -1407,6 +1521,10 @@ const TEMPLATE_GROUPS = [
   {
     label: "Plumbing",
     slugs: ["plumbing-pro"],
+  },
+  {
+    label: "Creator",
+    slugs: ["link-hub-pro", "link-hub-dark-pro"],
   },
 ];
 
@@ -1668,10 +1786,19 @@ const PreviewBar: React.FC<{
   onDeviceChange: (device: PreviewDevice) => void;
 }> = ({ slug, device, onDeviceChange }) => {
   const navigate = useNavigate();
+  const activeChipRef = React.useRef<HTMLDivElement | null>(null);
   const industryKeys = getIndustryKeys();
   const industryLabelMap = new Map(
     industryKeys.map((key) => [key.toLowerCase(), key]),
   );
+
+  React.useEffect(() => {
+    activeChipRef.current?.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [slug]);
 
   return (
     <Box
@@ -1689,7 +1816,8 @@ const PreviewBar: React.FC<{
         gap: 2,
         px: { xs: 2, md: 3 },
         py: 1,
-        flexWrap: "wrap",
+        flexWrap: "nowrap",
+        overflow: "hidden",
         minHeight: 48,
       }}
     >
@@ -1752,22 +1880,15 @@ const PreviewBar: React.FC<{
         spacing={1.5}
         useFlexGap
         sx={{
-          // On small screens the chip groups don't fit — scroll horizontally
-          // instead of wrapping and getting clipped. Desktop keeps wrapping.
-          flexWrap: { xs: "nowrap", md: "wrap" },
-          overflowX: { xs: "auto", md: "visible" },
+          flexWrap: "nowrap",
+          overflowX: "auto",
           flexGrow: 1,
-          flexBasis: { xs: "100%", md: "auto" },
           minWidth: 0,
           alignItems: "center",
-          pb: { xs: 0.5, md: 0 },
           WebkitOverflowScrolling: "touch",
-          scrollbarWidth: "thin",
-          "&::-webkit-scrollbar": { height: 4 },
-          "&::-webkit-scrollbar-thumb": {
-            backgroundColor: "rgba(255,255,255,0.2)",
-            borderRadius: 4,
-          },
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          "&::-webkit-scrollbar": { display: "none" },
         }}
       >
         {TEMPLATE_GROUPS.map((group) => (
@@ -1816,24 +1937,27 @@ const PreviewBar: React.FC<{
                               ? "Performance"
                               : shortLabel.charAt(0).toUpperCase() +
                                 shortLabel.slice(1));
+              const isActive = s === slug;
 
               return (
                 <Chip
                   key={s}
                   label={chipLabel}
                   size="small"
+                  ref={isActive ? activeChipRef : undefined}
                   onClick={() =>
                     navigate(`/landing-preview/${s}`, { replace: true })
                   }
                   sx={{
-                    bgcolor: s === slug ? "#378C92" : "rgba(255,255,255,0.08)",
-                    color: s === slug ? "#fff" : "rgba(255,255,255,0.55)",
-                    fontWeight: s === slug ? 700 : 400,
+                    bgcolor: isActive ? "#378C92" : "rgba(255,255,255,0.08)",
+                    color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
+                    fontWeight: isActive ? 700 : 400,
                     cursor: "pointer",
                     flexShrink: 0,
                     "&:hover": {
-                      bgcolor:
-                        s === slug ? "#378C92" : "rgba(255,255,255,0.15)",
+                      bgcolor: isActive
+                        ? "#378C92"
+                        : "rgba(255,255,255,0.15)",
                     },
                     fontSize: "0.7rem",
                   }}
@@ -2666,7 +2790,7 @@ const LandingPreview: React.FC = () => {
     <>
       <PreviewBar slug={slug} device={device} onDeviceChange={setDevice} />
       {device === "desktop" ? (
-        <Box sx={{ pt: "48px" }}>
+        <Box sx={{ pt: { xs: 0, md: "48px" } }}>
           <TemplateEngine templateId={templateId} data={data} />
         </Box>
       ) : (

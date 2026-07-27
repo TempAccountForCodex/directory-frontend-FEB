@@ -16,6 +16,8 @@ import { educationProAssets } from "../landingTemplates/assets/education/educati
 import { gardeningProAssets } from "../landingTemplates/assets/gardening/gardening-pro/index";
 import { plumbingProAssets } from "../landingTemplates/assets/plumbing/plumbing-pro/index";
 import { photoStudioProAssets } from "../landingTemplates/assets/portfolio/photo-studio-pro";
+import { linkHubProAssets } from "../landingTemplates/assets/link-hub/link-hub-pro";
+import { linkHubDarkProAssets } from "../landingTemplates/assets/link-hub/link-hub-dark-pro";
 
 export type TemplateThemeSettings = {
   primaryColor?: string;
@@ -113,6 +115,8 @@ const LOCAL_TEMPLATE_EDITOR_IDS = new Set([
   "gardening-pro",
   "plumbing-pro",
   "photo-studio-pro",
+  "link-hub-pro",
+  "link-hub-dark-pro",
   "education",
   "gardening",
   "plumbing",
@@ -128,9 +132,11 @@ const FALLBACK_SECTION_KEY_MAP: Record<string, Record<string, string>> = {
   "company-executive": {
     HERO: "overview",
     ABOUT: "about",
+    TEXT: "about",
     FEATURES: "why-us",
     PROCESS: "process",
     CONTACT: "contact",
+    NAVBAR: "navbar",
   },
 };
 
@@ -171,6 +177,24 @@ const inferFrontendTemplateIdFromBlocks = (
   if (
     typeof heroStyle === "string" &&
     heroStyle.trim().toLowerCase() === "executive"
+  ) {
+    return "company-executive";
+  }
+
+  // Recover company-executive when style was omitted but section markers exist.
+  const sectionKeys = new Set(
+    blocks
+      .map((block) =>
+        typeof block?.content?.editorSection === "string"
+          ? block.content.editorSection.trim()
+          : "",
+      )
+      .filter(Boolean),
+  );
+  if (
+    sectionKeys.has("overview") &&
+    sectionKeys.has("why-us") &&
+    sectionKeys.has("process-details")
   ) {
     return "company-executive";
   }
@@ -640,8 +664,16 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           label: "Header",
           blockType: "NAVBAR",
           optional: true,
-          buildContent: () => ({
+          buildContent: (data) => ({
+            brandName: data.name || "Atelier North",
             contactPrimaryText: "Drop us a line.",
+            navigationItems: [
+              { label: "Overview", link: "#overview" },
+              { label: "About", link: "#about" },
+              { label: "Why Us", link: "#why-us" },
+              { label: "Process", link: "#process" },
+              { label: "Contact", link: "#contact" },
+            ],
             navLabels: {
               overview: "Overview",
               about: "About",
@@ -656,11 +688,23 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           label: "Overview",
           blockType: "HERO",
           buildContent: (data) => ({
-            heading: data.tagline || "Delivering Trusted Solutions",
-            subheading: data.description || "",
-            ctaText: "Contact Us",
-            ctaLink: "#contact",
+            style: "executive",
+            heading:
+              data.tagline || "Interior studio workplace projects",
+            subheading: "",
+            ctaText: "Explore services",
+            ctaLink: "#about",
+            secondaryCtaText: "Contact",
             eyebrow: "Trusted business partner",
+            heroImage: companyStudioAssets.heroPortrait,
+            image: companyStudioAssets.heroPortrait,
+            // Persist hero title scale so public/created sites keep template size.
+            headingStyle: {
+              fontSize: { xs: "3rem", md: "6.7rem" },
+              lineHeight: { xs: 0.94, md: 0.88 },
+              letterSpacing: "-0.08em",
+              fontWeight: 800,
+            },
             socialProof: {
               label: "Trusted business partner",
               value: "100+ happy customers.",
@@ -692,9 +736,21 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
           blockType: "TEXT",
           buildContent: (data) => ({
             eyebrow: "Get to know us",
+            // Canonical editable field for CompanyStudioTemplate + TEXT blocks.
+            heading:
+              "Driving innovation and excellence for corporate success worldwide.",
             title:
               "Driving innovation and excellence for corporate success worldwide.",
-            body: data.description || data.tagline || "",
+            body:
+              data.description ||
+              "Built to showcase business services, executive credibility, and client confidence in a clearer and more professional way.",
+            image: companyStudioAssets.strategy,
+            headingStyle: {
+              fontSize: { xs: "2.35rem", md: "4.1rem" },
+              lineHeight: 0.96,
+              letterSpacing: "-0.07em",
+              fontWeight: 800,
+            },
             detailGroups: [
               {
                 title: "What we build",
@@ -702,8 +758,17 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
               },
               {
                 title: "How we work",
-                items: ["Fast collaboration", "Focused delivery", "Global support"],
+                items: [
+                  "Fast collaboration",
+                  "Focused delivery",
+                  "Global support",
+                ],
               },
+            ],
+            progressTitle: "Business progress",
+            progressStats: [
+              { label: "Revenue", value: "82%" },
+              { label: "Satisfaction", value: "90%" },
             ],
           }),
         },
@@ -3371,6 +3436,392 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
       ],
     },
   ],
+  "link-hub-pro": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "navbar",
+          label: "Header",
+          blockType: "NAVBAR",
+          optional: true,
+          buildContent: (data) => ({
+            brandName: data.name || "Alex Rivera",
+            // Backend requires ≥1 NAVBAR navigationItems even for minimal/hidden chrome.
+            navigationItems: [
+              { label: "Links", link: "#links" },
+              { label: "Products", link: "#products" },
+              { label: "Contact", link: "#contact" },
+            ],
+          }),
+        },
+        {
+          key: "profile",
+          label: "Profile",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            heading: data.name || "Alex Rivera",
+            subheading: "@alexcreates",
+            body:
+              data.description ||
+              "Creator, designer, and builder of calm digital products.",
+            image: linkHubProAssets.avatar,
+            heroImage: linkHubProAssets.background,
+            sectionStyle: {
+              backgroundImageUrl: linkHubProAssets.background,
+              backgroundType: "image",
+            },
+          }),
+        },
+        {
+          key: "socials",
+          label: "Social links",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            editorBlockType: "LINK_HUB_SOCIALS",
+            heading: "Social",
+            features: [
+              {
+                title: "Instagram",
+                description: "Instagram profile",
+                icon: "lucide:instagram",
+                link: data.socialLinks?.instagram || "https://instagram.com",
+                type: "social",
+                isVisible: true,
+              },
+              {
+                title: "YouTube",
+                description: "YouTube channel",
+                icon: "lucide:youtube",
+                link: "https://youtube.com",
+                type: "social",
+                isVisible: true,
+              },
+              {
+                title: "Twitter",
+                description: "X / Twitter profile",
+                icon: "lucide:twitter",
+                link: data.socialLinks?.twitter || "https://twitter.com",
+                type: "social",
+                isVisible: true,
+              },
+            ],
+          }),
+        },
+        {
+          key: "featured",
+          label: "Featured link",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            editorBlockType: "LINK_HUB_FEATURED",
+            heading: "Featured",
+            features: [
+              {
+                title: "New drop — Studio Guide",
+                description:
+                  "A free guide to building a calm creative practice online.",
+                image: linkHubProAssets.featured,
+                link: "https://example.com/featured",
+                type: "featured",
+                isFeatured: true,
+                isVisible: true,
+              },
+            ],
+          }),
+        },
+        {
+          key: "links",
+          label: "Links",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            editorBlockType: "LINK_HUB_LINKS",
+            heading: "Links",
+            features: [
+              {
+                title: "Book a collab call",
+                description: "15-minute intro for brand partnerships",
+                image: linkHubProAssets.linkOne,
+                link: "https://example.com/book",
+                type: "link",
+                isVisible: true,
+              },
+              {
+                title: "Latest portfolio",
+                description: "Selected work and case studies",
+                image: linkHubProAssets.linkTwo,
+                link: "https://example.com/portfolio",
+                type: "link",
+                isVisible: true,
+              },
+              {
+                title: "Creator newsletter",
+                description: "Weekly notes on craft and product",
+                link: "https://example.com/newsletter",
+                type: "link",
+                isVisible: true,
+              },
+            ],
+          }),
+        },
+        {
+          key: "products",
+          label: "Products",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            editorBlockType: "LINK_HUB_PRODUCTS",
+            heading: "Products & services",
+            features: [
+              {
+                title: "Brand kit template",
+                description: "Notion + Figma starter for indie brands",
+                image: linkHubProAssets.product,
+                link: "https://example.com/brand-kit",
+                type: "product",
+                isVisible: true,
+              },
+            ],
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Stay in the loop",
+            description:
+              "Drop your email for drops, collabs, and new links.",
+            buttonLabel: "Email me",
+            ctaText: "Join list",
+            email: data.contact?.email || "hello@alexcreates.com",
+            formFields: [
+              {
+                _id: "email",
+                label: "Email",
+                placeholder: "you@email.com",
+                fieldType: "email",
+                required: true,
+                options: "",
+              },
+            ],
+          }),
+        },
+        {
+          key: "footer",
+          label: "Footer",
+          blockType: "FOOTER",
+          optional: true,
+          buildContent: (data) => ({
+            heading: data.name || "Alex Rivera",
+            body: "Link Hub · Share your world in one place.",
+          }),
+        },
+      ],
+    },
+  ],
+  "link-hub-dark-pro": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "navbar",
+          label: "Header",
+          blockType: "NAVBAR",
+          optional: true,
+          buildContent: (data) => ({
+            brandName: data.name || "Studio North",
+            navigationItems: [
+              { label: "Links", link: "#links" },
+              { label: "Products", link: "#products" },
+              { label: "Contact", link: "#contact" },
+            ],
+          }),
+        },
+        {
+          key: "profile",
+          label: "Profile",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            heading: data.name || "Studio North",
+            subheading: "@studionorth",
+            body:
+              data.description ||
+              "Creator studio · products, drops, and collaborations.",
+            image: linkHubDarkProAssets.avatar,
+            heroImage: "",
+            sectionStyle: {
+              backgroundType: "color",
+              backgroundColor: "#1a1614",
+            },
+            headingStyle: {},
+            subheadingStyle: {},
+            bodyStyle: {},
+          }),
+        },
+        {
+          key: "socials",
+          label: "Social links",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            editorBlockType: "LINK_HUB_SOCIALS",
+            heading: "Social",
+            features: [
+              {
+                title: "Instagram",
+                description: "Instagram profile",
+                icon: "lucide:instagram",
+                link: data.socialLinks?.instagram || "https://instagram.com",
+                type: "social",
+                isVisible: true,
+              },
+              {
+                title: "TikTok",
+                description: "TikTok profile",
+                icon: "lucide:music-2",
+                link: "https://tiktok.com",
+                type: "social",
+                isVisible: true,
+              },
+              {
+                title: "Twitter",
+                description: "X / Twitter profile",
+                icon: "lucide:twitter",
+                link: data.socialLinks?.twitter || "https://twitter.com",
+                type: "social",
+                isVisible: true,
+              },
+              {
+                title: "YouTube",
+                description: "YouTube channel",
+                icon: "lucide:youtube",
+                link: "https://youtube.com",
+                type: "social",
+                isVisible: true,
+              },
+              {
+                title: "Facebook",
+                description: "Facebook page",
+                icon: "lucide:facebook",
+                link: "https://facebook.com",
+                type: "social",
+                isVisible: true,
+              },
+            ],
+          }),
+        },
+        {
+          key: "featured",
+          label: "Featured link",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            editorBlockType: "LINK_HUB_FEATURED",
+            heading: "Featured",
+            features: [
+              {
+                title: "Shop the new drop",
+                description: "Limited release essentials for creators",
+                image: linkHubDarkProAssets.featured,
+                link: "https://example.com/shop",
+                type: "featured",
+                isFeatured: true,
+                isVisible: true,
+              },
+            ],
+          }),
+        },
+        {
+          key: "links",
+          label: "Links",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            editorBlockType: "LINK_HUB_LINKS",
+            heading: "Links",
+            features: [
+              {
+                title: "Flagship collection",
+                description: "Explore the latest release",
+                image: linkHubDarkProAssets.linkOne,
+                link: "https://example.com/collection",
+                type: "link",
+                isVisible: true,
+              },
+              {
+                title: "Watch the tour film",
+                description: "Behind the scenes playlist",
+                image: linkHubDarkProAssets.linkTwo,
+                link: "https://example.com/film",
+                type: "link",
+                isVisible: true,
+              },
+              {
+                title: "Brand partnerships",
+                description: "Collab and booking inquiries",
+                link: "https://example.com/partners",
+                type: "link",
+                isVisible: true,
+              },
+            ],
+          }),
+        },
+        {
+          key: "products",
+          label: "Products",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            editorBlockType: "LINK_HUB_PRODUCTS",
+            heading: "Products",
+            features: [
+              {
+                title: "Signature energy",
+                description: "Everyday performance essentials",
+                image: linkHubDarkProAssets.product,
+                link: "https://example.com/product",
+                type: "product",
+                isVisible: true,
+              },
+            ],
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Join the list",
+            description: "Get drops and studio updates.",
+            buttonLabel: "Join",
+            ctaText: "Join",
+            email: data.contact?.email || "hello@studionorth.com",
+            formFields: [
+              {
+                _id: "email",
+                label: "Email",
+                placeholder: "you@email.com",
+                fieldType: "email",
+                required: true,
+                options: "",
+              },
+            ],
+          }),
+        },
+        {
+          key: "footer",
+          label: "Footer",
+          blockType: "FOOTER",
+          optional: true,
+          buildContent: (data) => ({
+            heading: data.name || "Studio North",
+            body: "Link Hub · Dark Pro",
+          }),
+        },
+      ],
+    },
+  ],
 };
 
 const normalizePersistedPages = (
@@ -3499,6 +3950,62 @@ const STYLE_FIELD_MAP: Array<{
   },
 ];
 
+/**
+ * HERO schema uses preset tokens like "default" / "display" for
+ * `headingFontSize`. Those must NOT be copied into `headingStyle.fontSize`,
+ * or CSS receives `font-size: default` (invalid) and the title collapses to
+ * body size after website creation.
+ */
+const NON_CSS_FONT_SIZE_TOKENS = new Set([
+  "default",
+  "large",
+  "xl",
+  "display",
+  "custom",
+  "small",
+  "medium",
+  "auto",
+  "none",
+  "inherit",
+  "initial",
+  "unset",
+]);
+
+const isCssFontSizeValue = (value: unknown): boolean => {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return true;
+  }
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return Object.values(value as Record<string, unknown>).some((entry) =>
+      isCssFontSizeValue(entry),
+    );
+  }
+  if (typeof value !== "string") {
+    return false;
+  }
+  const trimmed = value.trim();
+  if (!trimmed || NON_CSS_FONT_SIZE_TOKENS.has(trimmed.toLowerCase())) {
+    return false;
+  }
+  return (
+    /^-?[\d.]+(px|rem|em|%|vh|vw|ch|ex)$/i.test(trimmed) ||
+    /^clamp\(/i.test(trimmed) ||
+    /^calc\(/i.test(trimmed) ||
+    /^var\(/i.test(trimmed)
+  );
+};
+
+const sanitizeStyleFontSize = (
+  style: Record<string, unknown>,
+): Record<string, unknown> => {
+  if (!("fontSize" in style) || isCssFontSizeValue(style.fontSize)) {
+    return style;
+  }
+  const next = { ...style };
+  delete next.fontSize;
+  return next;
+};
+
 const normalizeAIFlatStyleFields = (
   content: Record<string, unknown>,
 ): Record<string, unknown> => {
@@ -3507,27 +4014,62 @@ const normalizeAIFlatStyleFields = (
   STYLE_FIELD_MAP.forEach(({ styleKey, fields }) => {
     const stylePatch = Object.entries(fields).reduce<Record<string, unknown>>(
       (patch, [flatField, styleField]) => {
-        if (normalized[flatField] !== undefined && normalized[flatField] !== null) {
-          patch[styleField] = normalized[flatField];
+        if (normalized[flatField] === undefined || normalized[flatField] === null) {
+          return patch;
         }
+        // Never promote HERO preset tokens (e.g. headingFontSize: "default")
+        // into CSS style objects.
+        if (styleField === "fontSize" && !isCssFontSizeValue(normalized[flatField])) {
+          return patch;
+        }
+        patch[styleField] = normalized[flatField];
         return patch;
       },
       {},
     );
 
-    if (!Object.keys(stylePatch).length) return;
-
     const existingStyle =
       normalized[styleKey] &&
       typeof normalized[styleKey] === "object" &&
       !Array.isArray(normalized[styleKey])
-        ? (normalized[styleKey] as Record<string, unknown>)
+        ? sanitizeStyleFontSize(
+            normalized[styleKey] as Record<string, unknown>,
+          )
         : {};
 
-    normalized[styleKey] = {
+    if (!Object.keys(stylePatch).length && !Object.keys(existingStyle).length) {
+      return;
+    }
+
+    if (!Object.keys(stylePatch).length) {
+      if (
+        normalized[styleKey] &&
+        typeof normalized[styleKey] === "object" &&
+        !Array.isArray(normalized[styleKey])
+      ) {
+        normalized[styleKey] = existingStyle;
+      }
+      return;
+    }
+
+    normalized[styleKey] = sanitizeStyleFontSize({
       ...stylePatch,
       ...existingStyle,
-    };
+    });
+  });
+
+  // Scrub preset tokens already stored on style objects even when no flat
+  // fields were present to trigger the merge above.
+  STYLE_FIELD_MAP.forEach(({ styleKey }) => {
+    if (
+      normalized[styleKey] &&
+      typeof normalized[styleKey] === "object" &&
+      !Array.isArray(normalized[styleKey])
+    ) {
+      normalized[styleKey] = sanitizeStyleFontSize(
+        normalized[styleKey] as Record<string, unknown>,
+      );
+    }
   });
 
   return normalized;
@@ -3857,6 +4399,90 @@ const mergeTemplateBlockContent = (
     ...seededContent,
     ...normalizedPersistedContent,
   };
+
+  // Deep-merge style objects so scrubbing an invalid persisted fontSize
+  // (e.g. HERO token "default") does not wipe seeded template sizes.
+  STYLE_FIELD_MAP.forEach(({ styleKey }) => {
+    const seededStyle = seededContent[styleKey];
+    const persistedStyle = normalizedPersistedContent[styleKey];
+    const hasSeeded =
+      seededStyle &&
+      typeof seededStyle === "object" &&
+      !Array.isArray(seededStyle);
+    const hasPersisted =
+      persistedStyle &&
+      typeof persistedStyle === "object" &&
+      !Array.isArray(persistedStyle);
+
+    if (!hasSeeded && !hasPersisted) {
+      return;
+    }
+
+    const nextStyle = sanitizeStyleFontSize({
+      ...(hasSeeded ? (seededStyle as Record<string, unknown>) : {}),
+      ...(hasPersisted ? (persistedStyle as Record<string, unknown>) : {}),
+    });
+
+    if (
+      !isCssFontSizeValue(nextStyle.fontSize) &&
+      hasSeeded &&
+      isCssFontSizeValue(
+        (seededStyle as Record<string, unknown>).fontSize,
+      )
+    ) {
+      nextStyle.fontSize = (seededStyle as Record<string, unknown>).fontSize;
+    }
+
+    merged[styleKey] = nextStyle;
+  });
+
+  // Prefer seeded copy when persisted text was cleared / never written.
+  // Prevents blank hero/about after creation when backend omits seed fields.
+  const PREFER_SEEDED_TEXT_KEYS = [
+    "heading",
+    "title",
+    "subheading",
+    "body",
+    "description",
+    "eyebrow",
+    "ctaText",
+    "brandName",
+    "buttonLabel",
+    "primaryCtaText",
+    "secondaryCtaText",
+  ];
+  PREFER_SEEDED_TEXT_KEYS.forEach((key) => {
+    const seededValue = seededContent[key];
+    const persistedValue = normalizedPersistedContent[key];
+    const persistedText =
+      typeof persistedValue === "string" ? persistedValue.trim() : "";
+    const persistedMissing =
+      !(key in normalizedPersistedContent) ||
+      persistedValue === null ||
+      persistedValue === undefined ||
+      !persistedText;
+    const persistedIsGenericPlaceholder =
+      typeof persistedValue === "string" &&
+      /^(section title|section heading|my brand|untitled|heading)$/i.test(
+        persistedText,
+      );
+    if (
+      (persistedMissing || persistedIsGenericPlaceholder) &&
+      typeof seededValue === "string" &&
+      seededValue.trim()
+    ) {
+      merged[key] = seededValue;
+    }
+  });
+
+  if (
+    (!merged.heading ||
+      (typeof merged.heading === "string" && !String(merged.heading).trim())) &&
+    typeof seededContent.title === "string" &&
+    seededContent.title.trim()
+  ) {
+    merged.heading = seededContent.title;
+  }
 
   if (
     persistedTheme &&
@@ -5129,6 +5755,75 @@ const buildTemplatePreviewBusinessDataImpl = (
     };
   }
 
+  if (templateId === "link-hub-pro" || templateId === "link-hub-dark-pro") {
+    const sectionMap = getTemplateSectionMap(templateId, pages);
+    const getSection = (key: string) => getSectionContent(key);
+    const withBlock = (
+      sectionKey: string,
+      rawContent: Record<string, unknown>,
+      additions: Record<string, unknown> = {},
+    ): Record<string, unknown> => ({
+      ...rawContent,
+      ...additions,
+      blockId: sectionMap.get(sectionKey)?.id,
+      sectionStyle: getSectionStyleValue(rawContent),
+      outerSectionStyle: getSectionStyleValue(rawContent, "outerSectionStyle"),
+    });
+    const navbar = getSection("navbar");
+    const profile = getSection("profile");
+    const socials = getSection("socials");
+    const featured = getSection("featured");
+    const links = getSection("links");
+    const products = getSection("products");
+    const contact = getSection("contact");
+    const footer = getSection("footer");
+    const socialItems = readArray<Record<string, unknown>>(socials, [
+      "features",
+      "items",
+    ]);
+    const featuredItems = readArray<Record<string, unknown>>(featured, [
+      "features",
+      "items",
+    ]);
+    const linkItems = readArray<Record<string, unknown>>(links, [
+      "features",
+      "items",
+    ]);
+    const productItems = readArray<Record<string, unknown>>(products, [
+      "features",
+      "items",
+    ]);
+
+    return {
+      ...themedBase,
+      tagline: readString(
+        profile,
+        ["subheading", "heading"],
+        String(themedBase.tagline || themedBase.name),
+      ),
+      description: readString(
+        profile,
+        ["body", "description"],
+        String(themedBase.description),
+      ),
+      templateContent: {
+        __siteSlug: website.slug || undefined,
+        navbar: buildNavbarContent(sectionMap.get("navbar"), navbar),
+        profile: withBlock("profile", profile),
+        hero: withBlock("profile", profile),
+        socials: withBlock("socials", socials, { features: socialItems }),
+        featured: withBlock("featured", featured, { features: featuredItems }),
+        links: withBlock("links", links, { features: linkItems }),
+        products: withBlock("products", products, { features: productItems }),
+        contact: withBlock("contact", contact, {
+          ...buildContactFormConfig(contact),
+        }),
+        footer: withBlock("footer", footer),
+        sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
+      },
+    };
+  }
+
   if (templateId === "company-executive") {
     // Company Executive has multiple FEATURES blocks. Resolve them through the
     // ordered section map so old sites without editorSection metadata do not
@@ -5291,6 +5986,11 @@ const buildTemplatePreviewBusinessDataImpl = (
             ["ctaText", "heroCtaText", "buttonText", "buttonLabel"],
             contactButton,
           ),
+          secondaryCtaText: readString(
+            overview,
+            ["secondaryCtaText", "secondaryCta"],
+            "Contact",
+          ),
           heroHeading: readString(overview, [
             "heading",
             "heroHeading",
@@ -5328,6 +6028,7 @@ const buildTemplatePreviewBusinessDataImpl = (
           eyebrow: readString(about, ["eyebrow"], "Get to know us"),
           eyebrowStyle: about.eyebrowStyle,
           heading: readString(about, ["heading", "title"]),
+          title: readString(about, ["title", "heading"]),
           body: readString(about, ["body", "description", "subheading"]),
           detailGroups: aboutDetailGroups,
           progressTitle: readString(

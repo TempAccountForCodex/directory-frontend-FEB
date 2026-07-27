@@ -11,6 +11,8 @@ import { educationProAssets } from "../landingTemplates/assets/education/educati
 import { gardeningProAssets } from "../landingTemplates/assets/gardening/gardening-pro";
 import { plumbingProAssets } from "../landingTemplates/assets/plumbing/plumbing-pro";
 import { portfolioAssets } from "../landingTemplates/assets/portfolio/portfolio-agency";
+import { linkHubProAssets } from "../landingTemplates/assets/link-hub/link-hub-pro";
+import { linkHubDarkProAssets } from "../landingTemplates/assets/link-hub/link-hub-dark-pro";
 
 type FrontendTemplateWebsite = {
   websiteId?: string | number;
@@ -107,12 +109,19 @@ const baseCompanyPremiumData: BusinessData = {
 
 const baseCompanyExecutiveData: BusinessData = {
   ...baseCompanyData,
-  name: "Executive Partners",
-  tagline: "Enterprise-ready presentation for established businesses.",
+  name: "Atelier North",
+  tagline: "Interior studio workplace projects",
   description:
-    "Professional, trustworthy, and premium service framing for executive-level brands.",
-  primaryColor: "#173f73",
-  secondaryColor: "#91b8f4",
+    "Atelier North creates calm interior environments with a focus on materials, proportion, and everyday usability across homes, hospitality spaces, and modern workplaces.",
+  primaryColor: "#124d4e",
+  secondaryColor: "#ececec",
+  contact: {
+    email: "studio@ateliernorth.co",
+    phone: "(415) 555-0162",
+    address: "214 Howard Street, Floor 2, San Francisco, CA 94105",
+  },
+  heroBannerUrl: companyStudioAssets.heroPortrait,
+  logoUrl: companyStudioAssets.avatars[0],
 };
 
 const baseCompanyProData: BusinessData = {
@@ -445,6 +454,34 @@ const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
     tagline: "Photographer",
     description:
       "Portrait and lifestyle photography with an editorial eye — cinematic storytelling for brands and people.",
+  },
+  "link-hub-pro": {
+    name: "Alex Rivera",
+    tagline: "@alexcreates",
+    description:
+      "Creator, designer, and builder of calm digital products.",
+    primaryColor: "#7C5CFF",
+    secondaryColor: "#F7F5FF",
+    contact: { email: "hello@alexcreates.com" },
+    socialLinks: {
+      instagram: "https://instagram.com",
+      twitter: "https://twitter.com",
+    },
+    heroBannerUrl: linkHubProAssets.background,
+    logoUrl: linkHubProAssets.avatar,
+  },
+  "link-hub-dark-pro": {
+    name: "Studio North",
+    tagline: "@studionorth",
+    description: "Creator studio · products, drops, and collaborations.",
+    primaryColor: "#FFFFFF",
+    secondaryColor: "#111111",
+    contact: { email: "hello@studionorth.com" },
+    socialLinks: {
+      instagram: "https://instagram.com",
+      twitter: "https://twitter.com",
+    },
+    logoUrl: linkHubDarkProAssets.avatar,
   },
   restaurant: restaurantData,
   "store-basic": baseStoreData,

@@ -101,6 +101,30 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
       "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
   },
   {
+    id: "static-link-hub-pro",
+    slug: "link-hub-pro",
+    name: "Link Hub Pro",
+    description:
+      "Premium link-in-bio page with profile, social icons, featured card, dynamic links, products, and lead capture.",
+    type: "website",
+    category: "creator",
+    version: "1.0.0",
+    previewImage:
+      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
+  },
+  {
+    id: "static-link-hub-dark-pro",
+    slug: "link-hub-dark-pro",
+    name: "Link Hub Dark Pro",
+    description:
+      "Dark mobile-first link-in-bio profile with avatar, social icons, thumbnail link cards, and join CTA.",
+    type: "website",
+    category: "creator",
+    version: "1.0.0",
+    previewImage:
+      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
+  },
+  {
     id: "static-store-basic",
     slug: "store-basic",
     name: "Store Basic",

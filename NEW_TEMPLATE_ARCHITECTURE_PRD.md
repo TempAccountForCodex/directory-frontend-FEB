@@ -62,6 +62,8 @@ A new template must explicitly declare one of these page models:
   the block is explicitly a global component. Live Preview from the editor
   must open the currently selected page at its resolved public path (for
   example, `/site/:siteSlug/about`), not always Home.
+- **Link Hub / link-in-bio template:** single-page by default (Home `/` only).
+  See `LINK_HUB_TEMPLATE_PRD.md` and Link Hub rules below.
 
 When upgrading old templates to the new standard, preserve existing approved
 visual design and assets, but refactor content/styling/navigation into
@@ -96,6 +98,12 @@ New templates must use shared components/helpers for:
 - editable/selectable metadata
 - text, image, video, button, link, icon, and media wrappers
 - global Header and Footer wrappers
+
+**Icon fields:** Templates should not expose raw icon text fields when an icon
+picker is available. Icon fields must use the reusable Icon Library modal
+(`FieldType.ICON` / `IconField`) and persist saved icon values in the canonical
+string form (`lucide:<name>`). See `ICON_LIBRARY_PRD.md`. Legacy plain strings
+(e.g. `phone`, `star`) remain supported via renderer aliases.
 
 Template-specific JSX is allowed only where the visual layout is genuinely unique. Editor metadata, persistence wiring, hidden-state handling, and style resolution must not be reimplemented inside each template.
 
@@ -549,6 +557,42 @@ must use the same shared header style unless the editor explicitly overrides
 header background/styling. Do not substitute a separate solid chrome bar for
 dynamic pages when Home’s approved design is an overlay.
 
+### 9.5 Link Hub / link-in-bio templates
+
+Link Hub templates (see `LINK_HUB_TEMPLATE_PRD.md`, e.g. `link-hub-pro`) are
+single-page by default and must follow these rules:
+
+- Default seed is Home `/` only — no platform routes like `/contact`.
+- All profile fields (avatar, name, handle, bio, background) are editable and
+  backend-safe via `block.content`.
+- All links must be dynamic (`features[]` / `items[]`), addable, removable, and
+  reorderable — never hardcoded static link lists in JSX.
+- Each link item persists label, URL (`link`), optional image/icon, and optional
+  `isVisible` / `isFeatured` / `type` when used.
+- Links must persist and render in editor, Live Preview, public site, and refresh.
+- External URLs must not be confused with internal website routes; resolve
+  internal paths with the current route helper and open external links safely.
+- Every visible element must be editable and backend-safe (no “Static style /
+  not saved” on real content).
+- Future Pro features (analytics, scheduling, custom domain, QR, pixels,
+  multi-hub) should be planned as reusable fields/capabilities — do not hardcode
+  pricing gates in the template.
+- **NAVBAR navigationItems rule:** If a template includes a NAVBAR block,
+  `navigationItems` must never be empty. Single-page / minimal / hidden-header
+  templates must still seed at least one valid Home section anchor (for example
+  `{ label: "Links", link: "#links" }`) or use an approved no-navbar block
+  pattern. Empty `navigationItems: []` fails backend creation validation.
+- **Creator visuals:** Profile/header backgrounds must be creator/link-in-bio
+  appropriate (local creator assets or CSS abstract/gradient). Do not reuse
+  unrelated business/template stock imagery.
+- **Visual variants:** Link Hub may have multiple visual skins (e.g. glass
+  premium vs dark Linktree-style). All variants must share the same persisted
+  profile/link model and editable URL/image/icon fields.
+- **Mobile-first desktop preview:** Mobile-first templates must still render
+  well on desktop by using a centered constrained layout (e.g. ~425px profile
+  column), while preserving editor selection/editability. Do not stretch a
+  link-in-bio page into a full-width marketing landing on large screens.
+
 ### 9.1 Forms must be real, backend-connected inputs — never static-only
 
 Every visual "form" in a template — footer newsletter/subscribe rows, contact
@@ -680,6 +724,15 @@ Rules:
 - Use descriptive local filenames and variant index modules where useful.
 - Local defaults must remain compatible with mapped media replacement.
 - Do not move a variant-specific asset into `shared` merely for convenience.
+- **Asset purpose / context rule:** Template default assets must match the
+  template’s purpose and visual context. Do not reuse unrelated images from
+  another family/variant (e.g. travel/desert stock on a creator link-in-bio
+  header). Prefer family-local assets or CSS abstract/gradient backgrounds
+  when a fitting image is unavailable.
+- **Mobile-first constrained layout:** Templates designed as mobile-first
+  profiles (link-in-bio, etc.) must keep a centered constrained column on
+  desktop preview while preserving editor selection and editability. Do not
+  force full-bleed marketing layouts for these templates.
 
 ## 11. New Template Creation Workflow
 

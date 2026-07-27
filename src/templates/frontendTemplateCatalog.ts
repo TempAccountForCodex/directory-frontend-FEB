@@ -90,6 +90,32 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
       "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
     pageCount: 1,
   },
+    {
+    id: "link-hub-pro",
+    slug: "link-hub-pro",
+    name: "Link Hub Pro",
+    description:
+      "Premium link-in-bio page with profile, social icons, featured card, dynamic links, products, and lead capture — mobile-first and fully editable.",
+    type: "website",
+    category: "creator",
+    version: "1.0.0",
+    previewImage:
+      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
+    pageCount: 1,
+  },
+  {
+    id: "link-hub-dark-pro",
+    slug: "link-hub-dark-pro",
+    name: "Link Hub Dark Pro",
+    description:
+      "Dark mobile-first link-in-bio profile with avatar, social icons, thumbnail link cards, and join CTA — centered phone-width layout on desktop.",
+    type: "website",
+    category: "creator",
+    version: "1.0.0",
+    previewImage:
+      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
+    pageCount: 1,
+  },
   {
     id: "store-basic",
     slug: "store-basic",

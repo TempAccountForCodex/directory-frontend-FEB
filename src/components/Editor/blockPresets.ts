@@ -286,6 +286,54 @@ export const getBlockDefaultContent = (
           },
         ],
       };
+    case "LINK_HUB_FEATURED":
+      return {
+        heading: "Featured",
+        features: [
+          {
+            title: "Featured link",
+            description: "Highlight your most important destination.",
+            link: "https://example.com",
+            image: DEFAULT_IMAGE,
+          },
+        ],
+      };
+    case "LINK_HUB_LINKS":
+      return {
+        heading: "Links",
+        features: [
+          {
+            title: "Primary link",
+            description: "Add a short supporting line",
+            link: "https://example.com",
+            image: DEFAULT_IMAGE,
+          },
+        ],
+      };
+    case "LINK_HUB_SOCIALS":
+      return {
+        heading: "Social",
+        features: [
+          {
+            title: "Instagram",
+            description: "Instagram profile",
+            icon: "instagram",
+            link: "https://instagram.com",
+          },
+        ],
+      };
+    case "LINK_HUB_PRODUCTS":
+      return {
+        heading: "Products & services",
+        features: [
+          {
+            title: "Product",
+            description: "Short product description",
+            link: "https://example.com",
+            image: DEFAULT_IMAGE,
+          },
+        ],
+      };
     case "FAQ":
       return {
         heading: "Frequently asked questions",
@@ -854,7 +902,78 @@ export const getLocalFieldMetadata = (
         makeRepeaterField("features", "Features", 3, {
           title: makeTextField("title", "Title", 1),
           description: makeTextField("description", "Description", 2, true),
-          icon: makeTextField("icon", "Icon", 3),
+          icon: {
+            name: "icon",
+            label: "Icon",
+            type: "ICON",
+            order: 3,
+          },
+        }),
+      ]);
+    // Link Hub Pro — featured is a single card (not a generic FEATURES list).
+    case "LINK_HUB_FEATURED":
+      return contentGroup([
+        makeRepeaterField(
+          "features",
+          "Featured card",
+          1,
+          {
+            title: makeTextField("title", "Title", 1),
+            description: makeTextField("description", "Description", 2, true),
+            link: makeTextField("link", "URL", 3),
+            image: {
+              name: "image",
+              label: "Image",
+              type: "IMAGE",
+              order: 4,
+            },
+          },
+          { min: 1, max: 1, hideAddButton: true, hideAddWhenMax: true },
+        ),
+      ]);
+    case "LINK_HUB_LINKS":
+      return contentGroup([
+        makeTextField("heading", "Heading", 1),
+        makeRepeaterField("features", "Links", 2, {
+          title: makeTextField("title", "Title", 1),
+          description: makeTextField("description", "Description", 2, true),
+          link: makeTextField("link", "URL", 3),
+          image: {
+            name: "image",
+            label: "Thumbnail",
+            type: "IMAGE",
+            order: 4,
+          },
+        }),
+      ]);
+    case "LINK_HUB_SOCIALS":
+      return contentGroup([
+        makeTextField("heading", "Heading", 1),
+        makeRepeaterField("features", "Social links", 2, {
+          title: makeTextField("title", "Platform", 1),
+          description: makeTextField("description", "Description", 2, true),
+          icon: {
+            name: "icon",
+            label: "Icon",
+            type: "ICON",
+            order: 3,
+          },
+          link: makeTextField("link", "URL", 4),
+        }),
+      ]);
+    case "LINK_HUB_PRODUCTS":
+      return contentGroup([
+        makeTextField("heading", "Heading", 1),
+        makeRepeaterField("features", "Products", 2, {
+          title: makeTextField("title", "Title", 1),
+          description: makeTextField("description", "Description", 2, true),
+          link: makeTextField("link", "URL", 3),
+          image: {
+            name: "image",
+            label: "Image",
+            type: "IMAGE",
+            order: 4,
+          },
         }),
       ]);
     case "FAQ":

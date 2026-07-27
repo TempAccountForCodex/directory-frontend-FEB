@@ -19,6 +19,7 @@ import type { FieldRendererProps } from "../types";
 import TextField from "./TextField";
 import TextArea from "./TextArea";
 import LinkField from "./LinkField";
+import "./IconField";
 
 export { TextField };
 export { TextArea };
@@ -32,6 +33,7 @@ export { default as Toggle } from "./Toggle";
 export { default as RepeaterField } from "./RepeaterField";
 export { default as MenuSelectField } from "./MenuSelectField";
 export { default as BlogPostsSelectorField } from "./BlogPostsSelectorField";
+export { default as IconField } from "./IconField";
 
 // Register fallback mappings for backend field types that have no dedicated component.
 // EMAIL reuses TextField — email validation comes from API metadata, not the component.
@@ -55,10 +57,7 @@ if (!hasFieldComponent(FieldType.RICHTEXT)) {
   registerFieldComponent(FieldType.RICHTEXT, TextArea);
 }
 
-// ICON degrades to TextField (icon name as text input)
-if (!hasFieldComponent(FieldType.ICON)) {
-  registerFieldComponent(FieldType.ICON, TextField);
-}
+// ICON is registered by IconField (Icon Library modal).
 
 // DATE degrades to TextField (date as text input)
 if (!hasFieldComponent(FieldType.DATE)) {

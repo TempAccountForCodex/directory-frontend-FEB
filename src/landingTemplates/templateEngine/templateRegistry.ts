@@ -271,6 +271,12 @@ const PlumbingProTemplate = lazy(
 const PhotoStudioProTemplate = lazy(
   () => import("../templates/portfolio/PhotoStudioProTemplate"),
 );
+const LinkHubProTemplate = lazy(
+  () => import("../templates/linkHub/LinkHubProTemplate"),
+);
+const LinkHubDarkProTemplate = lazy(
+  () => import("../templates/linkHub/LinkHubDarkProTemplate"),
+);
 
 const templateRegistry: Record<string, TemplateDefinition> = {
   // --- Service business ---
@@ -403,6 +409,22 @@ const templateRegistry: Record<string, TemplateDefinition> = {
       "New-architecture upgrade of the editorial photo studio portfolio — cinematic hero, works grid, enquiry contact, and dynamic page support.",
     tags: ["portfolio", "photography", "editorial", "studio", "pro"],
     component: PhotoStudioProTemplate,
+  },
+  "link-hub-pro": {
+    id: "link-hub-pro",
+    name: "Link Hub Pro",
+    description:
+      "Premium link-in-bio page with profile, social icons, featured card, dynamic links, products, and lead capture.",
+    tags: ["creator", "link-in-bio", "utility", "linktree", "pro"],
+    component: LinkHubProTemplate,
+  },
+  "link-hub-dark-pro": {
+    id: "link-hub-dark-pro",
+    name: "Link Hub Dark Pro",
+    description:
+      "Dark mobile-first link-in-bio profile with avatar, social icons, thumbnail link cards, and join CTA.",
+    tags: ["creator", "link-in-bio", "utility", "linktree", "dark", "pro"],
+    component: LinkHubDarkProTemplate,
   },
 
   // --- Store ---

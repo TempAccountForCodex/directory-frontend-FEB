@@ -341,6 +341,7 @@ const PublicWebsite: React.FC = () => {
 
         const resolvedTemplateId =
           websiteData.frontendTemplateId ||
+          websiteData.templateSnapshot?.templateId ||
           inferredFrontendTemplateId ||
           getStoredWebsiteFrontendTemplateId(
             websiteData.id || websiteData.websiteId,
@@ -442,6 +443,7 @@ const PublicWebsite: React.FC = () => {
           integrations: scopedIntegrations,
           frontendTemplateId:
             websiteData.frontendTemplateId ||
+            websiteData.templateSnapshot?.templateId ||
             inferredFrontendTemplateId ||
             getStoredWebsiteFrontendTemplateId(
               websiteData.id || websiteData.websiteId,

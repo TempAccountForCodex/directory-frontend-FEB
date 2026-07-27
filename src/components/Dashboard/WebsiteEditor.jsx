@@ -900,8 +900,11 @@ const syncAliasedBlockContent = (blockType, content) => {
     .trim()
     .toUpperCase();
   const nextContent = { ...content };
+  const isFeaturesFamily =
+    normalizedBlockType === "FEATURES" ||
+    normalizedBlockType.startsWith("LINK_HUB_");
 
-  if (normalizedBlockType === "FEATURES") {
+  if (isFeaturesFamily) {
     const items = Array.isArray(nextContent.items) ? nextContent.items : null;
     const features = Array.isArray(nextContent.features)
       ? nextContent.features
@@ -1903,6 +1906,39 @@ const withSyncedInnerBlocks = (block, innerBlocks) =>
     innerBlocks,
   });
 
+/**
+ * Resolve which field schema FormGenerator should load.
+ * Prefer content.editorBlockType (e.g. LINK_HUB_FEATURED) so template-specific
+ * FEATURES sections can hide variant/icon and expose URL without changing the
+ * shared FEATURES schema used by other templates.
+ */
+const LINK_HUB_SECTION_EDITOR_TYPES = {
+  featured: "LINK_HUB_FEATURED",
+  links: "LINK_HUB_LINKS",
+  socials: "LINK_HUB_SOCIALS",
+  products: "LINK_HUB_PRODUCTS",
+};
+
+const resolveFormGeneratorBlockType = (block, frontendTemplateId) => {
+  const content =
+    block?.content && typeof block.content === "object" ? block.content : {};
+  const explicit = String(content.editorBlockType || "").trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  const section = String(content.editorSection || "").trim();
+  if (
+    (String(frontendTemplateId || "").trim() === "link-hub-pro" ||
+      String(frontendTemplateId || "").trim() === "link-hub-dark-pro") &&
+    LINK_HUB_SECTION_EDITOR_TYPES[section]
+  ) {
+    return LINK_HUB_SECTION_EDITOR_TYPES[section];
+  }
+
+  return String(block?.blockType || "").trim();
+};
+
 const isMergeableEditorContentObject = (value) =>
   !!value && typeof value === "object" && !Array.isArray(value);
 
@@ -2442,6 +2478,15 @@ const sanitizeBlockContentForSave = (blockType, content) => {
         };
       },
     );
+
+    // Link Hub featured card is a single-item block — never persist extras.
+    if (
+      String(sanitizedContent.editorBlockType || "")
+        .trim()
+        .toUpperCase() === "LINK_HUB_FEATURED"
+    ) {
+      sanitizedContent.features = sanitizedContent.features.slice(0, 1);
+    }
   }
 
   if (rawBlockType === "CTA" || rawBlockType === "HERO") {
@@ -3016,6 +3061,7 @@ const WebsiteEditorInner = () => {
   const previewTransformHistoryTimerRef = useRef(null);
   const resolvedFrontendTemplateId =
     website?.frontendTemplateId ||
+    website?.templateSnapshot?.templateId ||
     getStoredWebsiteFrontendTemplateId(website?.id || websiteId) ||
     null;
   const isLocalTemplateEditorPage = !!selectedPage?.localOnly;
@@ -4507,6 +4553,7 @@ const WebsiteEditorInner = () => {
         ...websiteRes.data.data,
         frontendTemplateId:
           websiteRes.data.data?.frontendTemplateId ||
+          websiteRes.data.data?.templateSnapshot?.templateId ||
           inferredFrontendTemplateId ||
           getStoredWebsiteFrontendTemplateId(
             websiteRes.data.data?.id || websiteId,
@@ -10215,7 +10262,10 @@ const WebsiteEditorInner = () => {
                                   ) : (
                                     <FormGenerator
                                       blockType={String(
-                                        editingBlock?.blockType || "",
+                                        resolveFormGeneratorBlockType(
+                                          editingBlock,
+                                          resolvedFrontendTemplateId,
+                                        ) || "",
                                       ).toLowerCase()}
                                       initialValues={{
                                         ...blockForm.content,
@@ -12637,10 +12687,15 @@ const WebsiteEditorInner = () => {
 
             {(blockForm.blockType || editingBlock) && (
               <FormGenerator
-                blockType={(
-                  blockForm.blockType ||
-                  editingBlock?.blockType ||
-                  ""
+                blockType={String(
+                  resolveFormGeneratorBlockType(
+                    editingBlock
+                      ? editingBlock
+                      : { blockType: blockForm.blockType, content: blockForm.content },
+                    resolvedFrontendTemplateId,
+                  ) ||
+                    blockForm.blockType ||
+                    "",
                 ).toLowerCase()}
                 initialValues={{ ...blockForm.content, _websiteId: websiteId }}
                 onChange={(values) => {

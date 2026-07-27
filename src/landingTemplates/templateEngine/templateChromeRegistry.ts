@@ -106,6 +106,26 @@ const PhotoStudioProFooter = lazy(() =>
     default: module.PhotoStudioProTemplateFooter,
   })),
 );
+const LinkHubProHeader = lazy(() =>
+  import("../templates/linkHub/LinkHubProTemplate").then((module) => ({
+    default: module.LinkHubProTemplateHeader,
+  })),
+);
+const LinkHubProFooter = lazy(() =>
+  import("../templates/linkHub/LinkHubProTemplate").then((module) => ({
+    default: module.LinkHubProTemplateFooter,
+  })),
+);
+const LinkHubDarkProHeader = lazy(() =>
+  import("../templates/linkHub/LinkHubDarkProTemplate").then((module) => ({
+    default: module.LinkHubDarkProTemplateHeader,
+  })),
+);
+const LinkHubDarkProFooter = lazy(() =>
+  import("../templates/linkHub/LinkHubDarkProTemplate").then((module) => ({
+    default: module.LinkHubDarkProTemplateFooter,
+  })),
+);
 
 const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   minimal: {
@@ -143,6 +163,14 @@ const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   "photo-studio-pro": {
     Header: PhotoStudioProHeader,
     Footer: PhotoStudioProFooter,
+  },
+  "link-hub-pro": {
+    Header: LinkHubProHeader,
+    Footer: LinkHubProFooter,
+  },
+  "link-hub-dark-pro": {
+    Header: LinkHubDarkProHeader,
+    Footer: LinkHubDarkProFooter,
   },
 };
 
