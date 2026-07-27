@@ -30,6 +30,7 @@ const { email, phone, OfficeLocation } = CompanyContactData[0];
 const forumSupport = [
   { name: "Terms and Conditions", path: "/terms-and-conditions" },
   { name: "Help & FAQ", path: "/faq" },
+  { name: "App Access", path: "/app-access" },
   { name: "Privacy Policy", path: "/privacy-policy" },
   { name: "Cookie Policy", path: "/cookie-policy" },
   {

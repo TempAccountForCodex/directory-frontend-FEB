@@ -91,6 +91,7 @@ const MANUAL_ROUTES = [
   "/contact",
   "/blog",
   "/faq",
+  "/app-access",
   "/privacy-policy",
   "/cookie-policy",
   "/terms-and-conditions",
@@ -196,6 +197,7 @@ const getRouteMetadata = (loc) => {
 
   if (
     loc === "/privacy-policy" ||
+    loc === "/app-access" ||
     loc === "/cookie-policy" ||
     loc === "/terms-and-conditions"
   ) {

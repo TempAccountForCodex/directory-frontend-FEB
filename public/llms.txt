@@ -1,0 +1,16 @@
+# Techietribe
+
+Techietribe is a business directory and website platform for finding local businesses, managing listings, creating websites, and accessing account dashboard tools.
+
+## Public Pages
+
+- [Home](https://www.techietribe.ai/)
+- [Directory](https://www.techietribe.ai/directory)
+- [Listings](https://www.techietribe.ai/listings)
+- [Pricing](https://www.techietribe.ai/pricing)
+- [Templates](https://www.techietribe.ai/templates)
+- [Contact](https://www.techietribe.ai/contact)
+- [App Access and Google Data Use](https://www.techietribe.ai/app-access)
+- [Privacy Policy](https://www.techietribe.ai/privacy-policy)
+- [Cookie Policy](https://www.techietribe.ai/cookie-policy)
+- [Terms and Conditions](https://www.techietribe.ai/terms-and-conditions)

@@ -31,6 +31,7 @@ const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const PrivacyPolicy = lazy(
   () => import("../src/pages/publicPages/PrivacyPolicy"),
 );
+const AppAccess = lazy(() => import("../src/pages/publicPages/AppAccess"));
 const CookiePolicy = lazy(
   () => import("../src/pages/publicPages/CookiePolicy"),
 );
@@ -443,6 +444,14 @@ const AppRoutes = () => {
           element: (
             <Suspense fallback={<LegalPageFallback />}>
               <PrivacyPolicy />
+            </Suspense>
+          ),
+        },
+        {
+          path: "/app-access",
+          element: (
+            <Suspense fallback={<LegalPageFallback />}>
+              <AppAccess />
             </Suspense>
           ),
         },
