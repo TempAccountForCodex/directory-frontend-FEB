@@ -166,7 +166,10 @@ import { color } from "framer-motion";
 import { EditorAILayer } from "../WebsiteAI";
 import {
   getWebsiteEditableSchema,
-  generateWebsiteDraft,
+  startWebsiteDraft,
+  getWebsiteDraftStatus,
+  getActiveWebsiteDraft,
+  ackWebsiteDraft,
   WebsiteAIRequestError,
   normalizeWebsiteAIError,
 } from "../../api/websiteAI";
@@ -193,7 +196,12 @@ const EDITABLE_STYLE_FIELD_MAP = {
   copyright: { styleKey: "copyrightStyle", label: "Footer text" },
 };
 
-const AI_DRAFT_LONG_RUNNING_DELAY_MS = 8000;
+// The website draft runs as a backend job the editor polls. Poll cadence and
+// the client-side ceiling. The ceiling is deliberately set ABOVE the backend's
+// own job timeout so a slow generation surfaces the backend's specific failure
+// (e.g. "generation timed out") rather than a generic client give-up.
+const AI_DRAFT_POLL_INTERVAL_MS = 4000;
+const AI_DRAFT_POLL_MAX_MS = 8 * 60 * 1000;
 
 const imageEditorInputSx = {
   "& .MuiOutlinedInput-root": {
@@ -2424,6 +2432,27 @@ const isBlogHeroContentStaticElement = (selection) => {
   return false;
 };
 
+// Internal, structural block-content keys that identify a block to the template
+// system. The public site's frontend-template hydration matches saved blocks to
+// their seeded section by `editorSection` (and falls back to `editorBlockType`);
+// `_subType` discriminates split blog sections. If an AI patch overwrites any of
+// these with generated copy, the saved block no longer matches its section and
+// the live site silently renders that section's DEFAULT content. AI drafts must
+// never touch them — only real, user-facing copy.
+const PROTECTED_AI_CONTENT_FIELD_KEYS = new Set([
+  "editorSection",
+  "editorLabel",
+  "editorBlockType",
+  "_subType",
+]);
+
+const aiPatchTargetsProtectedField = (editorPath, persistedFieldPath) =>
+  [String(editorPath || ""), String(persistedFieldPath || "")].some((path) =>
+    path
+      .split(".")
+      .some((segment) => PROTECTED_AI_CONTENT_FIELD_KEYS.has(segment)),
+  );
+
 const sanitizeBlockContentForSave = (blockType, content) => {
   const rawBlockType = String(blockType || "").toUpperCase();
   const sanitizedContent = syncAliasedBlockContent(rawBlockType, {
@@ -2877,8 +2906,11 @@ const WebsiteEditorInner = () => {
   const [aiDraftSummary, setAiDraftSummary] = useState("");
   const aiDraftSnapshotRef = useRef(null);
   const aiDraftPendingResultRef = useRef(null);
-  const aiDraftLongRunningRef = useRef(false);
   const aiDraftStartedRef = useRef(false);
+  // Backend draft job currently being polled/awaited, and a flag to abort the
+  // poll loop when the editor unmounts.
+  const aiDraftJobIdRef = useRef(null);
+  const aiDraftPollStopRef = useRef(false);
   // Non-selected pages a full-site draft touched, so "Save Changes" can persist
   // them too (the normal save only writes the selected page).
   const draftedOtherPageIdsRef = useRef(new Set());
@@ -8111,6 +8143,12 @@ const WebsiteEditorInner = () => {
       normalized.forEach((patch) => {
         const persisted = patch.persistedFieldPath || "";
         const editorPath = patch.fieldPath || "";
+        // Never let an AI draft rewrite a block's structural identity fields
+        // (editorSection/editorBlockType/_subType/editorLabel). Doing so breaks
+        // the frontend-template section matching so the live site falls back to
+        // that section's default content. Skip such patches defensively even if
+        // the backend schema mistakenly exposes them.
+        if (aiPatchTargetsProtectedField(editorPath, persisted)) return;
         const isWebsiteField =
           persisted.startsWith("website.") || editorPath.startsWith("website.");
         if (isWebsiteField) {
@@ -8161,11 +8199,16 @@ const WebsiteEditorInner = () => {
     (result, snapshot) => {
       const appliedCount = applyAiDraftPatches(result?.patches);
       if (!appliedCount) {
-        // Nothing applied — treat as a soft failure and keep the template.
+        // Nothing applied — treat as a soft failure and keep the template. Ack
+        // the job so a resume on the next open doesn't re-surface an empty draft.
         restoreEditorSnapshot(snapshot);
         aiDraftSnapshotRef.current = null;
         aiDraftPendingResultRef.current = null;
         draftedOtherPageIdsRef.current = new Set();
+        if (aiDraftJobIdRef.current) {
+          void ackWebsiteDraft(aiDraftJobIdRef.current).catch(() => {});
+          aiDraftJobIdRef.current = null;
+        }
         clearAiDraftMarker();
         showSaveToast(
           "AI did not return any changes to apply. Showing the template as-is.",
@@ -8191,36 +8234,73 @@ const WebsiteEditorInner = () => {
     ],
   );
 
+  // Poll a backend draft job until it succeeds (returns the job) or fails/times
+  // out (throws). Transient status-fetch errors (e.g. a tunnel hiccup) are
+  // tolerated until the overall ceiling — the job keeps running server-side, so
+  // a dropped connection never orphans it.
+  const awaitDraftJob = useCallback(async (jobId) => {
+    const startedAt = Date.now();
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      if (aiDraftPollStopRef.current) {
+        throw new Error("AI draft polling stopped.");
+      }
+      await new Promise((resolve) =>
+        window.setTimeout(resolve, AI_DRAFT_POLL_INTERVAL_MS),
+      );
+      if (aiDraftPollStopRef.current) {
+        throw new Error("AI draft polling stopped.");
+      }
+      let job = null;
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        job = await getWebsiteDraftStatus(jobId);
+      } catch (err) {
+        if (Date.now() - startedAt > AI_DRAFT_POLL_MAX_MS) throw err;
+        continue; // transient — the backend job is still alive; keep polling
+      }
+      if (job.status === "succeeded") return job;
+      if (job.status === "failed") {
+        throw new Error(job.error || "AI draft generation failed.");
+      }
+      if (Date.now() - startedAt > AI_DRAFT_POLL_MAX_MS) {
+        throw new Error(
+          "AI draft is taking longer than expected. Please try again.",
+        );
+      }
+    }
+  }, []);
+
   const runAiDraft = useCallback(
     async (questionnaireData) => {
-      let longRunningTimer = null;
       setAiDraftLoading(true);
       setAiDraftReadyPromptOpen(false);
-      aiDraftLongRunningRef.current = false;
       aiDraftPendingResultRef.current = null;
+      aiDraftJobIdRef.current = null;
       const snapshot = captureEditorSnapshot();
       aiDraftSnapshotRef.current = snapshot;
       // Fresh draft — forget any pages a previous draft attempt tracked.
       draftedOtherPageIdsRef.current = new Set();
-      longRunningTimer = window.setTimeout(() => {
-        aiDraftLongRunningRef.current = true;
-      }, AI_DRAFT_LONG_RUNNING_DELAY_MS);
       try {
         const pageIdNum =
           selectedPage?.id && !selectedPage?.localOnly
             ? Number(selectedPage.id)
             : undefined;
-        const result = await generateWebsiteDraft({
+        // Start the job (idempotent per website — resumes an existing run) and
+        // poll it. The original request no longer blocks, so a proxy/tunnel
+        // timeout can't lose the result.
+        const job = await startWebsiteDraft({
           websiteId: Number(websiteId),
           pageId: Number.isFinite(pageIdNum) ? pageIdNum : undefined,
           questionnaire: questionnaireData,
         });
-        if (aiDraftLongRunningRef.current) {
-          aiDraftPendingResultRef.current = result;
-          setAiDraftReadyPromptOpen(true);
-          return;
-        }
-        applyAiDraftResult(result, snapshot);
+        aiDraftJobIdRef.current = job.jobId;
+        const finished =
+          job.status === "succeeded" ? job : await awaitDraftJob(job.jobId);
+        applyAiDraftResult(
+          { patches: finished.patches, summary: finished.summary },
+          snapshot,
+        );
       } catch (err) {
         const aiErr =
           err instanceof WebsiteAIRequestError
@@ -8229,21 +8309,22 @@ const WebsiteEditorInner = () => {
         restoreEditorSnapshot(snapshot);
         aiDraftSnapshotRef.current = null;
         draftedOtherPageIdsRef.current = new Set();
+        if (aiDraftJobIdRef.current) {
+          void ackWebsiteDraft(aiDraftJobIdRef.current).catch(() => {});
+          aiDraftJobIdRef.current = null;
+        }
         clearAiDraftMarker();
         showSaveToast(
           aiErr.message || "AI draft failed. Showing the template as-is.",
           "error",
         );
       } finally {
-        if (longRunningTimer) {
-          window.clearTimeout(longRunningTimer);
-        }
         setAiDraftLoading(false);
-        aiDraftLongRunningRef.current = false;
       }
     },
     [
       applyAiDraftResult,
+      awaitDraftJob,
       captureEditorSnapshot,
       clearAiDraftMarker,
       restoreEditorSnapshot,
@@ -8253,6 +8334,73 @@ const WebsiteEditorInner = () => {
     ],
   );
 
+  // Resume an in-flight/finished draft job when the editor is (re)opened without
+  // a fresh creation marker: keep the loading state up for a running job, or
+  // surface the "ready to review" prompt for one that finished while away.
+  const resumeActiveDraft = useCallback(async () => {
+    let active = null;
+    try {
+      active = await getActiveWebsiteDraft(Number(websiteId));
+    } catch {
+      return; // best-effort; resume must never block the editor
+    }
+    if (!active) return;
+
+    if (active.status === "failed") {
+      void ackWebsiteDraft(active.jobId).catch(() => {});
+      return;
+    }
+
+    if (active.status === "succeeded") {
+      aiDraftSnapshotRef.current = captureEditorSnapshot();
+      aiDraftJobIdRef.current = active.jobId;
+      aiDraftPendingResultRef.current = {
+        patches: active.patches,
+        summary: active.summary,
+      };
+      setAiDraftReadyPromptOpen(true);
+      return;
+    }
+
+    // running → resume polling with the loading state visible.
+    const snapshot = captureEditorSnapshot();
+    aiDraftSnapshotRef.current = snapshot;
+    aiDraftJobIdRef.current = active.jobId;
+    draftedOtherPageIdsRef.current = new Set();
+    setAiDraftLoading(true);
+    try {
+      const finished = await awaitDraftJob(active.jobId);
+      aiDraftPendingResultRef.current = {
+        patches: finished.patches,
+        summary: finished.summary,
+      };
+      setAiDraftReadyPromptOpen(true);
+    } catch (err) {
+      const aiErr =
+        err instanceof WebsiteAIRequestError
+          ? err.aiError
+          : normalizeWebsiteAIError(err);
+      restoreEditorSnapshot(snapshot);
+      aiDraftSnapshotRef.current = null;
+      if (aiDraftJobIdRef.current) {
+        void ackWebsiteDraft(aiDraftJobIdRef.current).catch(() => {});
+        aiDraftJobIdRef.current = null;
+      }
+      showSaveToast(
+        aiErr.message || "AI draft failed. Showing the template as-is.",
+        "error",
+      );
+    } finally {
+      setAiDraftLoading(false);
+    }
+  }, [
+    awaitDraftJob,
+    captureEditorSnapshot,
+    restoreEditorSnapshot,
+    showSaveToast,
+    websiteId,
+  ]);
+
   const handleShowAiDraft = useCallback(() => {
     applyAiDraftResult(
       aiDraftPendingResultRef.current,
@@ -8260,19 +8408,29 @@ const WebsiteEditorInner = () => {
     );
   }, [applyAiDraftResult]);
 
+  // Mark the backend draft job consumed so it isn't re-surfaced on reopen.
+  const ackActiveDraftJob = useCallback(() => {
+    if (aiDraftJobIdRef.current) {
+      void ackWebsiteDraft(aiDraftJobIdRef.current).catch(() => {});
+      aiDraftJobIdRef.current = null;
+    }
+  }, []);
+
   const handleKeepAiDraft = useCallback(() => {
     aiDraftSnapshotRef.current = null;
     aiDraftPendingResultRef.current = null;
+    ackActiveDraftJob();
     setAiDraftReviewOpen(false);
     setAiDraftReadyPromptOpen(false);
     clearAiDraftMarker();
     showSaveToast("AI draft applied. Review and save when ready.", "success");
-  }, [clearAiDraftMarker, showSaveToast]);
+  }, [ackActiveDraftJob, clearAiDraftMarker, showSaveToast]);
 
   const handleRevertAiDraft = useCallback(() => {
     restoreEditorSnapshot(aiDraftSnapshotRef.current);
     aiDraftSnapshotRef.current = null;
     aiDraftPendingResultRef.current = null;
+    ackActiveDraftJob();
     // Snapshot restore already reverted other pages' in-memory blocks; forget
     // them so a later save doesn't re-persist reverted content.
     draftedOtherPageIdsRef.current = new Set();
@@ -8280,9 +8438,21 @@ const WebsiteEditorInner = () => {
     setAiDraftReadyPromptOpen(false);
     clearAiDraftMarker();
     showSaveToast("AI draft reverted. Showing the original template.", "info");
-  }, [clearAiDraftMarker, restoreEditorSnapshot, showSaveToast]);
+  }, [ackActiveDraftJob, clearAiDraftMarker, restoreEditorSnapshot, showSaveToast]);
 
-  // Detect the aiDraft marker once the editor has loaded, then run the draft.
+  // Allow polling while mounted; stop the poll loop on unmount. Resetting the
+  // flag on mount is required because refs persist across StrictMode's
+  // mount→unmount→remount (and any navigate-away/back), which would otherwise
+  // leave polling permanently disabled.
+  useEffect(() => {
+    aiDraftPollStopRef.current = false;
+    return () => {
+      aiDraftPollStopRef.current = true;
+    };
+  }, []);
+
+  // Once the editor has loaded: a fresh creation marker starts a new draft;
+  // otherwise resume any draft job already running/finished for this website.
   useEffect(() => {
     if (aiDraftStartedRef.current) return;
     if (loading || !website || !selectedPage || !websiteId) return;
@@ -8299,18 +8469,22 @@ const WebsiteEditorInner = () => {
       }
     }
 
-    if (!hasMarker && !routeQuestionnaire && !storedQuestionnaire) return;
-
     const questionnaireData = routeQuestionnaire || storedQuestionnaire;
-    aiDraftStartedRef.current = true;
 
-    if (!questionnaireData) {
-      // Marker present but no questionnaire data — nothing to generate.
-      clearAiDraftMarker();
+    if (hasMarker || questionnaireData) {
+      aiDraftStartedRef.current = true;
+      if (!questionnaireData) {
+        // Marker present but no questionnaire data — nothing to generate.
+        clearAiDraftMarker();
+        return;
+      }
+      void runAiDraft(questionnaireData);
       return;
     }
 
-    void runAiDraft(questionnaireData);
+    // No fresh-creation marker — resume an in-flight/finished draft if any.
+    aiDraftStartedRef.current = true;
+    void resumeActiveDraft();
   }, [
     loading,
     website,
@@ -8321,6 +8495,7 @@ const WebsiteEditorInner = () => {
     aiDraftStorageKey,
     clearAiDraftMarker,
     runAiDraft,
+    resumeActiveDraft,
   ]);
 
   // ---- Website AI (Ask AI / chat) integration helpers ----

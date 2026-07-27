@@ -14,6 +14,23 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { motion } from "framer-motion";
+import type {
+  BillingCycle,
+  Cell,
+  Plan,
+  PlanId,
+  SiteCount,
+} from "./pricingConfig";
+import {
+  COMPARISON_GROUPS,
+  getNextSiteCount,
+  getPlanPrice,
+  getPlanPriceBreakdown,
+  PLANS,
+  PRICING_DISCOUNT_DISPLAY,
+  SITE_COUNT_MAX,
+  SITE_COUNT_MIN,
+} from "./pricingConfig";
 
 const star = "/assets/publicAssets/images/common/star.svg";
 
@@ -34,210 +51,11 @@ const COLORS = {
   bg: "#020303",
   card: "#071c1e",
   cardDark: "#050f11",
+  brand: "#378C92",
   teal: "#2fb8b3",
   tealSoft: "rgba(47,184,179,0.25)",
   border: "rgba(255,255,255,0.08)",
 };
-
-/* ============================
-   Plans
-
-   NOTE: Prices are PLACEHOLDERS pending final numbers.
-   Edit PLAN_BASE_PRICES to change the 5-site base pricing.
-============================ */
-
-type BillingCycle = "monthly" | "annual";
-type PlanId = "free" | "pro" | "business";
-type SiteCount = 5 | 10 | 15;
-
-type Feature = string | { label: string; sub: string[] };
-
-type Plan = {
-  id: PlanId;
-  label: string;
-  tagline: string;
-  positioning: string;
-  free?: boolean;
-  recommended?: boolean;
-  comingSoon?: boolean;
-  cta: string;
-  features: Feature[];
-};
-
-const SITE_COUNT_OPTIONS: SiteCount[] = [5, 10, 15, ];
-const PLAN_BASE_SITE_COUNT: SiteCount = 5;
-
-const PLAN_BASE_PRICES: Record<PlanId, Record<BillingCycle, number>> = {
-  free: {
-    monthly: 0,
-    annual: 0,
-  },
-  pro: {
-    monthly: 9,
-    annual: 108,
-  },
-  business: {
-    monthly: 19,
-    annual: 228,
-  },
-};
-
-const getPlanPrice = (
-  planId: PlanId,
-  billing: BillingCycle,
-  siteCount: SiteCount,
-) =>
-  PLAN_BASE_PRICES[planId][billing] *
-  (planId === "free" ? 1 : siteCount / PLAN_BASE_SITE_COUNT);
-
-const PLANS: Plan[] = [
-  {
-    id: "free",
-    label: "Free",
-    tagline: "Get online",
-    positioning: "Establish a complete but simple online presence.",
-    free: true,
-    cta: "Get Started",
-    features: [
-      "1 single-page landing site",
-      "1 form · 50 submissions/mo",
-      "5 blog posts",
-      "50 MB storage",
-      "10 AI actions/day",
-      "Free techietribe.app subdomain",
-    ],
-  },
-  {
-    id: "pro",
-    label: "Pro",
-    tagline: "Look professional",
-    positioning: "A polished, fully branded presence on your own domain.",
-    recommended: true,
-    cta: "Get Started",
-    features: [
-      "Everything in Free, plus:",
-      {
-        label: "Up to 5 websites",
-        sub: [
-          "A directory listing for each",
-          "1 custom domain for each",
-          "5 forms per website",
-        ],
-      },
-      "500 form submissions/mo",
-      "Unlimited posts/site",
-      "upto 150 MB storage/site",
-      "100 AI actions/mo",
-      "Custom code & embeds",
-      "SEO optimization",
-      "Premium templates · custom CSS",
-      "Detailed analytics",
-      "2 collaborators per website",
-    ],
-  },
-  {
-    id: "business",
-    label: "Business",
-    tagline: "Grow and scale",
-    positioning: "Scale a portfolio with maximum directory visibility.",
-    comingSoon: true,
-    cta: "Coming Soon",
-    features: [
-      "Everything in Pro, plus:",
-      "Unlimited websites & directory listings*",
-      "Unlimited forms · 10,000 submissions/mo",
-      "Unlimited blog posts",
-      "1 GB storage",
-      "500 AI actions/mo",
-      "Custom code & embeds",
-      "SEO optimization for websites & blogs",
-      "Blog comments & moderation controls",
-      "Conversion, funnel & real-time analytics",
-      "Advanced integrations",
-      "10 collaborators per website",
-      "Priority based directory listing",
-      "Priority support",
-      "Custom Integrated Shops"
-    ],
-  },
-];
-
-/* ============================
-   Feature comparison matrix
-============================ */
-
-type Cell = string | boolean;
-
-type CompareRow = { feature: string; free: Cell; pro: Cell; business: Cell };
-
-const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
-  {
-    category: "Websites & content",
-    rows: [
-      { feature: "Landing pages", free: "1 single-page", pro: "Up to 5", business: "Unlimited*" },
-      { feature: "Directory listings", free: "1 standard", pro: "Up to 5", business: "Unlimited*" },
-      { feature: "Link-in-bio pages", free: "1", pro: "Up to 5", business: "Unlimited*" },
-      { feature: "Blog posts", free: "5", pro: "50 per website", business: "Unlimited" },
-      { feature: "Storage", free: "100 MB", pro: "500 MB", business: "1 GB" },
-    ],
-  },
-  {
-    category: "Forms & leads",
-    rows: [
-      { feature: "Forms", free: "1", pro: "5 per website", business: "Unlimited" },
-      { feature: "Form submissions", free: "50/month", pro: "500/month", business: "10,000/month" },
-      { feature: "Booking/reservation forms", free: false, pro: true, business: true },
-      { feature: "CSV lead export", free: false, pro: true, business: true },
-    ],
-  },
-  {
-    category: "AI tools",
-    rows: [
-      { feature: "AI actions", free: "10/daily", pro: "100/daily", business: "500/daily" },
-      { feature: "AI listing enhancement", free: false, pro: true, business: true },
-    ],
-  },
-  {
-    category: "Domain & branding",
-    rows: [
-      { feature: "Techietribe subdomain", free: true, pro: true, business: true },
-      { feature: "Custom domains", free: false, pro: "1 per website", business: "1 per website" },
-    ],
-  },
-  {
-    category: "Design & editor",
-    rows: [
-      { feature: "Templates", free: "Free", pro: "Free & premium", business: "All templates" },
-      { feature: "Video blocks & uploads", free: false, pro: true, business: true },
-      { feature: "Custom CSS", free: false, pro: true, business: true },
-      { feature: "Custom code & embeds", free: false, pro: false, business: true },
-    ],
-  },
-  {
-    category: "Analytics",
-    rows: [
-      { feature: "Basic analytics", free: true, pro: true, business: true },
-      { feature: "Detailed traffic analytics", free: false, pro: true, business: true },
-      { feature: "Conversion & real-time analytics", free: false, pro: false, business: true },
-    ],
-  },
-  {
-    category: "Directory & reputation",
-    rows: [
-      { feature: "Directory ranking boost", free: "Standard", pro: "Enhanced", business: "Highest" },
-      { feature: "Featured directory listing", free: false, pro: "Standard", business: "Enhanced" },
-      { feature: "Owner review replies", free: false, pro: true, business: true },
-    ],
-  },
-  {
-    category: "Team & integrations",
-    rows: [
-      { feature: "Collaborators", free: "0", pro: "2 per website", business: "10 per website" },
-      { feature: "Advanced integrations", free: false, pro: "Limited", business: true },
-      { feature: "Support", free: "Standard", pro: "Standard", business: "Priority" },
-    ],
-  },
-];
 
 /* ============================
    Sub-Components
@@ -272,7 +90,12 @@ const BillingToggle = ({
           component={motion.span}
           aria-hidden
           animate={{ x: `${selectedIndex * 100}%` }}
-          transition={{ type: "spring", stiffness: 360, damping: 32, mass: 0.9 }}
+          transition={{
+            type: "spring",
+            stiffness: 360,
+            damping: 32,
+            mass: 0.9,
+          }}
           sx={{
             position: "absolute",
             top: 4,
@@ -353,6 +176,134 @@ const BillingToggle = ({
   );
 };
 
+const LaunchDiscountBanner = () => {
+  const [copied, setCopied] = React.useState(false);
+  const copyTimer = React.useRef<number | null>(null);
+
+  React.useEffect(
+    () => () => {
+      if (copyTimer.current) {
+        window.clearTimeout(copyTimer.current);
+      }
+    },
+    [],
+  );
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(PRICING_DISCOUNT_DISPLAY.launchCode);
+      setCopied(true);
+
+      if (copyTimer.current) {
+        window.clearTimeout(copyTimer.current);
+      }
+
+      copyTimer.current = window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        maxWidth: 880,
+        mx: "auto",
+        mb: 10,
+        p: { xs: 2, sm: 2.5 },
+        borderRadius: "20px",
+        border: `1px solid ${COLORS.tealSoft}`,
+        background:
+          "linear-gradient(135deg, rgba(47,184,179,0.14), rgba(255,255,255,0.045))",
+        boxShadow:
+          "0 18px 58px rgba(47,184,179,0.12), 0 0 58px rgba(47,184,179,0.08), inset 0 1px 0 rgba(255,255,255,0.07)",
+        transform: "translateY(0)",
+        transition:
+          "box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease",
+        "&:hover": {
+          transform: "translateY(-3px)",
+          borderColor: "rgba(47,184,179,0.42)",
+          boxShadow:
+            "0 24px 70px rgba(47,184,179,0.16), 0 0 70px rgba(47,184,179,0.1), inset 0 1px 0 rgba(255,255,255,0.09)",
+        },
+      }}
+    >
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={2}
+        alignItems={{ xs: "flex-start", md: "center" }}
+        justifyContent="space-between"
+      >
+        <Box>
+          <Typography
+            sx={{
+              color: COLORS.teal,
+              fontSize: "0.72rem",
+              fontWeight: 900,
+              letterSpacing: 1.4,
+              textTransform: "uppercase",
+              mb: 0.6,
+            }}
+          >
+            Launch discount
+          </Typography>
+          <Typography
+            sx={{
+              color: "#fff",
+              fontSize: { xs: "1.15rem", sm: "1.35rem" },
+              fontWeight: 900,
+              lineHeight: 1.2,
+            }}
+          >
+            {PRICING_DISCOUNT_DISPLAY.launchPercent}% off your first annual Pro
+            or Business payment
+          </Typography>
+          <Typography
+            sx={{
+              color: "rgba(255,255,255,0.62)",
+              mt: 0.8,
+              fontSize: "0.86rem",
+              lineHeight: 1.5,
+            }}
+          >
+            Annual billing already includes two months free. Launch discounts
+            are display-only here and will be connected at checkout later.
+          </Typography>
+        </Box>
+
+        <Chip
+          clickable
+          role="button"
+          aria-label={`Copy launch code ${PRICING_DISCOUNT_DISPLAY.launchCode}`}
+          label={copied ? "COPIED" : PRICING_DISCOUNT_DISPLAY.launchCode}
+          onClick={handleCopyCode}
+          sx={{
+            height: 40,
+            px: 1,
+            borderRadius: "999px",
+            background: copied ? COLORS.teal : "#fff",
+            color: copied ? "#031211" : "#041e18",
+            fontSize: "0.85rem",
+            fontWeight: 900,
+            letterSpacing: 1.2,
+            cursor: "pointer",
+            transition:
+              "background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease",
+            "&:hover": {
+              background: copied ? COLORS.teal : "rgba(255,255,255,0.92)",
+              transform: "translateY(-2px)",
+              boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
+            },
+            "&:active": {
+              transform: "translateY(0)",
+            },
+          }}
+        />
+      </Stack>
+    </Box>
+  );
+};
+
 const PlanHeader = ({
   plan,
   billing,
@@ -364,35 +315,83 @@ const PlanHeader = ({
   siteCount: SiteCount;
   onSiteCountChange: (direction: -1 | 1) => void;
 }) => {
-  const displayPrice = getPlanPrice(plan.id, billing, siteCount);
+  const {
+    price: displayPrice,
+    listPrice,
+    volumeDiscountPercent,
+    volumeSavings,
+    annualSavings,
+  } = getPlanPriceBreakdown(plan.id, billing, siteCount);
   const paidPlan = !plan.free;
-  const siteCountIndex = SITE_COUNT_OPTIONS.indexOf(siteCount);
-  const canDecrease = paidPlan && siteCountIndex > 0;
-  const canIncrease = paidPlan && siteCountIndex < SITE_COUNT_OPTIONS.length - 1;
+  const canDecrease = paidPlan && siteCount > SITE_COUNT_MIN;
+  const canIncrease = paidPlan && siteCount < SITE_COUNT_MAX;
+  const priceLabel = plan.free
+    ? "$0"
+    : `$${displayPrice.toLocaleString("en-US")}`;
+  const priceFontSize =
+    priceLabel.length >= 7
+      ? "2.25rem"
+      : priceLabel.length >= 6
+        ? "2.6rem"
+        : "3rem";
+  const formattedListPrice = listPrice.toLocaleString("en-US");
   return (
-    <Box sx={{ textAlign: "center" }}>
-      <Typography sx={{ fontWeight: 800, fontSize: "1.15rem" }}>
-        {plan.label}
-      </Typography>
+    <Box
+      sx={{
+        textAlign: "center",
+        minHeight: { md: 258 },
+      }}
+    >
+      <Stack
+        direction="row"
+        alignItems="baseline"
+        justifyContent="center"
+        spacing={1}
+        sx={{ minHeight: 32, flexWrap: "wrap", rowGap: 0.5 }}
+      >
+        <Typography
+          sx={{
+            color: "#fff",
+            fontWeight: 1000,
+            fontSize: "1.5rem",
+            lineHeight: 1.1,
+          }}
+        >
+          {plan.label}
+        </Typography>
+        <Typography
+          sx={{
+            ...gradientText,
+            fontSize: "0.58rem",
+            letterSpacing: 0.7,
+            textTransform: "uppercase",
+          }}
+        >
+          {plan.tagline}
+        </Typography>
+      </Stack>
+
       <Typography
         sx={{
-          ...gradientText,
-          fontSize: "0.8rem",
-          mt: 0.5,
-          letterSpacing: 0.3,
+          opacity: 0.6,
+          mt: 1.2,
+          fontSize: "0.7rem",
+          lineHeight: 1.5,
+          minHeight: 38,
+          maxWidth: 360,
+          mx: "auto",
         }}
       >
-        {plan.tagline}
+        {plan.positioning}
       </Typography>
 
       <Box
         sx={{
-          mt: 2,
-          position: "relative",
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "center",
-          gap: 0.5,
+          mt: 0.7,
+          display: "grid",
+          gridTemplateColumns: paidPlan ? "40px minmax(0, 1fr) 40px" : "1fr",
+          alignItems: "center",
+          columnGap: { xs: 1, sm: 1.5 },
           minHeight: 56,
         }}
       >
@@ -402,12 +401,9 @@ const PlanHeader = ({
             disabled={!canDecrease}
             onClick={() => onSiteCountChange(-1)}
             sx={{
-              position: "absolute",
-              left: { xs: 0, sm: 8 },
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
+              justifySelf: "end",
               color: canDecrease ? COLORS.teal : "rgba(255,255,255,0.18)",
               border: `1px solid ${
                 canDecrease ? COLORS.tealSoft : "rgba(255,255,255,0.08)"
@@ -419,50 +415,66 @@ const PlanHeader = ({
                 background: canDecrease
                   ? "rgba(47,184,179,0.14)"
                   : "rgba(255,255,255,0.04)",
-                transform: canDecrease
-                  ? "translate(-2px, -50%)"
-                  : "translateY(-50%)",
+                transform: canDecrease ? "translateX(-3px)" : "none",
               },
             }}
           >
-            <ChevronLeftIcon sx={{ fontSize: 22 }} />
+            <ChevronLeftIcon sx={{ fontSize: 20 }} />
           </IconButton>
         )}
-        <Typography
-          component="span"
-          sx={{ fontSize: "2.6rem", fontWeight: 900, lineHeight: 1 }}
+        <Box
+          sx={{
+            minWidth: 0,
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "center",
+            gap: 0.5,
+          }}
         >
-          <Box
-            component={motion.span}
-            key={`${plan.id}-${billing}-${siteCount}`}
-            initial={{ opacity: 0, y: 8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            sx={{ display: "inline-block" }}
+          <Typography
+            component="span"
+            sx={{
+              color: "#fff",
+              fontSize: priceFontSize,
+              fontWeight: 900,
+              lineHeight: 1,
+              whiteSpace: "nowrap",
+            }}
           >
-            {plan.free ? "$0" : `$${displayPrice}`}
-          </Box>
-        </Typography>
-        <Typography
-          component="span"
-          sx={{ opacity: 0.5, fontSize: "0.85rem", fontWeight: 500 }}
-        >
-          {plan.free
-            ? "/forever"
-            : `/${billing === "annual" ? "year" : "month"}`}
-        </Typography>
+            <Box
+              component={motion.span}
+              key={`${plan.id}-${billing}-${siteCount}`}
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              sx={{ display: "inline-block" }}
+            >
+              {priceLabel}
+            </Box>
+          </Typography>
+          <Typography
+            component="span"
+            sx={{
+              opacity: 0.5,
+              fontSize: "0.85rem",
+              fontWeight: 500,
+              mb: 0.4,
+            }}
+          >
+            {plan.free
+              ? "/forever"
+              : `/${billing === "annual" ? "year" : "month"}`}
+          </Typography>
+        </Box>
         {paidPlan && (
           <IconButton
             aria-label={`Increase ${plan.label} website count`}
             disabled={!canIncrease}
             onClick={() => onSiteCountChange(1)}
             sx={{
-              position: "absolute",
-              right: { xs: 0, sm: 8 },
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
+              justifySelf: "start",
               color: canIncrease ? COLORS.teal : "rgba(255,255,255,0.18)",
               border: `1px solid ${
                 canIncrease ? COLORS.tealSoft : "rgba(255,255,255,0.08)"
@@ -474,9 +486,7 @@ const PlanHeader = ({
                 background: canIncrease
                   ? "rgba(47,184,179,0.14)"
                   : "rgba(255,255,255,0.04)",
-                transform: canIncrease
-                  ? "translate(2px, -50%)"
-                  : "translateY(-50%)",
+                transform: canIncrease ? "translateX(2px)" : "none",
               },
             }}
           >
@@ -484,6 +494,93 @@ const PlanHeader = ({
           </IconButton>
         )}
       </Box>
+
+      {paidPlan && (annualSavings > 0 || volumeSavings > 0) ? (
+        <Stack
+          spacing={0.85}
+          justifyContent="center"
+          alignItems="center"
+          sx={{ mt: 1.1, minHeight: 58 }}
+        >
+          <Typography
+            component="span"
+            sx={{
+              color: "rgba(255,255,255,0.46)",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              textDecoration: "line-through",
+            }}
+          >
+            ${formattedListPrice}/{billing === "annual" ? "year" : "month"}
+          </Typography>
+
+          <Stack
+            direction="row"
+            spacing={0.8}
+            justifyContent="center"
+            alignItems="center"
+            sx={{
+              flexWrap: "nowrap",
+              maxWidth: "100%",
+              "& .MuiChip-root": {
+                minWidth: 0,
+              },
+              "& .MuiChip-label": {
+                px: 1.1,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              },
+            }}
+          >
+            {billing === "annual" && annualSavings > 0 && (
+              <Chip
+                label={`Save $${annualSavings} · 2 months free`}
+                sx={{
+                  height: 24,
+                  borderRadius: "6px",
+                  background: "rgba(47,184,179,0.16)",
+                  border: `1px solid ${COLORS.tealSoft}`,
+                  color: COLORS.teal,
+                  fontSize: "0.72rem",
+                  fontWeight: 900,
+                  letterSpacing: 0.2,
+                }}
+              />
+            )}
+            {volumeDiscountPercent > 0 && (
+              <Chip
+                label={`${volumeDiscountPercent}% volume discount`}
+                sx={{
+                  height: 24,
+                  borderRadius: "6px",
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  color: "rgba(255,255,255,0.78)",
+                  fontSize: "0.72rem",
+                  fontWeight: 900,
+                  letterSpacing: 0.2,
+                }}
+              />
+            )}
+          </Stack>
+        </Stack>
+      ) : (
+        <Box sx={{ mt: 1.1, minHeight: 58 }}>
+          <Typography
+            sx={{
+              color: "rgba(255,255,255,0.62)",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              lineHeight: 1.45,
+            }}
+          >
+            {plan.free
+              ? "No credit card required"
+              : `Save with ${PRICING_DISCOUNT_DISPLAY.annualFreeMonths} months free on annual billing`}
+          </Typography>
+        </Box>
+      )}
 
       {paidPlan && (
         <Typography
@@ -493,7 +590,7 @@ const PlanHeader = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           sx={{
-            mt: 1,
+            mt: 1.1,
             mb: 0,
             color: COLORS.teal,
             fontSize: "0.78rem",
@@ -502,22 +599,9 @@ const PlanHeader = ({
             textTransform: "uppercase",
           }}
         >
-          {siteCount} sites
+          {siteCount} sites included
         </Typography>
       )}
-
-      <Typography
-        sx={{
-          opacity: 0.6,
-          mt: 1.5,
-          fontSize: "0.85rem",
-          lineHeight: 1.5,
-          minHeight: 54,
-          px: 1,
-        }}
-      >
-        {plan.positioning}
-      </Typography>
     </Box>
   );
 };
@@ -535,25 +619,17 @@ const PricingCard = ({
 }) => {
   const recommended = !!plan.recommended;
   const comingSoon = !!plan.comingSoon;
-  const [siteCount, setSiteCount] = React.useState<SiteCount>(5);
+  const [siteCount, setSiteCount] = React.useState<SiteCount>(SITE_COUNT_MIN);
   const displayPrice = getPlanPrice(plan.id, billing, siteCount);
   const updateSiteCount = (direction: -1 | 1) => {
-    setSiteCount((current) => {
-      const currentIndex = SITE_COUNT_OPTIONS.indexOf(current);
-      const nextIndex = Math.max(
-        0,
-        Math.min(SITE_COUNT_OPTIONS.length - 1, currentIndex + direction),
-      );
-
-      return SITE_COUNT_OPTIONS[nextIndex];
-    });
+    setSiteCount((current) => getNextSiteCount(current, direction));
   };
 
   const firstIsHeading =
     typeof plan.features[0] === "string" &&
     (plan.features[0] as string).endsWith("plus:");
   const sectionLabel = firstIsHeading
-    ? (plan.features[0] as string).replace(/,?\s*plus:$/, "")
+    ? (plan.features[0] as string).replace(/:$/, "")
     : "What's included";
   const items = firstIsHeading ? plan.features.slice(1) : plan.features;
 
@@ -569,23 +645,21 @@ const PricingCard = ({
           border: recommended
             ? `1px solid rgba(47,184,179,0.5)`
             : `1px solid ${COLORS.border}`,
-          boxShadow: recommended
-            ? "0 0 50px rgba(47,184,179,0.12)"
-            : "none",
+          boxShadow: recommended ? "0 0 50px rgba(47,184,179,0.12)" : "none",
           display: "flex",
           flexDirection: "column",
         }}
       >
-        {(recommended || comingSoon) && (
+        {recommended && (
           <Chip
-            label={comingSoon ? "COMING SOON" : "MOST POPULAR"}
+            label="MOST POPULAR"
             sx={{
               height: 26,
               fontSize: "0.65rem",
               fontWeight: 800,
               letterSpacing: 1,
-              background: comingSoon ? "rgba(255,255,255,0.9)" : COLORS.teal,
-              color: comingSoon ? "#041e18" : "white",
+              background: COLORS.teal,
+              color: "white",
               position: "absolute",
               top: -13,
               left: "50%",
@@ -646,7 +720,7 @@ const PricingCard = ({
             {/* Section divider label */}
             <Box
               sx={{
-                mt: 3,
+                mt: 2.5,
                 mb: 2.5,
                 display: "flex",
                 alignItems: "center",
@@ -804,9 +878,9 @@ const PricingCard = ({
                 },
                 "&:hover": {
                   background: recommended
-                    ? COLORS.teal
+                    ? COLORS.brand
                     : "rgba(255,255,255,0.1)",
-                  borderColor: COLORS.teal,
+                  borderColor: COLORS.brand,
                   color: "#ffffff",
                 },
               }}
@@ -882,319 +956,324 @@ const ComparisonTable = () => {
   const [expanded, setExpanded] = React.useState(false);
 
   return (
-  <Container maxWidth="lg" sx={{ mt: 14, pb: 4 }}>
-    <Box sx={{ textAlign: "center", mb: 7 }}>
-      <Typography
-        sx={{
-          fontSize: "0.72rem",
-          fontWeight: 700,
-          letterSpacing: 2,
-          textTransform: "uppercase",
-          color: COLORS.teal,
-          mb: 1.5,
-        }}
-      >
-        Full breakdown
-      </Typography>
-      <Typography
-        variant="h4"
-        sx={{
-          fontWeight: 900,
-          fontSize: { xs: "1.7rem", md: "2.4rem" },
-          letterSpacing: "-0.02em",
-        }}
-      >
-        Compare every feature
-      </Typography>
-    </Box>
-
-    <Box sx={{ position: "relative" }}>
-      <Box
-        sx={{
-          borderRadius: "24px",
-          border: `1px solid ${COLORS.border}`,
-          background: "rgba(3,24,26,0.6)",
-          overflow: "hidden",
-          boxShadow: expanded
-            ? "0 22px 70px rgba(47,184,179,0.14)"
-            : "0 14px 44px rgba(0,0,0,0.22)",
-          transition: "box-shadow 0.35s ease, border-color 0.35s ease",
-        }}
-      >
-        <motion.div
-          initial={false}
-          animate={{
-            height: expanded ? "auto" : 360,
-            filter: expanded ? "saturate(1.08)" : "saturate(0.96)",
+    <Container maxWidth="lg" sx={{ mt: 14, pb: 4 }}>
+      <Box sx={{ textAlign: "center", mb: 7 }}>
+        <Typography
+          sx={{
+            fontSize: "0.72rem",
+            fontWeight: 700,
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            color: COLORS.teal,
+            mb: 1.5,
           }}
-          transition={{
-            height: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
-            filter: { duration: 0.35, ease: "easeOut" },
-          }}
-          style={{ overflow: "hidden" }}
         >
-          <Box
-            sx={{
-              overflowX: "auto",
-              transform: expanded ? "translateY(0)" : "translateY(-2px)",
-              transition: "transform 0.35s ease",
+          Full breakdown
+        </Typography>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 900,
+            fontSize: { xs: "1.7rem", md: "2.4rem" },
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Compare every feature
+        </Typography>
+      </Box>
+
+      <Box sx={{ position: "relative" }}>
+        <Box
+          sx={{
+            borderRadius: "24px",
+            border: `1px solid ${COLORS.border}`,
+            background: "rgba(3,24,26,0.6)",
+            overflow: "hidden",
+            boxShadow: expanded
+              ? "0 22px 70px rgba(47,184,179,0.14)"
+              : "0 14px 44px rgba(0,0,0,0.22)",
+            transition: "box-shadow 0.35s ease, border-color 0.35s ease",
+          }}
+        >
+          <motion.div
+            initial={false}
+            animate={{
+              height: expanded ? "auto" : 360,
+              filter: expanded ? "saturate(1.08)" : "saturate(0.96)",
             }}
+            transition={{
+              height: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+              filter: { duration: 0.35, ease: "easeOut" },
+            }}
+            style={{ overflow: "hidden" }}
           >
             <Box
-              component="table"
               sx={{
-                width: "100%",
-                minWidth: 720,
-                borderCollapse: "separate",
-                borderSpacing: 0,
-                tableLayout: "fixed",
+                overflowX: "auto",
+                transform: expanded ? "translateY(0)" : "translateY(-2px)",
+                transition: "transform 0.35s ease",
               }}
             >
-        {/* Header */}
-        <Box component="thead">
-          <Box component="tr">
-            <Box
-              component="th"
-              sx={{
-                textAlign: "left",
-                p: "22px 24px",
-                position: "sticky",
-                top: 0,
-                background: COLORS.cardDark,
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                  color: "rgba(255,255,255,0.5)",
-                }}
-              >
-                FEATURES
-              </Typography>
-            </Box>
-            {PLANS.map((p) => (
               <Box
-                component="th"
-                key={p.id}
+                component="table"
                 sx={{
-                  width: PLAN_COL_WIDTH,
-                  p: "18px 12px",
-                  textAlign: "center",
-                  background: p.recommended
-                    ? "rgba(47,184,179,0.08)"
-                    : COLORS.cardDark,
-                  borderTop: p.recommended
-                    ? `2px solid ${COLORS.teal}`
-                    : "2px solid transparent",
-                  borderLeft: p.recommended
-                    ? `1px solid ${COLORS.tealSoft}`
-                    : "none",
-                  borderRight: p.recommended
-                    ? `1px solid ${COLORS.tealSoft}`
-                    : "none",
+                  width: "100%",
+                  minWidth: 720,
+                  borderCollapse: "separate",
+                  borderSpacing: 0,
+                  tableLayout: "fixed",
                 }}
               >
-                <Typography
-                  sx={{
-                    fontWeight: 800,
-                    fontSize: "1rem",
-                    color: p.recommended ? COLORS.teal : "#fff",
-                  }}
-                >
-                  {p.label}
-                </Typography>
-                {p.recommended && (
-                  <Typography
-                    sx={{
-                      fontSize: "0.6rem",
-                      fontWeight: 700,
-                      letterSpacing: 1,
-                      color: COLORS.teal,
-                      opacity: 0.8,
-                    }}
-                  >
-                    MOST POPULAR
-                  </Typography>
-                )}
-              </Box>
-            ))}
-          </Box>
-        </Box>
-
-        <Box component="tbody">
-          {COMPARISON_GROUPS.map((group) => (
-            <React.Fragment key={group.category}>
-              {/* Category header row */}
-              <Box component="tr">
-                <Box
-                  component="td"
-                  sx={{
-                    p: "18px 24px 8px",
-                    background: "rgba(255,255,255,0.015)",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: "0.7rem",
-                      fontWeight: 800,
-                      letterSpacing: 1.2,
-                      textTransform: "uppercase",
-                      color: "rgba(255,255,255,0.4)",
-                    }}
-                  >
-                    {group.category}
-                  </Typography>
-                </Box>
-                {PLANS.map((p) => (
-                  <Box
-                    component="td"
-                    key={p.id}
-                    sx={{
-                      background: p.recommended
-                        ? "rgba(47,184,179,0.05)"
-                        : "rgba(255,255,255,0.015)",
-                      borderLeft: p.recommended
-                        ? `1px solid ${COLORS.tealSoft}`
-                        : "none",
-                      borderRight: p.recommended
-                        ? `1px solid ${COLORS.tealSoft}`
-                        : "none",
-                    }}
-                  />
-                ))}
-              </Box>
-
-              {group.rows.map((row) => (
-                <Box
-                  component="tr"
-                  key={row.feature}
-                  sx={{
-                    "&:hover td": { background: "rgba(255,255,255,0.03)" },
-                  }}
-                >
-                  <Box
-                    component="td"
-                    sx={{
-                      p: "13px 24px",
-                      fontSize: "0.9rem",
-                      color: "rgba(255,255,255,0.82)",
-                      borderTop: `1px solid ${COLORS.border}`,
-                    }}
-                  >
-                    {row.feature}
-                  </Box>
-                  {(["free", "pro", "business"] as const).map((col) => {
-                    const recommended = col === "pro";
-                    return (
-                      <Box
-                        component="td"
-                        key={col}
+                {/* Header */}
+                <Box component="thead">
+                  <Box component="tr">
+                    <Box
+                      component="th"
+                      sx={{
+                        textAlign: "left",
+                        p: "22px 24px",
+                        position: "sticky",
+                        top: 0,
+                        background: COLORS.cardDark,
+                      }}
+                    >
+                      <Typography
                         sx={{
-                          p: "13px 12px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          letterSpacing: 1,
+                          color: "rgba(255,255,255,0.5)",
+                        }}
+                      >
+                        FEATURES
+                      </Typography>
+                    </Box>
+                    {PLANS.map((p) => (
+                      <Box
+                        component="th"
+                        key={p.id}
+                        sx={{
+                          width: PLAN_COL_WIDTH,
+                          p: "18px 12px",
                           textAlign: "center",
-                          borderTop: `1px solid ${COLORS.border}`,
-                          background: recommended
-                            ? "rgba(47,184,179,0.05)"
-                            : "transparent",
-                          borderLeft: recommended
+                          background: p.recommended
+                            ? "rgba(47,184,179,0.08)"
+                            : COLORS.cardDark,
+                          borderTop: p.recommended
+                            ? `2px solid ${COLORS.teal}`
+                            : "2px solid transparent",
+                          borderLeft: p.recommended
                             ? `1px solid ${COLORS.tealSoft}`
                             : "none",
-                          borderRight: recommended
+                          borderRight: p.recommended
                             ? `1px solid ${COLORS.tealSoft}`
                             : "none",
                         }}
                       >
-                        <CompareCell value={row[col]} highlight={recommended} />
+                        <Typography
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: "1rem",
+                            color: p.recommended ? COLORS.teal : "#fff",
+                          }}
+                        >
+                          {p.label}
+                        </Typography>
+                        {p.recommended && (
+                          <Typography
+                            sx={{
+                              fontSize: "0.6rem",
+                              fontWeight: 700,
+                              letterSpacing: 1,
+                              color: COLORS.teal,
+                              opacity: 0.8,
+                            }}
+                          >
+                            MOST POPULAR
+                          </Typography>
+                        )}
                       </Box>
-                    );
-                  })}
+                    ))}
+                  </Box>
                 </Box>
-              ))}
-            </React.Fragment>
-          ))}
-        </Box>
+
+                <Box component="tbody">
+                  {COMPARISON_GROUPS.map((group) => (
+                    <React.Fragment key={group.category}>
+                      {/* Category header row */}
+                      <Box component="tr">
+                        <Box
+                          component="td"
+                          sx={{
+                            p: "18px 24px 8px",
+                            background: "rgba(255,255,255,0.015)",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: "0.7rem",
+                              fontWeight: 800,
+                              letterSpacing: 1.2,
+                              textTransform: "uppercase",
+                              color: "rgba(255,255,255,0.4)",
+                            }}
+                          >
+                            {group.category}
+                          </Typography>
+                        </Box>
+                        {PLANS.map((p) => (
+                          <Box
+                            component="td"
+                            key={p.id}
+                            sx={{
+                              background: p.recommended
+                                ? "rgba(47,184,179,0.05)"
+                                : "rgba(255,255,255,0.015)",
+                              borderLeft: p.recommended
+                                ? `1px solid ${COLORS.tealSoft}`
+                                : "none",
+                              borderRight: p.recommended
+                                ? `1px solid ${COLORS.tealSoft}`
+                                : "none",
+                            }}
+                          />
+                        ))}
+                      </Box>
+
+                      {group.rows.map((row) => (
+                        <Box
+                          component="tr"
+                          key={row.feature}
+                          sx={{
+                            "&:hover td": {
+                              background: "rgba(255,255,255,0.03)",
+                            },
+                          }}
+                        >
+                          <Box
+                            component="td"
+                            sx={{
+                              p: "13px 24px",
+                              fontSize: "0.9rem",
+                              color: "rgba(255,255,255,0.82)",
+                              borderTop: `1px solid ${COLORS.border}`,
+                            }}
+                          >
+                            {row.feature}
+                          </Box>
+                          {(["free", "pro", "business"] as const).map((col) => {
+                            const recommended = col === "pro";
+                            return (
+                              <Box
+                                component="td"
+                                key={col}
+                                sx={{
+                                  p: "13px 12px",
+                                  textAlign: "center",
+                                  borderTop: `1px solid ${COLORS.border}`,
+                                  background: recommended
+                                    ? "rgba(47,184,179,0.05)"
+                                    : "transparent",
+                                  borderLeft: recommended
+                                    ? `1px solid ${COLORS.tealSoft}`
+                                    : "none",
+                                  borderRight: recommended
+                                    ? `1px solid ${COLORS.tealSoft}`
+                                    : "none",
+                                }}
+                              >
+                                <CompareCell
+                                  value={row[col]}
+                                  highlight={recommended}
+                                />
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </Box>
+              </Box>
             </Box>
-          </Box>
-        </motion.div>
-      </Box>
+          </motion.div>
+        </Box>
 
-      {/* Fade overlay when collapsed */}
-      <motion.div
-        initial={false}
-        animate={{
-          opacity: expanded ? 0 : 1,
-          y: expanded ? 18 : 0,
-        }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: 140,
-          borderRadius: "0 0 24px 24px",
-          background:
-            "linear-gradient(180deg, rgba(4,30,24,0) 0%, rgba(4,30,24,0.92) 58%, #041e18 100%)",
-          pointerEvents: "none",
-        }}
-      />
-    </Box>
-
-    {/* Toggle button */}
-    <Box sx={{ textAlign: "center", mt: 3 }}>
-      <Box
-        component={motion.div}
-        animate={{ y: expanded ? 0 : -8 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        sx={{ display: "inline-flex" }}
-      >
-        <Button
-          onClick={() => setExpanded((v) => !v)}
-          endIcon={
-            <ExpandMoreIcon
-              sx={{
-                transition: "transform 0.35s ease",
-                transform: expanded ? "rotate(180deg)" : "none",
-              }}
-            />
-          }
-          sx={{
-            px: 4,
-            py: 1.4,
-            borderRadius: "999px",
-            fontWeight: 700,
-            textTransform: "none",
-            color: "white",
-            border: `1px solid ${COLORS.tealSoft}`,
-            background: expanded
-              ? "rgba(255,255,255,0.08)"
-              : "rgba(47,184,179,0.1)",
-            boxShadow: expanded
-              ? "none"
-              : "0 12px 34px rgba(47,184,179,0.18)",
-            transition:
-              "background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
-            "&:hover": {
-              background: "rgba(47,184,179,0.16)",
-              borderColor: COLORS.teal,
-              boxShadow: "0 14px 40px rgba(47,184,179,0.22)",
-            },
+        {/* Fade overlay when collapsed */}
+        <motion.div
+          initial={false}
+          animate={{
+            opacity: expanded ? 0 : 1,
+            y: expanded ? 18 : 0,
           }}
-        >
-          {expanded ? "Show less" : "Show full comparison"}
-        </Button>
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 140,
+            borderRadius: "0 0 24px 24px",
+            background:
+              "linear-gradient(180deg, rgba(4,30,24,0) 0%, rgba(4,30,24,0.92) 58%, #041e18 100%)",
+            pointerEvents: "none",
+          }}
+        />
       </Box>
-    </Box>
 
-    <Typography
-      sx={{ mt: 3, fontSize: "0.8rem", opacity: 0.5, textAlign: "center" }}
-    >
-      *Unlimited is subject to a reasonable fair-use policy and platform-abuse
-      protections.
-    </Typography>
-  </Container>
+      {/* Toggle button */}
+      <Box sx={{ textAlign: "center", mt: 3 }}>
+        <Box
+          component={motion.div}
+          animate={{ y: expanded ? 0 : -8 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          sx={{ display: "inline-flex" }}
+        >
+          <Button
+            onClick={() => setExpanded((v) => !v)}
+            endIcon={
+              <ExpandMoreIcon
+                sx={{
+                  transition: "transform 0.35s ease",
+                  transform: expanded ? "rotate(180deg)" : "none",
+                }}
+              />
+            }
+            sx={{
+              px: 4,
+              py: 1.4,
+              borderRadius: "999px",
+              fontWeight: 700,
+              textTransform: "none",
+              color: "white",
+              border: `1px solid ${COLORS.tealSoft}`,
+              background: expanded
+                ? "rgba(255,255,255,0.08)"
+                : "rgba(47,184,179,0.1)",
+              boxShadow: expanded
+                ? "none"
+                : "0 12px 34px rgba(47,184,179,0.18)",
+              transition:
+                "background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
+              "&:hover": {
+                background: "rgba(47,184,179,0.16)",
+                borderColor: COLORS.teal,
+                boxShadow: "0 14px 40px rgba(47,184,179,0.22)",
+              },
+            }}
+          >
+            {expanded ? "Show less" : "Show full comparison"}
+          </Button>
+        </Box>
+      </Box>
+
+      <Typography
+        sx={{ mt: 3, fontSize: "0.8rem", opacity: 0.5, textAlign: "center" }}
+      >
+        *Unlimited is subject to a reasonable fair-use policy and platform-abuse
+        protections.
+      </Typography>
+    </Container>
   );
 };
 
@@ -1270,14 +1349,15 @@ const PricingSection: React.FC = () => {
             mx="auto"
             sx={{ color: "white", marginTop: "30px" }}
           >
-            Free gets you online. Pro makes you look professional. Business helps
-            you grow and scale.
+            Free gets you online. Pro makes you look professional. Business
+            helps you grow and scale.
           </Typography>
         </Box>
       </Container>
 
       <Box sx={{ pb: 10, pt: 0, color: "white" }}>
         <Container maxWidth="lg">
+          <LaunchDiscountBanner />
           <BillingToggle value={billing} onChange={setBilling} />
 
           <Grid container spacing={4} alignItems="stretch">

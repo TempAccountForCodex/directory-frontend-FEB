@@ -710,6 +710,171 @@ export async function generateWebsiteDraft(
   }
 }
 
+/* ------------------------------------------------------------------ */
+/*  Async website-draft job (start → poll → ack)                       */
+/*                                                                     */
+/*  The draft generation is a long LLM call that outlives a single     */
+/*  (proxy-killable) HTTP request. The backend runs it as a persisted  */
+/*  per-website job: `start` returns immediately, the frontend polls   */
+/*  `status` until it succeeds/fails, and `ack`s the result once the   */
+/*  user has kept or reverted it. `active` lets the editor resume the  */
+/*  loading state (or surface a finished result) when reopened.        */
+/* ------------------------------------------------------------------ */
+
+export type WebsiteDraftJobStatus = "running" | "succeeded" | "failed";
+
+export interface WebsiteDraftJob {
+  jobId: string;
+  status: WebsiteDraftJobStatus;
+  websiteId?: number;
+  pageId?: number | null;
+  patches: AIPatch[];
+  summary?: string;
+  error?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Normalize whatever status string the backend uses into our 3 states. */
+function normalizeDraftJobStatus(raw: unknown): WebsiteDraftJobStatus {
+  const s = String(raw ?? "").toLowerCase();
+  if (["succeeded", "success", "completed", "complete", "done"].includes(s)) {
+    return "succeeded";
+  }
+  if (
+    ["failed", "fail", "error", "errored", "cancelled", "canceled", "timeout", "timed_out"].includes(
+      s,
+    )
+  ) {
+    return "failed";
+  }
+  // pending / queued / processing / running / unknown → keep polling
+  return "running";
+}
+
+/** Peel `{ data: … }` / `{ job: … }` envelopes off a job-shaped response. */
+function unwrapJobBody(raw: unknown): Record<string, unknown> | null {
+  if (!raw || typeof raw !== "object") return null;
+  let body = raw as Record<string, unknown>;
+  if (body.data && typeof body.data === "object" && !Array.isArray(body.data)) {
+    body = body.data as Record<string, unknown>;
+  }
+  if (body.job && typeof body.job === "object" && !Array.isArray(body.job)) {
+    body = body.job as Record<string, unknown>;
+  }
+  return body;
+}
+
+function normalizeDraftJob(raw: unknown): WebsiteDraftJob | null {
+  const body = unwrapJobBody(raw);
+  if (!body) return null;
+  const jobId =
+    (typeof body.jobId === "string" && body.jobId) ||
+    (typeof body.id === "string" && body.id) ||
+    (body.id != null ? String(body.id) : "") ||
+    (body.jobId != null ? String(body.jobId) : "");
+  if (!jobId) return null;
+  const ownPatches = extractDraftPatches(body);
+  const patches = ownPatches.length ? ownPatches : extractDraftPatches(body.result);
+  const summaryRaw =
+    (typeof body.summary === "string" && body.summary) ||
+    (body.result && typeof body.result === "object"
+      ? (body.result as Record<string, unknown>).summary
+      : undefined);
+  return {
+    jobId,
+    status: normalizeDraftJobStatus(body.status ?? body.state),
+    websiteId: typeof body.websiteId === "number" ? body.websiteId : undefined,
+    pageId: (body.pageId as number | null | undefined) ?? null,
+    patches,
+    summary: typeof summaryRaw === "string" ? summaryRaw : undefined,
+    error:
+      typeof body.error === "string"
+        ? body.error
+        : typeof body.errorMessage === "string"
+          ? body.errorMessage
+          : undefined,
+    createdAt: typeof body.createdAt === "string" ? body.createdAt : undefined,
+    updatedAt: typeof body.updatedAt === "string" ? body.updatedAt : undefined,
+  };
+}
+
+/** Start (or resume, if one is already running) a website-draft job. */
+export async function startWebsiteDraft(
+  payload: GenerateWebsiteDraftRequest,
+): Promise<WebsiteDraftJob> {
+  try {
+    const res = await apiClient.post("/ai/generate-website-draft", payload);
+    const body = res.data;
+    if (
+      body &&
+      typeof body === "object" &&
+      "success" in body &&
+      (body as { success?: boolean }).success === false
+    ) {
+      throw new WebsiteAIRequestError(errorFromBody(body as Record<string, unknown>));
+    }
+    const job = normalizeDraftJob(body);
+    if (!job) {
+      throw new WebsiteAIRequestError(
+        normalizeWebsiteAIError(new Error("Malformed draft job response")),
+      );
+    }
+    return job;
+  } catch (err) {
+    if (err instanceof WebsiteAIRequestError) throw err;
+    throw new WebsiteAIRequestError(normalizeWebsiteAIError(err));
+  }
+}
+
+/** Poll a single job's current status/result. */
+export async function getWebsiteDraftStatus(jobId: string): Promise<WebsiteDraftJob> {
+  try {
+    const res = await apiClient.get(
+      `/ai/generate-website-draft/status/${encodeURIComponent(jobId)}`,
+    );
+    const job = normalizeDraftJob(res.data);
+    if (!job) {
+      throw new WebsiteAIRequestError(
+        normalizeWebsiteAIError(new Error("Malformed draft job status response")),
+      );
+    }
+    return job;
+  } catch (err) {
+    if (err instanceof WebsiteAIRequestError) throw err;
+    throw new WebsiteAIRequestError(normalizeWebsiteAIError(err));
+  }
+}
+
+/** The current/most-recent unacked job for a website, or null. */
+export async function getActiveWebsiteDraft(
+  websiteId: number,
+): Promise<WebsiteDraftJob | null> {
+  try {
+    const res = await apiClient.get("/ai/generate-website-draft/active", {
+      params: { websiteId },
+    });
+    const body = unwrapJobBody(res.data);
+    if (!body || (body.jobId == null && body.id == null)) return null;
+    return normalizeDraftJob(res.data);
+  } catch (err) {
+    if (err instanceof WebsiteAIRequestError) throw err;
+    throw new WebsiteAIRequestError(normalizeWebsiteAIError(err));
+  }
+}
+
+/** Mark a finished job consumed so it isn't re-surfaced on the next open. */
+export async function ackWebsiteDraft(jobId: string): Promise<void> {
+  try {
+    await apiClient.post(
+      `/ai/generate-website-draft/${encodeURIComponent(jobId)}/ack`,
+    );
+  } catch (err) {
+    if (err instanceof WebsiteAIRequestError) throw err;
+    throw new WebsiteAIRequestError(normalizeWebsiteAIError(err));
+  }
+}
+
 export async function applyWebsiteAIPatches(params: {
   websiteId: number;
   patches: ApplyPatchInput[];
