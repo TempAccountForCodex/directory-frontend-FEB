@@ -2454,6 +2454,88 @@ const aiPatchTargetsProtectedField = (editorPath, persistedFieldPath) =>
       .some((segment) => PROTECTED_AI_CONTENT_FIELD_KEYS.has(segment)),
   );
 
+// Asset/URL fields hold logos, images, and links — values the AI cannot
+// meaningfully author (it invents non-existent filenames like
+// "hero-kids-coding-class.jpg" or plain text), and several are backend-validated
+// as `format: "url"`, so a single AI-written string makes the ENTIRE page save
+// fail (e.g. `Block at index 0: block.NAVBAR.content.logo must match format
+// "url"`). Drop AI patches targeting these fields so the original asset value is
+// kept — only real, user-facing copy should come from a draft. The exception
+// suffixes keep copy-ish siblings (alt text, captions, a text "logoTitle").
+const AI_MEDIA_FIELD_PATTERN =
+  /(logo|favicon|image|icon|avatar|photo|picture|thumbnail|video|poster|href|link|src|media|gallery|embed|url)/i;
+const AI_MEDIA_FIELD_EXCEPTION =
+  /(alt|text|caption|label|title|heading|description|name|content)$/i;
+
+const aiMediaSegment = (segment) =>
+  AI_MEDIA_FIELD_PATTERN.test(segment) &&
+  !AI_MEDIA_FIELD_EXCEPTION.test(segment);
+
+// Only the LEAF field decides — not intermediate segments. A middle segment like
+// `links`/`imageStyle` must NOT drop legit copy leaves such as `links.0.label`
+// (a nav link's visible text) or `imageStyle.fit` (a CSS enum). We drop when the
+// field itself is an asset/URL (`logo`, `heroImage`, `href`, `url`, `src`…) or a
+// numeric element of an asset collection (`images.0`, `gallery.2`).
+const aiPatchTargetsMediaField = (editorPath, persistedFieldPath) =>
+  [String(editorPath || ""), String(persistedFieldPath || "")].some((path) => {
+    const segments = path.split(".").filter(Boolean);
+    if (!segments.length) return false;
+    const leaf = segments[segments.length - 1];
+    if (aiMediaSegment(leaf)) return true;
+    const parent = segments[segments.length - 2];
+    return /^\d+$/.test(leaf) && parent != null && aiMediaSegment(parent);
+  });
+
+// The blocks-save endpoint validates each block's content and rejects the whole
+// page if a single field is invalid, e.g.:
+//   "Block at index 0: block.NAVBAR.content.logo must match format \"url\""
+// A lone bad value (typically an AI draft that slipped a non-URL string into a
+// URL/format-constrained field) must never trap the user in the editor unable to
+// save. Parse the offending block index + content field path so the save can
+// drop just that field and still persist everything else.
+const parseBlockFieldValidationError = (error) => {
+  const data = error?.response?.data;
+  const raw =
+    (typeof data === "string" && data) ||
+    data?.message ||
+    data?.error ||
+    (Array.isArray(data?.errors) ? data.errors.join(" ") : "") ||
+    "";
+  const match =
+    /Block at index\s+(\d+)\s*:\s*block\.[^.\s]+\.([^\s]+?)\s+(?:must|should|is|cannot|does|has|needs|failed)\b/i.exec(
+      String(raw),
+    );
+  if (!match) return null;
+  return { index: Number(match[1]), fieldPath: match[2] };
+};
+
+// Remove a dotted content path (e.g. "content.logo", "content.images.0.url")
+// from a save-payload block. Numeric leaf segments splice the array element so a
+// single bad gallery entry can be dropped. Returns true if something changed.
+const stripBlockContentField = (payloadBlock, fieldPath) => {
+  if (!payloadBlock || !fieldPath) return false;
+  const segments = String(fieldPath).split(".").filter(Boolean);
+  if (segments.length < 2) return false;
+  let node = payloadBlock;
+  for (let i = 0; i < segments.length - 1; i += 1) {
+    if (node == null || typeof node !== "object") return false;
+    node = node[segments[i]];
+  }
+  if (node == null || typeof node !== "object") return false;
+  const leaf = segments[segments.length - 1];
+  if (Array.isArray(node)) {
+    const idx = Number(leaf);
+    if (!Number.isInteger(idx) || idx < 0 || idx >= node.length) return false;
+    node.splice(idx, 1);
+    return true;
+  }
+  if (Object.prototype.hasOwnProperty.call(node, leaf)) {
+    delete node[leaf];
+    return true;
+  }
+  return false;
+};
+
 const sanitizeBlockContentForSave = (blockType, content) => {
   const rawBlockType = String(blockType || "").toUpperCase();
   const sanitizedContent = syncAliasedBlockContent(rawBlockType, {
@@ -3505,6 +3587,54 @@ const WebsiteEditorInner = () => {
     );
   }, [persistedPages, supportsLocalTemplateEditor]);
 
+  // PUT a page's blocks, but never let one invalid field block the whole page.
+  // If the API rejects a specific block field (e.g. an AI draft slipped a bad
+  // value into a `format: "url"` field), drop just that field and retry so all
+  // the healthy content still persists. Returns the successful response plus the
+  // list of dropped fields so the caller can tell the user what was skipped.
+  const putBlocksWithValidationRecovery = useCallback(
+    async (pageId, payloadBlocks, extraBody = {}) => {
+      const attemptBlocks = payloadBlocks.map((block) => ({
+        ...block,
+        content:
+          block.content && typeof block.content === "object"
+            ? JSON.parse(JSON.stringify(block.content))
+            : block.content,
+      }));
+      const skippedFields = [];
+      const seen = new Set();
+      const MAX_FIELD_RECOVERIES = 12;
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          const response = await apiClient.put(
+            `/websites/${websiteId}/pages/${pageId}/blocks`,
+            { blocks: attemptBlocks, ...extraBody },
+          );
+          return { response, skippedFields };
+        } catch (error) {
+          const parsed = parseBlockFieldValidationError(error);
+          const key = parsed ? `${parsed.index}:${parsed.fieldPath}` : null;
+          if (
+            !parsed ||
+            attempt >= MAX_FIELD_RECOVERIES ||
+            seen.has(key) ||
+            !attemptBlocks[parsed.index] ||
+            !stripBlockContentField(
+              attemptBlocks[parsed.index],
+              parsed.fieldPath,
+            )
+          ) {
+            throw error;
+          }
+          seen.add(key);
+          skippedFields.push(parsed);
+        }
+      }
+    },
+    [websiteId],
+  );
+
   // Autosave callback — PUT blocks to API with ETag conflict detection
   const handleAutosave = useCallback(
     async (data) => {
@@ -3610,10 +3740,10 @@ const WebsiteEditorInner = () => {
           throw new Error("No persisted template page is available for saving");
         }
 
-        const response = await apiClient.put(
-          `/websites/${websiteId}/pages/${effectivePageId}/blocks`,
-          {
-            blocks: blocksToSave
+        const { response, skippedFields } =
+          await putBlocksWithValidationRecovery(
+            effectivePageId,
+            blocksToSave
               .filter(hasValidGalleryImages)
               .map((b, idx) => ({
                 ...(b.id && !String(b.id).startsWith("local-")
@@ -3625,11 +3755,34 @@ const WebsiteEditorInner = () => {
                 sortOrder: idx,
                 isVisible: b.isVisible,
               })),
-            ...(expectedUpdatedAtRef.current
+            expectedUpdatedAtRef.current
               ? { expectedUpdatedAt: expectedUpdatedAtRef.current }
-              : {}),
-          },
-        );
+              : {},
+          );
+
+        // Some fields were rejected by validation and dropped so the rest of the
+        // page could still save — let the user know instead of silently losing
+        // them or blocking the whole save on a single bad value.
+        if (skippedFields.length) {
+          const names = Array.from(
+            new Set(
+              skippedFields.map((f) =>
+                String(f.fieldPath).split(".").pop(),
+              ),
+            ),
+          );
+          setSaveToast({
+            open: true,
+            severity: "warning",
+            message: `Saved. ${skippedFields.length} field${
+              skippedFields.length > 1 ? "s" : ""
+            } with an invalid value ${
+              skippedFields.length > 1 ? "were" : "was"
+            } skipped (${names.join(", ")}). Set ${
+              names.length > 1 ? "them" : "it"
+            } manually if needed.`,
+          });
+        }
 
         // Store ETag from response for next request
         if (response.headers?.etag) {
@@ -3739,10 +3892,10 @@ const WebsiteEditorInner = () => {
               blocksToSave,
             );
 
-            const retryResponse = await apiClient.put(
-              `/websites/${websiteId}/pages/${retryPageId}/blocks`,
-              {
-                blocks: retryBlocks
+            const { response: retryResponse } =
+              await putBlocksWithValidationRecovery(
+                retryPageId,
+                retryBlocks
                   .filter(hasValidGalleryImages)
                   .map((b, idx) => ({
                     ...(b.id && !String(b.id).startsWith("local-")
@@ -3754,11 +3907,10 @@ const WebsiteEditorInner = () => {
                     sortOrder: idx,
                     isVisible: b.isVisible,
                   })),
-                ...(error.response.data?.serverUpdatedAt
+                error.response.data?.serverUpdatedAt
                   ? { expectedUpdatedAt: error.response.data.serverUpdatedAt }
-                  : {}),
-              },
-            );
+                  : {},
+              );
 
             if (retryResponse.headers?.etag) {
               etagRef.current = retryResponse.headers.etag;
@@ -3814,6 +3966,7 @@ const WebsiteEditorInner = () => {
       persistedTemplateThemeSettings,
       templatePersistencePage?.id,
       website?.secondaryColor,
+      putBlocksWithValidationRecovery,
     ],
   );
 
@@ -3936,12 +4089,7 @@ const WebsiteEditorInner = () => {
         }));
       try {
         // eslint-disable-next-line no-await-in-loop
-        await apiClient.put(
-          `/websites/${websiteId}/pages/${effectivePageId}/blocks`,
-          {
-            blocks: blocksToSave,
-          },
-        );
+        await putBlocksWithValidationRecovery(effectivePageId, blocksToSave);
         remaining.delete(pageId);
         remaining.delete(String(effectivePageId));
       } catch (err) {
@@ -3949,7 +4097,7 @@ const WebsiteEditorInner = () => {
       }
     }
     draftedOtherPageIdsRef.current = remaining;
-  }, [websiteId]);
+  }, [websiteId, putBlocksWithValidationRecovery]);
 
   const triggerManualSave = useCallback(async () => {
     localConflictRetryRef.current = false;
@@ -8150,6 +8298,10 @@ const WebsiteEditorInner = () => {
         // that section's default content. Skip such patches defensively even if
         // the backend schema mistakenly exposes them.
         if (aiPatchTargetsProtectedField(editorPath, persisted)) return;
+        // Skip logo/image/link/URL fields — the AI fills them with invented
+        // filenames or text that fail the backend's `format: "url"` validation
+        // and block the whole page from saving. Keep the original asset.
+        if (aiPatchTargetsMediaField(editorPath, persisted)) return;
         const isWebsiteField =
           persisted.startsWith("website.") || editorPath.startsWith("website.");
         if (isWebsiteField) {
