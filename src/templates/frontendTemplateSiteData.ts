@@ -13,6 +13,7 @@ import { plumbingProAssets } from "../landingTemplates/assets/plumbing/plumbing-
 import { portfolioAssets } from "../landingTemplates/assets/portfolio/portfolio-agency";
 import { linkHubProAssets } from "../landingTemplates/assets/link-hub/link-hub-pro";
 import { linkHubDarkProAssets } from "../landingTemplates/assets/link-hub/link-hub-dark-pro";
+import { beautyLinkHubProAssets } from "../landingTemplates/assets/link-hub/beauty-link-hub-pro";
 
 type FrontendTemplateWebsite = {
   websiteId?: string | number;
@@ -482,6 +483,20 @@ const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
       twitter: "https://twitter.com",
     },
     logoUrl: linkHubDarkProAssets.avatar,
+  },
+  "beauty-link-hub-pro": {
+    name: "Luna Belle",
+    tagline: "Makeup | Skin | Entrepreneur",
+    description: "Soft glam looks, skin routines, and beauty referrals.",
+    primaryColor: "#F5E8DC",
+    secondaryColor: "#3A2C24",
+    contact: { email: "hello@lunabelle.studio" },
+    socialLinks: {
+      instagram: "https://instagram.com",
+      twitter: "https://twitter.com",
+    },
+    heroBannerUrl: beautyLinkHubProAssets.background,
+    logoUrl: beautyLinkHubProAssets.avatar,
   },
   restaurant: restaurantData,
   "store-basic": baseStoreData,

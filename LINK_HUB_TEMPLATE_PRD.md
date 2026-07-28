@@ -30,6 +30,7 @@ profile/link data model (e.g. `link-hub-pro`, `link-hub-dark-pro`).
 | --- | --- | --- |
 | Link Hub Pro | `link-hub-pro` | Premium glass / gradient profile |
 | Link Hub Dark Pro | `link-hub-dark-pro` | Dark mobile-first Linktree-style column (~425px), black thumbnail link cards |
+| Beauty Link Hub Pro | `beauty-link-hub-pro` | Warm beauty/makeup creator mobile layout with beige pills + featured image card |
 
 Rules:
 
@@ -39,6 +40,10 @@ Rules:
 - Visual differences are template JSX + local assets only.
 - Mobile-first variants must keep a **centered constrained column on desktop**
   (phone-width profile), not expand into a full marketing landing layout.
+- **Beauty / creator image layouts:** Beauty Link Hub templates may use warm
+  full-bleed background imagery with soft cream/beige overlays and pill
+  buttons, but must keep the same editable/persisted Link Hub data model
+  (profile, socials, featured, links, products, contact, footer).
 
 ## 3. Product goals
 
@@ -226,7 +231,7 @@ src/landingTemplates/assets/link-hub/<variant>/
   videos/
 ```
 
-Examples: `link-hub-pro/`, `link-hub-dark-pro/`.
+Examples: `link-hub-pro/`, `link-hub-dark-pro/`, `beauty-link-hub-pro/`.
 
 No third-party image URLs in seeds or JSX.
 
@@ -257,6 +262,13 @@ Dark mobile-first variants (e.g. `link-hub-dark-pro`) may use:
 - social icon row + join/contact CTA
 - decorative kebab / verified badge chrome that remains hideable via existing
   container selection (no fake backend fields)
+
+### 12.3 Beauty / creator warm image variants
+
+Beauty/creator Link Hub templates (e.g. `beauty-link-hub-pro`) can use warm
+image-based mobile layouts (beige/cream overlays, soft glass pills, featured
+tutorial cards), but must use the **same editable/persisted Link Hub data
+model** as other variants — no fake frontend-only fields.
 
 ## 13. Registration checklist
 

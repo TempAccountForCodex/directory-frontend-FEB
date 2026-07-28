@@ -99,8 +99,7 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "creator",
     version: "1.0.0",
-    previewImage:
-      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
+    previewImage: "/assets/templateAssets/images/dummy/linkHubPro.png",
     pageCount: 1,
   },
   {
@@ -112,8 +111,19 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     type: "website",
     category: "creator",
     version: "1.0.0",
-    previewImage:
-      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
+    previewImage: "/assets/templateAssets/images/dummy/linkHubDarkPro.png",
+    pageCount: 1,
+  },
+  {
+    id: "beauty-link-hub-pro",
+    slug: "beauty-link-hub-pro",
+    name: "Beauty Link Hub Pro",
+    description:
+      "Warm beauty / makeup creator link-in-bio with soft beige pills, featured tutorial card, and social icons — mobile-first phone layout on desktop.",
+    type: "website",
+    category: "creator",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/BeautyLinkHubPro.png",
     pageCount: 1,
   },
   {

@@ -586,12 +586,16 @@ single-page by default and must follow these rules:
   appropriate (local creator assets or CSS abstract/gradient). Do not reuse
   unrelated business/template stock imagery.
 - **Visual variants:** Link Hub may have multiple visual skins (e.g. glass
-  premium vs dark Linktree-style). All variants must share the same persisted
-  profile/link model and editable URL/image/icon fields.
+  premium, dark Linktree-style, warm beauty/creator image layouts). All
+  variants must share the same persisted profile/link model and editable
+  URL/image/icon fields.
 - **Mobile-first desktop preview:** Mobile-first templates must still render
   well on desktop by using a centered constrained layout (e.g. ~425px profile
   column), while preserving editor selection/editability. Do not stretch a
   link-in-bio page into a full-width marketing landing on large screens.
+- **Mobile-first editability:** Mobile-first link templates must preserve full
+  editability for background, avatar, links, social icons, and featured media
+  (image replace + URL fields). No visible real content may be static-only.
 
 ### 9.1 Forms must be real, backend-connected inputs — never static-only
 

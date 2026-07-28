@@ -12,6 +12,7 @@ const COMPANY_TEMPLATE_IDS = new Set([
   "photo-studio-pro",
   "link-hub-pro",
   "link-hub-dark-pro",
+  "beauty-link-hub-pro",
 ]);
 const THEME_EDITOR_FONT = '"Poppins", "Inter", sans-serif';
 

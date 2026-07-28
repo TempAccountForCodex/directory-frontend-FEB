@@ -1423,6 +1423,44 @@ const buildLinkHubDarkProPreviewData = (): BusinessData => {
 
 const LINK_HUB_DARK_PRO_DATA: BusinessData = buildLinkHubDarkProPreviewData();
 
+const buildBeautyLinkHubProPreviewData = (): BusinessData => {
+  const website = {
+    name: "Luna Belle",
+    slug: "beauty-link-hub-pro",
+    primaryColor: "#F5E8DC",
+    secondaryColor: "#3A2C24",
+  };
+  const seededPages = buildFrontendTemplateEditorPages(
+    "beauty-link-hub-pro",
+    website,
+  );
+  const previewData = buildTemplatePreviewBusinessData(
+    "beauty-link-hub-pro",
+    website,
+    seededPages,
+  );
+  if (!previewData) {
+    return {
+      name: "Luna Belle",
+      tagline: "Makeup | Skin | Entrepreneur",
+      description: "Soft glam looks, skin routines, and beauty referrals.",
+      primaryColor: "#F5E8DC",
+    };
+  }
+  const templateContent = {
+    ...((previewData.templateContent as Record<string, unknown>) || {}),
+  };
+  delete templateContent.__editorSectionVisibility;
+  templateContent.__editorSectionVisibilityAuthoritative = false;
+  return {
+    ...previewData,
+    templateContent,
+  } as BusinessData;
+};
+
+const BEAUTY_LINK_HUB_PRO_DATA: BusinessData =
+  buildBeautyLinkHubProPreviewData();
+
 // ─── Template slug → data mapping ─────────────────────────────────────────────
 
 const TEMPLATE_DATA_MAP: Record<
@@ -1451,6 +1489,10 @@ const TEMPLATE_DATA_MAP: Record<
   "link-hub-dark-pro": {
     templateId: "link-hub-dark-pro",
     data: LINK_HUB_DARK_PRO_DATA,
+  },
+  "beauty-link-hub-pro": {
+    templateId: "beauty-link-hub-pro",
+    data: BEAUTY_LINK_HUB_PRO_DATA,
   },
   "store-basic": { templateId: "store-basic", data: STORE_DATA },
   "store-premium": { templateId: "store-premium", data: STORE_PREMIUM_DATA },
@@ -1524,7 +1566,7 @@ const TEMPLATE_GROUPS = [
   },
   {
     label: "Creator",
-    slugs: ["link-hub-pro", "link-hub-dark-pro"],
+    slugs: ["link-hub-pro", "link-hub-dark-pro", "beauty-link-hub-pro"],
   },
 ];
 

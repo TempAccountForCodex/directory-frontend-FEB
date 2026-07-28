@@ -109,8 +109,7 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "creator",
     version: "1.0.0",
-    previewImage:
-      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
+    previewImage: "/assets/templateAssets/images/dummy/linkHubPro.png",
   },
   {
     id: "static-link-hub-dark-pro",
@@ -121,8 +120,18 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     type: "website",
     category: "creator",
     version: "1.0.0",
-    previewImage:
-      "/assets/templateAssets/images/dummy/portfolio-photo-studio.webp",
+    previewImage: "/assets/templateAssets/images/dummy/linkHubDarkPro.png",
+  },
+  {
+    id: "static-beauty-link-hub-pro",
+    slug: "beauty-link-hub-pro",
+    name: "Beauty Link Hub Pro",
+    description:
+      "Warm beauty creator link-in-bio with soft beige pills, featured tutorial card, and social icons.",
+    type: "website",
+    category: "creator",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/BeautyLinkHubPro.png",
   },
   {
     id: "static-store-basic",

@@ -1938,7 +1938,8 @@ const resolveFormGeneratorBlockType = (block, frontendTemplateId) => {
   const section = String(content.editorSection || "").trim();
   if (
     (String(frontendTemplateId || "").trim() === "link-hub-pro" ||
-      String(frontendTemplateId || "").trim() === "link-hub-dark-pro") &&
+      String(frontendTemplateId || "").trim() === "link-hub-dark-pro" ||
+      String(frontendTemplateId || "").trim() === "beauty-link-hub-pro") &&
     LINK_HUB_SECTION_EDITOR_TYPES[section]
   ) {
     return LINK_HUB_SECTION_EDITOR_TYPES[section];

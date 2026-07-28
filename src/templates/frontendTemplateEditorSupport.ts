@@ -18,6 +18,7 @@ import { plumbingProAssets } from "../landingTemplates/assets/plumbing/plumbing-
 import { photoStudioProAssets } from "../landingTemplates/assets/portfolio/photo-studio-pro";
 import { linkHubProAssets } from "../landingTemplates/assets/link-hub/link-hub-pro";
 import { linkHubDarkProAssets } from "../landingTemplates/assets/link-hub/link-hub-dark-pro";
+import { beautyLinkHubProAssets } from "../landingTemplates/assets/link-hub/beauty-link-hub-pro";
 
 export type TemplateThemeSettings = {
   primaryColor?: string;
@@ -117,6 +118,7 @@ const LOCAL_TEMPLATE_EDITOR_IDS = new Set([
   "photo-studio-pro",
   "link-hub-pro",
   "link-hub-dark-pro",
+  "beauty-link-hub-pro",
   "education",
   "gardening",
   "plumbing",
@@ -3822,6 +3824,189 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
       ],
     },
   ],
+  "beauty-link-hub-pro": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "navbar",
+          label: "Header",
+          blockType: "NAVBAR",
+          optional: true,
+          buildContent: (data) => ({
+            brandName: data.name || "Luna Belle",
+            navigationItems: [
+              { label: "Links", link: "#links" },
+              { label: "Contact", link: "#contact" },
+            ],
+          }),
+        },
+        {
+          key: "profile",
+          label: "Profile",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            heading: data.name || "Luna Belle",
+            subheading: "Makeup | Skin | Entrepreneur",
+            body: data.description || "",
+            image: beautyLinkHubProAssets.avatar,
+            heroImage: beautyLinkHubProAssets.background,
+            sectionStyle: {
+              backgroundType: "image",
+              backgroundImageUrl: beautyLinkHubProAssets.background,
+              backgroundSize: "cover",
+              backgroundPosition: "center top",
+            },
+            headingStyle: {},
+            subheadingStyle: {},
+            bodyStyle: {},
+          }),
+        },
+        {
+          key: "socials",
+          label: "Social links",
+          blockType: "FEATURES",
+          buildContent: (data) => ({
+            editorBlockType: "LINK_HUB_SOCIALS",
+            heading: "Social",
+            features: [
+              {
+                title: "TikTok",
+                description: "TikTok profile",
+                icon: "lucide:music-2",
+                link: "https://tiktok.com",
+                type: "social",
+                isVisible: true,
+              },
+              {
+                title: "YouTube",
+                description: "YouTube channel",
+                icon: "lucide:youtube",
+                link: "https://youtube.com",
+                type: "social",
+                isVisible: true,
+              },
+              {
+                title: "Twitter",
+                description: "X / Twitter profile",
+                icon: "lucide:twitter",
+                link: data.socialLinks?.twitter || "https://twitter.com",
+                type: "social",
+                isVisible: true,
+              },
+              {
+                title: "Instagram",
+                description: "Instagram profile",
+                icon: "lucide:instagram",
+                link: data.socialLinks?.instagram || "https://instagram.com",
+                type: "social",
+                isVisible: true,
+              },
+            ],
+          }),
+        },
+        {
+          key: "featured",
+          label: "Featured link",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            editorBlockType: "LINK_HUB_FEATURED",
+            heading: "💄 Make Up Tutorials 💄",
+            features: [
+              {
+                title: "Make Up Tutorials",
+                description: "Soft glam looks and product guides",
+                image: beautyLinkHubProAssets.featured,
+                link: "https://example.com/tutorials",
+                type: "featured",
+                isFeatured: true,
+                isVisible: true,
+              },
+            ],
+          }),
+        },
+        {
+          key: "links",
+          label: "Links",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            editorBlockType: "LINK_HUB_LINKS",
+            heading: "Links",
+            features: [
+              {
+                title: "MUA",
+                description: "Book makeup artistry",
+                link: "https://example.com/mua",
+                type: "link",
+                isVisible: true,
+              },
+              {
+                title: "Referral Codes",
+                description: "Beauty brand referral links",
+                link: "https://example.com/referrals",
+                type: "link",
+                isVisible: true,
+              },
+            ],
+          }),
+        },
+        {
+          key: "products",
+          label: "Products",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            editorBlockType: "LINK_HUB_PRODUCTS",
+            heading: "Favorites",
+            features: [
+              {
+                title: "Skin essentials",
+                description: "Daily beauty favorites",
+                image: beautyLinkHubProAssets.product,
+                link: "https://example.com/shop",
+                type: "product",
+                isVisible: false,
+              },
+            ],
+          }),
+        },
+        {
+          key: "contact",
+          label: "Contact",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            heading: "Stay in the glow",
+            description: "New looks, launches, and studio updates.",
+            buttonLabel: "Join",
+            ctaText: "Join",
+            email: data.contact?.email || "hello@lunabelle.studio",
+            formFields: [
+              {
+                _id: "email",
+                label: "Email",
+                placeholder: "you@email.com",
+                fieldType: "email",
+                required: true,
+                options: "",
+              },
+            ],
+          }),
+        },
+        {
+          key: "footer",
+          label: "Footer",
+          blockType: "FOOTER",
+          optional: true,
+          buildContent: (data) => ({
+            heading: data.name || "Luna Belle",
+            body: "Beauty Link Hub Pro",
+          }),
+        },
+      ],
+    },
+  ],
 };
 
 const normalizePersistedPages = (
@@ -5755,7 +5940,11 @@ const buildTemplatePreviewBusinessDataImpl = (
     };
   }
 
-  if (templateId === "link-hub-pro" || templateId === "link-hub-dark-pro") {
+  if (
+    templateId === "link-hub-pro" ||
+    templateId === "link-hub-dark-pro" ||
+    templateId === "beauty-link-hub-pro"
+  ) {
     const sectionMap = getTemplateSectionMap(templateId, pages);
     const getSection = (key: string) => getSectionContent(key);
     const withBlock = (

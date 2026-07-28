@@ -277,6 +277,9 @@ const LinkHubProTemplate = lazy(
 const LinkHubDarkProTemplate = lazy(
   () => import("../templates/linkHub/LinkHubDarkProTemplate"),
 );
+const BeautyLinkHubProTemplate = lazy(
+  () => import("../templates/linkHub/BeautyLinkHubProTemplate"),
+);
 
 const templateRegistry: Record<string, TemplateDefinition> = {
   // --- Service business ---
@@ -425,6 +428,22 @@ const templateRegistry: Record<string, TemplateDefinition> = {
       "Dark mobile-first link-in-bio profile with avatar, social icons, thumbnail link cards, and join CTA.",
     tags: ["creator", "link-in-bio", "utility", "linktree", "dark", "pro"],
     component: LinkHubDarkProTemplate,
+  },
+  "beauty-link-hub-pro": {
+    id: "beauty-link-hub-pro",
+    name: "Beauty Link Hub Pro",
+    description:
+      "Warm beauty creator link-in-bio with soft beige pills, featured tutorial card, and social icons.",
+    tags: [
+      "creator",
+      "link-in-bio",
+      "utility",
+      "linktree",
+      "beauty",
+      "makeup",
+      "pro",
+    ],
+    component: BeautyLinkHubProTemplate,
   },
 
   // --- Store ---

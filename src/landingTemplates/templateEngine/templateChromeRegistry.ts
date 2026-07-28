@@ -126,6 +126,16 @@ const LinkHubDarkProFooter = lazy(() =>
     default: module.LinkHubDarkProTemplateFooter,
   })),
 );
+const BeautyLinkHubProHeader = lazy(() =>
+  import("../templates/linkHub/BeautyLinkHubProTemplate").then((module) => ({
+    default: module.BeautyLinkHubProTemplateHeader,
+  })),
+);
+const BeautyLinkHubProFooter = lazy(() =>
+  import("../templates/linkHub/BeautyLinkHubProTemplate").then((module) => ({
+    default: module.BeautyLinkHubProTemplateFooter,
+  })),
+);
 
 const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   minimal: {
@@ -171,6 +181,10 @@ const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   "link-hub-dark-pro": {
     Header: LinkHubDarkProHeader,
     Footer: LinkHubDarkProFooter,
+  },
+  "beauty-link-hub-pro": {
+    Header: BeautyLinkHubProHeader,
+    Footer: BeautyLinkHubProFooter,
   },
 };
 
