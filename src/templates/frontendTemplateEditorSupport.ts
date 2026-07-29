@@ -19,6 +19,7 @@ import { photoStudioProAssets } from "../landingTemplates/assets/portfolio/photo
 import { linkHubProAssets } from "../landingTemplates/assets/link-hub/link-hub-pro";
 import { linkHubDarkProAssets } from "../landingTemplates/assets/link-hub/link-hub-dark-pro";
 import { beautyLinkHubProAssets } from "../landingTemplates/assets/link-hub/beauty-link-hub-pro";
+import { coffeeProAssets } from "../landingTemplates/assets/restaurant/coffee-pro";
 
 export type TemplateThemeSettings = {
   primaryColor?: string;
@@ -119,6 +120,7 @@ const LOCAL_TEMPLATE_EDITOR_IDS = new Set([
   "link-hub-pro",
   "link-hub-dark-pro",
   "beauty-link-hub-pro",
+  "coffee-pro",
   "education",
   "gardening",
   "plumbing",
@@ -4007,6 +4009,303 @@ const TEMPLATE_PAGE_SCHEMAS: Record<string, TemplatePageSeed[]> = {
       ],
     },
   ],
+  "coffee-pro": [
+    {
+      key: "home",
+      title: "Home",
+      path: "/",
+      isHome: true,
+      sections: [
+        {
+          key: "navbar",
+          label: "Header",
+          blockType: "NAVBAR",
+          optional: true,
+          buildContent: (data) => ({
+            brandName: data.name || "Caffino",
+            navigationItems: [
+              { label: "Home", link: "#home" },
+              { label: "About", link: "#about" },
+              { label: "Menu", link: "#menu" },
+              { label: "Gallery", link: "#gallery" },
+              { label: "FAQ", link: "#faq" },
+            ],
+            ctaText: "Book Now",
+            ctaLink: "#contact",
+          }),
+        },
+        {
+          key: "hero",
+          label: "Hero",
+          blockType: "HERO",
+          buildContent: (data) => ({
+            eyebrow: "Welcome to Caffino",
+            heading:
+              data.tagline || "Your Perfect Coffee Moment Starts Here",
+            subheading:
+              data.description ||
+              "Slow mornings, rich espresso, and a warm room made for lingering.",
+            ctaText: "Explore Menu",
+            ctaLink: "#menu",
+            heroImage: coffeeProAssets.hero,
+            sectionStyle: {
+              backgroundImageUrl: coffeeProAssets.hero,
+              backgroundSize: "cover",
+              backgroundPosition: "center right",
+            },
+          }),
+        },
+        {
+          key: "why-us",
+          label: "Why choose us",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "Why coffee lovers choose us",
+            heading: "Crafted for people who care about every cup",
+            features: [
+              {
+                icon: "01",
+                title: "Premium Beans",
+                description:
+                  "Single-origin lots roasted for sweetness, clarity, and depth.",
+              },
+              {
+                icon: "02",
+                title: "Expert Roasting",
+                description:
+                  "Small batches tuned daily so every cup tastes intentional.",
+              },
+              {
+                icon: "03",
+                title: "Cozy Space",
+                description:
+                  "A warm room built for lingering conversations and quiet focus.",
+              },
+            ],
+          }),
+        },
+        {
+          key: "ritual",
+          label: "Daily ritual",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "Our story",
+            heading: "More Than Coffee, A Daily Ritual.",
+            body: "We believe a great cup can reset the day — roasted with care, poured with intention, and served in a space that feels like home.",
+            image: coffeeProAssets.ritual,
+            detailGroups: [
+              {
+                title: "Crafted daily",
+                items: ["Freshly roasted", "Handcrafted drinks", "Seasonal syrups"],
+              },
+              {
+                title: "Hospitality",
+                items: ["Expert baristas", "Thoughtful service", "Calm atmosphere"],
+              },
+            ],
+          }),
+        },
+        {
+          key: "craft",
+          label: "Crafting excellence",
+          blockType: "TEXT",
+          buildContent: () => ({
+            eyebrow: "The craft",
+            heading: "Crafting Excellence In Every Drop",
+            body: "From dial-in to pour, every detail is measured so sweetness, body, and aroma land exactly where they should.",
+            image: coffeeProAssets.craft,
+            detailGroups: [
+              {
+                title: "Precision",
+                items: ["Dialed recipes", "Consistent extraction", "Clean equipment"],
+              },
+              {
+                title: "Flavor",
+                items: ["Balanced sweetness", "Rich crema", "Memorable finish"],
+              },
+            ],
+          }),
+        },
+        {
+          key: "menu",
+          label: "Menu",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            eyebrow: "Our menu",
+            heading: "Handcrafted Coffee For Every Taste",
+            features: [
+              {
+                icon: "Latte",
+                title: "Classic Latte Art",
+                description:
+                  "Silky microfoam over espresso with seasonal latte art.",
+                price: "$6.50",
+                image: coffeeProAssets.menuLatte,
+              },
+              {
+                icon: "Cappuccino",
+                title: "Velvet Cappuccino",
+                description:
+                  "Equal parts espresso, steamed milk, and airy foam.",
+                price: "$5.75",
+                image: coffeeProAssets.menuCappuccino,
+              },
+              {
+                icon: "Mocha",
+                title: "Dark Mocha",
+                description:
+                  "Espresso with melted chocolate and soft milk foam.",
+                price: "$6.95",
+                image: coffeeProAssets.menuMocha,
+              },
+              {
+                icon: "Flat White",
+                title: "Studio Flat White",
+                description: "Ristretto-forward cup with velvety microfoam.",
+                price: "$6.25",
+                image: coffeeProAssets.menuFlatwhite,
+              },
+              {
+                icon: "Americano",
+                title: "Slow Americano",
+                description:
+                  "Long black clarity with a smooth chocolate finish.",
+                price: "$4.50",
+                image: coffeeProAssets.menuAmericano,
+              },
+              {
+                icon: "Espresso",
+                title: "Double Espresso",
+                description:
+                  "Bright crema shot roasted for intensity and sweetness.",
+                price: "$3.75",
+                image: coffeeProAssets.menuEspresso,
+              },
+            ],
+          }),
+        },
+        {
+          key: "testimonials",
+          label: "Testimonials",
+          blockType: "TESTIMONIALS",
+          buildContent: () => ({
+            eyebrow: "Guest love",
+            heading: "Loved By Coffee Enthusiasts",
+            testimonials: [
+              {
+                quote:
+                  "The latte is consistently perfect and the room always feels calm and elevated.",
+                author: "Maya Ellis",
+                position: "Coffee Blogger",
+                photo: coffeeProAssets.avatars[0],
+                rating: 5,
+              },
+              {
+                quote:
+                  "A daily ritual worth protecting. Warm service and beautiful espresso.",
+                author: "Jordan Blake",
+                position: "Designer",
+                photo: coffeeProAssets.avatars[1],
+                rating: 5,
+              },
+              {
+                quote:
+                  "From the beans to the seating, everything feels thoughtfully crafted.",
+                author: "Priya Shah",
+                position: "Local Guest",
+                photo: coffeeProAssets.avatars[2],
+                rating: 5,
+              },
+            ],
+          }),
+        },
+        {
+          key: "gallery",
+          label: "Gallery",
+          blockType: "GALLERY",
+          buildContent: () => ({
+            eyebrow: "Experience",
+            heading: "A Glimpse Into The Caffino Experience",
+            items: coffeeProAssets.gallery.map((url, index) => ({
+              url,
+              caption: `Cafe moment ${index + 1}`,
+            })),
+          }),
+        },
+        {
+          key: "faq",
+          label: "FAQ",
+          blockType: "FEATURES",
+          buildContent: () => ({
+            heading: "Frequently Asked Questions",
+            features: [
+              {
+                title: "Do you take reservations?",
+                description:
+                  "Yes — book a table online or walk in for counter service during open hours.",
+              },
+              {
+                title: "Are dairy alternatives available?",
+                description:
+                  "We offer oat, almond, and coconut milk with every espresso drink.",
+              },
+              {
+                title: "Do you roast your own beans?",
+                description:
+                  "We roast weekly in small batches and brew our house espresso daily.",
+              },
+              {
+                title: "Is there seating for remote work?",
+                description:
+                  "Yes — quiet tables, strong Wi‑Fi, and outlets throughout the cafe.",
+              },
+            ],
+          }),
+        },
+        {
+          key: "contact",
+          label: "Reservation",
+          blockType: "CONTACT",
+          buildContent: (data) => ({
+            eyebrow: "Reservations",
+            heading: "Book Your Coffee Moment",
+            description:
+              "Reserve a table or ask about private gatherings — we will get back to you shortly.",
+            email: data.contact.email || "hello@caffino.cafe",
+            phone: data.contact.phone || "(555) 214-9088",
+            address: data.contact.address || "128 Roast Avenue, Portland",
+            buttonLabel: "Book Now",
+            showForm: true,
+          }),
+        },
+        {
+          key: "footer",
+          label: "Footer",
+          blockType: "FOOTER",
+          optional: true,
+          buildContent: (data) => ({
+            logoText: data.name || "Caffino",
+            heading: data.name || "Caffino",
+            body: "Handcrafted coffee, warm hospitality, and a daily ritual worth savoring.",
+            subheading: "Visit",
+            description: "Dine In\nTakeaway\nDelivery\nPrivate Events",
+            address: data.contact.address || "128 Roast Avenue, Portland",
+            phone: data.contact.phone || "(555) 214-9088",
+            email: data.contact.email || "hello@caffino.cafe",
+            copyright: `(c) 2026 ${data.name || "Caffino"}. All rights reserved.`,
+            eyebrow: "Quick Links",
+            buttonLabel: "Contact",
+            links: [
+              { label: "Home", url: "#home" },
+              { label: "About", url: "#about" },
+              { label: "Menu", url: "#menu" },
+              { label: "FAQ", url: "#faq" },
+            ],
+          }),
+        },
+      ],
+    },
+  ],
 };
 
 const normalizePersistedPages = (
@@ -6980,6 +7279,105 @@ const buildTemplatePreviewBusinessDataImpl = (
         },
         sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
         extraBlocks,
+      },
+    };
+  }
+
+  if (templateId === "coffee-pro") {
+    const sectionMap = getTemplateSectionMap(templateId, pages);
+    const navbar = getSectionContent("navbar");
+    const hero = getSectionContent("hero");
+    const whyUs = getSectionContent("why-us");
+    const ritual = getSectionContent("ritual");
+    const craft = getSectionContent("craft");
+    const menu = getSectionContent("menu");
+    const testimonials = getSectionContent("testimonials");
+    const gallery = getSectionContent("gallery");
+    const faq = getSectionContent("faq");
+    const contact = getSectionContent("contact");
+    const footer = getSectionContent("footer");
+    const whyItems = readArray<Record<string, unknown>>(whyUs, ["features"]);
+    const menuItems = readArray<Record<string, unknown>>(menu, ["features"]);
+    const faqItems = readArray<Record<string, unknown>>(faq, ["features"]);
+    const testimonialItems = readArray<Record<string, unknown>>(testimonials, [
+      "testimonials",
+    ]);
+    const galleryItems = readArray<Record<string, unknown>>(gallery, ["items"]);
+    const ritualDetailGroups = mapDetailGroups(
+      readArray<Record<string, unknown>>(ritual, ["detailGroups"]),
+      [
+        {
+          title: "Crafted daily",
+          items: ["Freshly roasted", "Handcrafted drinks", "Seasonal syrups"],
+        },
+        {
+          title: "Hospitality",
+          items: ["Expert baristas", "Thoughtful service", "Calm atmosphere"],
+        },
+      ],
+    );
+    const craftDetailGroups = mapDetailGroups(
+      readArray<Record<string, unknown>>(craft, ["detailGroups"]),
+      [
+        {
+          title: "Precision",
+          items: ["Dialed recipes", "Consistent extraction", "Clean equipment"],
+        },
+        {
+          title: "Flavor",
+          items: ["Balanced sweetness", "Rich crema", "Memorable finish"],
+        },
+      ],
+    );
+    const withBlock = (
+      sectionKey: string,
+      rawContent: Record<string, unknown>,
+      additions: Record<string, unknown> = {},
+    ): Record<string, unknown> => ({
+      ...rawContent,
+      ...additions,
+      blockId: sectionMap.get(sectionKey)?.id,
+      sectionStyle: getSectionStyleValue(rawContent),
+      outerSectionStyle: getSectionStyleValue(rawContent, "outerSectionStyle"),
+    });
+
+    return {
+      ...themedBase,
+      tagline: readString(
+        hero,
+        ["heading"],
+        String(themedBase.tagline || themedBase.name),
+      ),
+      description: readString(
+        ritual,
+        ["body", "description"],
+        String(themedBase.description),
+      ),
+      features: menuItems.length
+        ? mapFeatureItems(menuItems)
+        : themedBase.features,
+      reviews: testimonialItems.length
+        ? mapTestimonials(testimonialItems)
+        : themedBase.reviews,
+      templateContent: {
+        navbar: buildNavbarContent(sectionMap.get("navbar"), navbar),
+        hero: withBlock("hero", hero),
+        "why-us": withBlock("why-us", whyUs, { features: whyItems }),
+        ritual: withBlock("ritual", ritual, {
+          detailGroups: ritualDetailGroups,
+        }),
+        craft: withBlock("craft", craft, { detailGroups: craftDetailGroups }),
+        menu: withBlock("menu", menu, { features: menuItems }),
+        testimonials: withBlock("testimonials", testimonials, {
+          testimonials: testimonialItems,
+        }),
+        gallery: withBlock("gallery", gallery, { items: galleryItems }),
+        faq: withBlock("faq", faq, { features: faqItems }),
+        contact: withBlock("contact", contact, {
+          ...buildContactFormConfig(contact),
+        }),
+        footer: withBlock("footer", footer),
+        sectionOrder: getOrderedSectionKeysForHomePage(templateId, pages),
       },
     };
   }

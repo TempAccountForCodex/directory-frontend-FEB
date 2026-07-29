@@ -133,12 +133,18 @@ This file tracks reusable content patterns that are visible in templates, expect
   - `store-performance`
   - `store-fit`
   - `store-paws`
+  - `coffee-pro` (menu cards currently bind `FEATURES.features[].price` /
+    `features[].image` / `features[].icon` as category — confirm opaque JSON
+    persistence or promote `features[].price` / `features[].image` to the
+    official FEATURES item schema)
 - `example visible elements`:
   - product cards
   - trust/product CTA tiles
   - merchandising badges
+  - cafe menu cards (name, description, image, category tag, price)
 - `why existing schema is insufficient`:
   - current reusable fields do not safely represent store-specific product content.
+  - cafe menu prices on `features[]` are not in the documented FEATURES contract.
 
 ### 7. `eyebrow`
 

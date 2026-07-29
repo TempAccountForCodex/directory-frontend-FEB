@@ -136,6 +136,16 @@ const BeautyLinkHubProFooter = lazy(() =>
     default: module.BeautyLinkHubProTemplateFooter,
   })),
 );
+const CoffeeProHeader = lazy(() =>
+  import("../templates/restaurant/CoffeeProTemplate").then((module) => ({
+    default: module.CoffeeProTemplateHeader,
+  })),
+);
+const CoffeeProFooter = lazy(() =>
+  import("../templates/restaurant/CoffeeProTemplate").then((module) => ({
+    default: module.CoffeeProTemplateFooter,
+  })),
+);
 
 const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   minimal: {
@@ -185,6 +195,10 @@ const templateChromeRegistry: Record<string, TemplateChromeDefinition> = {
   "beauty-link-hub-pro": {
     Header: BeautyLinkHubProHeader,
     Footer: BeautyLinkHubProFooter,
+  },
+  "coffee-pro": {
+    Header: CoffeeProHeader,
+    Footer: CoffeeProFooter,
   },
 };
 

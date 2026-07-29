@@ -288,6 +288,17 @@ const STATIC_TEMPLATES: StaticTemplate[] = [
     previewImage: "/assets/templateAssets/images/dummy/consulting.webp",
   },
   {
+    id: "static-coffee-pro",
+    slug: "coffee-pro",
+    name: "Coffee Pro",
+    description:
+      "Premium dark cafe template with editable menu cards, gallery, FAQ, and reservation booking.",
+    type: "website",
+    category: "restaurant",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/coffeePro.jpg",
+  },
+  {
     id: "static-restaurant",
     slug: "restaurant",
     name: "Restaurant",
@@ -853,7 +864,9 @@ const Templates: React.FC = () => {
                               left: 0,
                               width: "100%",
                               height: "auto",
-                              objectFit: "contain",
+                              minHeight: "100%",
+                              objectFit: "cover",
+                              objectPosition: "top center",
                               display: "block",
                               willChange: "transform",
                               transition: "transform 5.5s linear",

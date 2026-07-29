@@ -13,6 +13,7 @@ const COMPANY_TEMPLATE_IDS = new Set([
   "link-hub-pro",
   "link-hub-dark-pro",
   "beauty-link-hub-pro",
+  "coffee-pro",
 ]);
 const THEME_EDITOR_FONT = '"Poppins", "Inter", sans-serif';
 
@@ -65,6 +66,13 @@ const COMPANY_PALETTES = [
     primary: "#7c5836",
     secondary: "#cb9763",
     swatches: ["#fbf9f6", "#7c5836", "#cb9763", "#1d1714"],
+  },
+  {
+    id: "espresso-gold",
+    name: "Espresso Gold",
+    primary: "#050505",
+    secondary: "#D48B31",
+    swatches: ["#050505", "#D48B31", "#F7F1E8", "#1A120A"],
   },
   {
     id: "slate-blue",

@@ -596,6 +596,30 @@ single-page by default and must follow these rules:
 - **Mobile-first editability:** Mobile-first link templates must preserve full
   editability for background, avatar, links, social icons, and featured media
   (image replace + URL fields). No visible real content may be static-only.
+- **Optional create-modal setup steps:** Special template categories (e.g. Link
+  Hub) may insert extra optional steps in Create Website modal. Those steps
+  must map only to backend-safe persisted `block.content` fields, must be
+  skippable (defaults remain), and must not change the create flow for
+  unrelated templates.
+
+### 9.6 Coffee / Cafe single-page templates
+
+Single-page restaurant/cafe templates (e.g. `coffee-pro`) must follow these
+rules in addition to the general single-page contract:
+
+- Default seed is Home `/` only — Header nav uses section anchors
+  (`#home`, `#about`, `#menu`, `#testimonials`, `#faq`, `#contact`), not
+  platform/root routes like `/contact`.
+- When users later add real pages, Header menu sync must follow the existing
+  dynamic page menu rules (§9.3).
+- Menu / product sections are required and must be editable + persisted via
+  backend-safe arrays (`features[]` or `items[]`) with unique per-item paths
+  for title, description, image, category/tag (`icon`), and price when
+  supported.
+- FAQ, gallery, testimonials, feature cards, and footer content must be fully
+  editable and persisted — no static-only real content.
+- Reservation / contact forms must use the real Forms submission pipeline
+  (§9.1).
 
 ### 9.1 Forms must be real, backend-connected inputs — never static-only
 

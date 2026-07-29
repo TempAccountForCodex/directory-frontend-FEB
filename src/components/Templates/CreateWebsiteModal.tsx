@@ -1,11 +1,12 @@
 /**
  * CreateWebsiteModal (Step 3.5.2 + 10.7.7)
  *
- * Three-step website creation wizard using the existing creation and listing flows.
- * Steps: 1) Name & Domain  2) AI Content  3) Directory Listing
+ * Website creation wizard using the existing creation and listing flows.
+ * Default steps: 1) Name & Domain  2) AI Content  3) Directory Listing
+ * Link Hub templates insert optional "Link Hub Setup" before AI Content.
  */
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -47,6 +48,11 @@ import { useTheme as useCustomTheme } from "../../context/ThemeContext";
 import DashboardInput from "../Dashboard/shared/DashboardInput";
 import ListingOptInStep from "../WebsiteEditor/ListingOptInStep";
 import CategorySelect from "./CategorySelect";
+import LinkHubSetupStep, {
+  EMPTY_LINK_HUB_SETUP,
+  applyLinkHubSetupToPages,
+  type LinkHubSetupData,
+} from "./LinkHubSetupStep";
 import { storeWebsiteFrontendTemplateId } from "../../templates/frontendTemplatePersistence";
 import {
   buildFrontendTemplateEditorPages,
@@ -93,6 +99,25 @@ const STEPS = [
   "AI Content",
   "Directory Listing",
 ];
+
+const LINK_HUB_STEPS = [
+  "Name & Domain",
+  "Link Hub Setup",
+  "AI Content",
+  "Directory Listing",
+];
+
+const LINK_HUB_TEMPLATE_IDS = new Set([
+  "link-hub-pro",
+  "link-hub-dark-pro",
+  "beauty-link-hub-pro",
+]);
+
+const isLinkHubFrontendTemplate = (templateId: string | null | undefined) => {
+  if (!templateId) return false;
+  const resolved = resolveFrontendTemplateId(templateId);
+  return LINK_HUB_TEMPLATE_IDS.has(resolved);
+};
 
 const ACCENT = "#378C92";
 const ACCENT_LIGHT = "#4FA8AE";
@@ -658,6 +683,17 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
   // Remembers whether the current create was launched via "Generate with AI" so
   // the post-creation handoff routes into the editor draft flow.
   const aiRequestedRef = useRef(false);
+  const [linkHubSetup, setLinkHubSetup] =
+    useState<LinkHubSetupData>(EMPTY_LINK_HUB_SETUP);
+
+  const isLinkHubTemplate = useMemo(
+    () => isLinkHubFrontendTemplate(template?.id),
+    [template?.id],
+  );
+  const wizardSteps = isLinkHubTemplate ? LINK_HUB_STEPS : STEPS;
+  const linkHubStepIndex = isLinkHubTemplate ? 1 : -1;
+  const aiStepIndex = isLinkHubTemplate ? 2 : 1;
+  const listingStepIndex = isLinkHubTemplate ? 3 : 2;
 
   // Debounce timer ref
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -684,6 +720,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
       setAiContactInfo("");
       setAiLocation("");
       setAiInstructions("");
+      setLinkHubSetup(EMPTY_LINK_HUB_SETUP);
       aiRequestedRef.current = false;
     }
   }, [actualTheme, open]);
@@ -808,11 +845,18 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
             },
           });
         } else if (supportsFrontendTemplateEditor(frontendTemplateId)) {
-          const creationPages = buildFrontendTemplateCreationPages(
+          const seededPages = buildFrontendTemplateCreationPages(
             frontendTemplateId,
             websiteName.trim(),
             primaryColor,
           );
+          const creationPages = isLinkHubFrontendTemplate(frontendTemplateId)
+            ? applyLinkHubSetupToPages(seededPages, {
+                ...linkHubSetup,
+                displayName:
+                  linkHubSetup.displayName.trim() || websiteName.trim(),
+              })
+            : seededPages;
 
           if (creationPages.length === 0) {
             setError(
@@ -860,11 +904,18 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
               throw err;
             }
 
-            const creationPages = buildFrontendTemplateCreationPages(
+            const seededPages = buildFrontendTemplateCreationPages(
               frontendTemplateId,
               websiteName.trim(),
               primaryColor,
             );
+            const creationPages = isLinkHubFrontendTemplate(frontendTemplateId)
+              ? applyLinkHubSetupToPages(seededPages, {
+                  ...linkHubSetup,
+                  displayName:
+                    linkHubSetup.displayName.trim() || websiteName.trim(),
+                })
+              : seededPages;
 
             if (creationPages.length === 0) {
               setError(
@@ -913,7 +964,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
             );
           }
           setCreatedWebsiteId(createdWebsiteId);
-        setActiveStep(2);
+          setActiveStep(listingStepIndex);
         } else {
           setError(res?.data?.message || "Failed to create website");
         }
@@ -934,6 +985,8 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
       subdomain,
       primaryColor,
       subdomainStatus,
+      linkHubSetup,
+      listingStepIndex,
     ],
   );
 
@@ -1285,7 +1338,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
             },
           }}
         >
-          {STEPS.map((label) => (
+          {wizardSteps.map((label) => (
             <Step key={label}>
               <StepLabel StepIconComponent={CustomStepIcon}>{label}</StepLabel>
             </Step>
@@ -1491,8 +1544,22 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
             </Stack>
           )}
 
-          {/* Step 2: AI content */}
-          {activeStep === 1 && (
+          {/* Optional Link Hub setup (Link Hub templates only) */}
+          {activeStep === linkHubStepIndex && (
+            <LinkHubSetupStep
+              value={{
+                ...linkHubSetup,
+                displayName:
+                  linkHubSetup.displayName || websiteName.trim(),
+              }}
+              onChange={setLinkHubSetup}
+              modalColors={modalColors}
+              softButtonSx={softButtonSx}
+            />
+          )}
+
+          {/* AI content */}
+          {activeStep === aiStepIndex && (
             <Box
               sx={{
                 position: "relative",
@@ -1839,7 +1906,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
           )}
 
           {/* Step 3: Directory listing */}
-          {activeStep === 2 && createdWebsiteId && (
+          {activeStep === listingStepIndex && createdWebsiteId && (
             <Box
               sx={{
                 // Theme the step's own chrome text to match the modal mode...
@@ -1885,7 +1952,7 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
           py: { xs: 2.5, sm: 3 },
           gap: 1.5,
           flexWrap: "wrap",
-          display: activeStep === 2 ? "none" : "flex",
+          display: activeStep === listingStepIndex ? "none" : "flex",
           borderTop: `1px solid ${modalColors.line}`,
           bgcolor: modalColors.footerBg,
           backdropFilter: "blur(8px)",
@@ -1921,7 +1988,25 @@ const CreateWebsiteModal = React.memo(function CreateWebsiteModal({
           </Button>
         )}
 
-        {activeStep === 1 && (
+        {activeStep === linkHubStepIndex && (
+          <>
+            <Button
+              onClick={() => {
+                setLinkHubSetup(EMPTY_LINK_HUB_SETUP);
+                handleNext();
+              }}
+              disabled={creating}
+              sx={softButtonSx}
+            >
+              Skip this step
+            </Button>
+            <Button onClick={handleNext} disabled={creating} sx={primaryButtonSx}>
+              Next
+            </Button>
+          </>
+        )}
+
+        {activeStep === aiStepIndex && (
           <>
             <Button
               onClick={() => handleCreate(false)}

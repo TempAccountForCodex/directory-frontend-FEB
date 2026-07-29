@@ -14,6 +14,7 @@ import { portfolioAssets } from "../landingTemplates/assets/portfolio/portfolio-
 import { linkHubProAssets } from "../landingTemplates/assets/link-hub/link-hub-pro";
 import { linkHubDarkProAssets } from "../landingTemplates/assets/link-hub/link-hub-dark-pro";
 import { beautyLinkHubProAssets } from "../landingTemplates/assets/link-hub/beauty-link-hub-pro";
+import { coffeeProAssets } from "../landingTemplates/assets/restaurant/coffee-pro";
 
 type FrontendTemplateWebsite = {
   websiteId?: string | number;
@@ -497,6 +498,21 @@ const FRONTEND_TEMPLATE_BASE_DATA: Record<string, BusinessData> = {
     },
     heroBannerUrl: beautyLinkHubProAssets.background,
     logoUrl: beautyLinkHubProAssets.avatar,
+  },
+  "coffee-pro": {
+    name: "Caffino",
+    tagline: "Your perfect coffee moment starts here.",
+    description:
+      "Handcrafted espresso, warm hospitality, and a premium dark cafe experience.",
+    primaryColor: "#050505",
+    secondaryColor: "#D48B31",
+    contact: {
+      email: "hello@caffino.cafe",
+      phone: "(555) 214-9088",
+      address: "128 Roast Avenue, Portland",
+    },
+    heroBannerUrl: coffeeProAssets.hero,
+    logoUrl: coffeeProAssets.menuLatte,
   },
   restaurant: restaurantData,
   "store-basic": baseStoreData,

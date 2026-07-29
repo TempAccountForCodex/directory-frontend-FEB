@@ -280,6 +280,9 @@ const LinkHubDarkProTemplate = lazy(
 const BeautyLinkHubProTemplate = lazy(
   () => import("../templates/linkHub/BeautyLinkHubProTemplate"),
 );
+const CoffeeProTemplate = lazy(
+  () => import("../templates/restaurant/CoffeeProTemplate"),
+);
 
 const templateRegistry: Record<string, TemplateDefinition> = {
   // --- Service business ---
@@ -338,6 +341,14 @@ const templateRegistry: Record<string, TemplateDefinition> = {
       "Dark-and-warm editorial restaurant layout with cinematic food imagery, story sections, promo strip, and reservation-focused contact area.",
     tags: ["service", "restaurant", "editorial", "food"],
     component: RestaurantTemplate,
+  },
+  "coffee-pro": {
+    id: "coffee-pro",
+    name: "Coffee Pro",
+    description:
+      "Premium dark cafe single-page template with editable menu cards, testimonials, gallery, FAQ, and reservations.",
+    tags: ["service", "restaurant", "cafe", "coffee", "premium"],
+    component: CoffeeProTemplate,
   },
   modern: {
     id: "modern",

@@ -1461,6 +1461,42 @@ const buildBeautyLinkHubProPreviewData = (): BusinessData => {
 const BEAUTY_LINK_HUB_PRO_DATA: BusinessData =
   buildBeautyLinkHubProPreviewData();
 
+const buildCoffeeProPreviewData = (): BusinessData => {
+  const website = {
+    name: "Caffino",
+    slug: "coffee-pro",
+    primaryColor: "#050505",
+    secondaryColor: "#D48B31",
+  };
+  const seededPages = buildFrontendTemplateEditorPages("coffee-pro", website);
+  const previewData = buildTemplatePreviewBusinessData(
+    "coffee-pro",
+    website,
+    seededPages,
+  );
+  if (!previewData) {
+    return {
+      name: "Caffino",
+      tagline: "Your perfect coffee moment starts here.",
+      description:
+        "Handcrafted espresso, warm hospitality, and a premium dark cafe experience.",
+      primaryColor: "#050505",
+      secondaryColor: "#D48B31",
+    };
+  }
+  const templateContent = {
+    ...((previewData.templateContent as Record<string, unknown>) || {}),
+  };
+  delete templateContent.__editorSectionVisibility;
+  templateContent.__editorSectionVisibilityAuthoritative = false;
+  return {
+    ...previewData,
+    templateContent,
+  } as BusinessData;
+};
+
+const COFFEE_PRO_DATA: BusinessData = buildCoffeeProPreviewData();
+
 // ─── Template slug → data mapping ─────────────────────────────────────────────
 
 const TEMPLATE_DATA_MAP: Record<
@@ -1493,6 +1529,10 @@ const TEMPLATE_DATA_MAP: Record<
   "beauty-link-hub-pro": {
     templateId: "beauty-link-hub-pro",
     data: BEAUTY_LINK_HUB_PRO_DATA,
+  },
+  "coffee-pro": {
+    templateId: "coffee-pro",
+    data: COFFEE_PRO_DATA,
   },
   "store-basic": { templateId: "store-basic", data: STORE_DATA },
   "store-premium": { templateId: "store-premium", data: STORE_PREMIUM_DATA },
@@ -1563,6 +1603,10 @@ const TEMPLATE_GROUPS = [
   {
     label: "Plumbing",
     slugs: ["plumbing-pro"],
+  },
+  {
+    label: "Cafe",
+    slugs: ["coffee-pro"],
   },
   {
     label: "Creator",
@@ -2038,6 +2082,7 @@ const COMPANY_TEMPLATE_SLUGS = [
 const EDUCATION_TEMPLATE_SLUGS = ["education-pro"] as const;
 const GARDENING_TEMPLATE_SLUGS = ["gardening-pro"] as const;
 const PLUMBING_TEMPLATE_SLUGS = ["plumbing-pro"] as const;
+const COFFEE_TEMPLATE_SLUGS = ["coffee-pro"] as const;
 
 const STORE_TEMPLATE_SLUGS = [
   "store-basic",
@@ -2054,6 +2099,13 @@ const COMPANY_EXECUTIVE_PALETTES: CompanyExecutivePalette[] = [
     primary: "#124d4e",
     secondary: "#e8f3f2",
     swatches: ["#f4f1e7", "#124d4e", "#2aa9ab", "#0d1211"],
+  },
+  {
+    id: "espresso",
+    name: "Espresso Gold",
+    primary: "#050505",
+    secondary: "#D48B31",
+    swatches: ["#050505", "#D48B31", "#F7F1E8", "#1A120A"],
   },
   {
     id: "navy",
@@ -2208,17 +2260,25 @@ const LandingPreview: React.FC = () => {
   const isPlumbingCategory = PLUMBING_TEMPLATE_SLUGS.includes(
     slug as (typeof PLUMBING_TEMPLATE_SLUGS)[number],
   );
+  const isCoffeeCategory = COFFEE_TEMPLATE_SLUGS.includes(
+    slug as (typeof COFFEE_TEMPLATE_SLUGS)[number],
+  );
   const isTemplateCustomizerCategory =
     isCompanyCategory ||
     isStoreCategory ||
     isEducationCategory ||
     isGardeningCategory ||
-    isPlumbingCategory;
+    isPlumbingCategory ||
+    isCoffeeCategory;
   const previewMode = searchParams.get("mode");
   const selectedPalette =
     COMPANY_EXECUTIVE_PALETTES.find(
       (palette) => palette.id === searchParams.get("palette"),
-    ) || COMPANY_EXECUTIVE_PALETTES[0];
+    ) ||
+    (isCoffeeCategory
+      ? COMPANY_EXECUTIVE_PALETTES.find((palette) => palette.id === "espresso") ||
+        COMPANY_EXECUTIVE_PALETTES[0]
+      : COMPANY_EXECUTIVE_PALETTES[0]);
   const selectedFontPack =
     COMPANY_EXECUTIVE_FONT_PACKS.find(
       (pack) => pack.id === searchParams.get("font"),
@@ -2250,7 +2310,9 @@ const LandingPreview: React.FC = () => {
         ? "Gardening Pro"
         : isPlumbingCategory
           ? "Plumbing Pro"
-          : storeCustomizerLabel;
+          : isCoffeeCategory
+            ? "Coffee Pro"
+            : storeCustomizerLabel;
   const data = React.useMemo<BusinessData>(() => {
     if (!isTemplateCustomizerCategory) return resolvedData;
 

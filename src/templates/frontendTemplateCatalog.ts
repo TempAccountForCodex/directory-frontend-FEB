@@ -283,6 +283,18 @@ export const FRONTEND_TEMPLATE_CATALOG: FrontendTemplateDefinition[] = [
     pageCount: 4,
   },
   {
+    id: "coffee-pro",
+    slug: "coffee-pro",
+    name: "Coffee Pro",
+    description:
+      "Premium dark cafe template with editable menu cards, gallery, FAQ, and reservation booking.",
+    type: "website",
+    category: "restaurant",
+    version: "1.0.0",
+    previewImage: "/assets/templateAssets/images/dummy/coffeePro.jpg",
+    pageCount: 1,
+  },
+  {
     id: "restaurant",
     slug: "restaurant",
     name: "Restaurant",

@@ -220,6 +220,35 @@ Do **not** hardcode pricing / plan gates in the frontend until billing exists.
 - User-added pages later use shared chrome + empty/default body (architecture PRD).
 - Blog detail / system pages must not appear in any Link Hub menu (usually N/A).
 
+## 11.1 Create Website setup flow (Link Hub)
+
+For Link Hub templates (`link-hub-pro`, `link-hub-dark-pro`,
+`beauty-link-hub-pro`), Create Website modal must insert an optional
+**Link Hub Setup** step before AI Content:
+
+1. Name & Domain  
+2. Link Hub Setup (optional)  
+3. AI Content  
+4. Directory Listing  
+
+Non–Link Hub templates keep the default 3-step flow.
+
+Rules:
+
+- Collect optional profile, main links, social links, featured/product links,
+  and contact/newsletter fields before AI Content.
+- User may **Skip this step** — template default seeds are used unchanged.
+- Filled fields must seed the same backend-safe `block.content` paths used by
+  the live templates (`heading` / `subheading` / `body` / `image` /
+  `sectionStyle`, `features[]` with `title` / `link` / `image` / `icon` /
+  `type` / `isVisible` / `isFeatured`, contact `email` / `buttonLabel` /
+  `heading` / `description`).
+- Do not invent frontend-only fake fields.
+- No static/style-only seeded content — everything seeded here remains
+  editable in Website Editor after create.
+- Create without AI and Generate with AI must both honor skipped vs filled
+  setup data.
+
 ## 12. Assets
 
 Local only under:
