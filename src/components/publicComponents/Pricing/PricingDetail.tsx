@@ -28,11 +28,18 @@ import {
   getPlanPriceBreakdown,
   PLANS,
   PRICING_DISCOUNT_DISPLAY,
+  REFERRAL_PROGRAM,
   SITE_COUNT_MAX,
   SITE_COUNT_MIN,
 } from "./pricingConfig";
 
 const star = "/assets/publicAssets/images/common/star.svg";
+const heroAvatars = [
+  "/assets/publicAssets/images/home/avatar1-sm.webp",
+  "/assets/publicAssets/images/home/avatar2-sm.webp",
+  "/assets/publicAssets/images/home/avatar3-sm.webp",
+];
+const pricingFontStack = "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif";
 
 /* ============================
    Theme & Config
@@ -46,6 +53,45 @@ const gradientText = {
   backgroundClip: "text",
   fontWeight: 700,
 };
+
+const HeroAvatarCluster = () => (
+  <Box
+    component="span"
+    sx={{
+      display: "inline-flex",
+      alignItems: "center",
+      mx: { xs: 0, md: 0.05 },
+      transform: { xs: "translateY(0px)", md: "translateY(2px)" },
+    }}
+  >
+    {heroAvatars.map((src, index) => (
+      <Box
+        key={src}
+        component="img"
+        src={src}
+        alt=""
+        sx={{
+          width: { xs: 24, sm: 32, md: 38, lg: 44 },
+          height: { xs: 24, sm: 32, md: 38, lg: 44 },
+          objectFit: "cover",
+          borderRadius: "34%",
+          border: "3px solid #fff",
+          boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+          ml: index === 0 ? 0 : { xs: -0.9, sm: -1.15, md: -1.45 },
+          position: "relative",
+          zIndex: heroAvatars.length - index,
+          transform:
+            index === 0
+              ? "rotate(-8deg)"
+              : index === 1
+                ? "translateY(-3px) rotate(1deg)"
+                : "rotate(9deg)",
+          transformOrigin: "center bottom",
+        }}
+      />
+    ))}
+  </Box>
+);
 
 const COLORS = {
   bg: "#020303",
@@ -72,7 +118,7 @@ const BillingToggle = ({
   const selectedIndex = options.indexOf(value);
 
   return (
-    <Box sx={{ textAlign: "center", mb: 8 }}>
+    <Box sx={{ textAlign: "center", mb: { xs: 4, md: 8 } }}>
       <Box
         sx={{
           display: "inline-grid",
@@ -176,7 +222,7 @@ const BillingToggle = ({
   );
 };
 
-const LaunchDiscountBanner = () => {
+const CopyableCodeChip = ({ code, label }: { code: string; label: string }) => {
   const [copied, setCopied] = React.useState(false);
   const copyTimer = React.useRef<number | null>(null);
 
@@ -189,9 +235,13 @@ const LaunchDiscountBanner = () => {
     [],
   );
 
+  React.useEffect(() => {
+    setCopied(false);
+  }, [code]);
+
   const handleCopyCode = async () => {
     try {
-      await navigator.clipboard.writeText(PRICING_DISCOUNT_DISPLAY.launchCode);
+      await navigator.clipboard.writeText(code);
       setCopied(true);
 
       if (copyTimer.current) {
@@ -205,11 +255,58 @@ const LaunchDiscountBanner = () => {
   };
 
   return (
+    <Chip
+      clickable
+      role="button"
+      aria-label={`Copy ${label} code ${code}`}
+      label={copied ? "COPIED" : code}
+      onClick={handleCopyCode}
+      sx={{
+        height: { xs: 36, sm: 40 },
+        px: 1,
+        borderRadius: "999px",
+        background: copied ? COLORS.teal : "#fff",
+        color: copied ? "#031211" : "#041e18",
+        fontSize: { xs: "0.74rem", sm: "0.85rem" },
+        fontWeight: 900,
+        letterSpacing: 1.2,
+        cursor: "pointer",
+        transition:
+          "background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease",
+        "&:hover": {
+          background: copied ? COLORS.teal : "rgba(255,255,255,0.92)",
+          transform: "translateY(-2px)",
+          boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
+        },
+        "&:active": {
+          transform: "translateY(0)",
+        },
+      }}
+    />
+  );
+};
+
+const PromoBanner = ({
+  eyebrow,
+  title,
+  body,
+  code,
+  copyLabel,
+  mb = 4,
+}: {
+  eyebrow: string;
+  title: string;
+  body: React.ReactNode;
+  code: string;
+  copyLabel: string;
+  mb?: number;
+}) => {
+  return (
     <Box
       sx={{
-        maxWidth: 880,
+        maxWidth: 980,
         mx: "auto",
-        mb: 10,
+        mb,
         p: { xs: 2, sm: 2.5 },
         borderRadius: "20px",
         border: `1px solid ${COLORS.tealSoft}`,
@@ -228,77 +325,143 @@ const LaunchDiscountBanner = () => {
         },
       }}
     >
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={2}
-        alignItems={{ xs: "flex-start", md: "center" }}
-        justifyContent="space-between"
+      <Box
+        component={motion.div}
+        key={code}
+        initial={{ opacity: 0, x: 18 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
       >
-        <Box>
-          <Typography
-            sx={{
-              color: COLORS.teal,
-              fontSize: "0.72rem",
-              fontWeight: 900,
-              letterSpacing: 1.4,
-              textTransform: "uppercase",
-              mb: 0.6,
-            }}
-          >
-            Launch discount
-          </Typography>
-          <Typography
-            sx={{
-              color: "#fff",
-              fontSize: { xs: "1.15rem", sm: "1.35rem" },
-              fontWeight: 900,
-              lineHeight: 1.2,
-            }}
-          >
-            {PRICING_DISCOUNT_DISPLAY.launchPercent}% off your first annual Pro
-            or Business payment
-          </Typography>
-          <Typography
-            sx={{
-              color: "rgba(255,255,255,0.62)",
-              mt: 0.8,
-              fontSize: "0.86rem",
-              lineHeight: 1.5,
-            }}
-          >
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          alignItems={{ xs: "center", md: "center" }}
+          justifyContent="space-between"
+        >
+          <Box sx={{ textAlign: { xs: "center", md: "left" } }}>
+            <Typography
+              sx={{
+                color: COLORS.teal,
+                fontSize: "0.72rem",
+                fontWeight: 900,
+                letterSpacing: 1.4,
+                textTransform: "uppercase",
+                mb: 0.6,
+              }}
+            >
+              {eyebrow}
+            </Typography>
+            <Typography
+              sx={{
+                color: "#fff",
+                fontSize: { xs: "1rem", sm: "1.14rem", md: "1.35rem" },
+                fontWeight: 900,
+                lineHeight: 1.22,
+              }}
+            >
+              {title}
+            </Typography>
+            <Typography
+              sx={{
+                color: "rgba(255,255,255,0.62)",
+                mt: 0.8,
+                fontSize: { xs: "0.78rem", sm: "0.82rem", md: "0.86rem" },
+                lineHeight: 1.45,
+              }}
+            >
+              {body}
+            </Typography>
+          </Box>
+
+          <CopyableCodeChip code={code} label={copyLabel} />
+        </Stack>
+      </Box>
+    </Box>
+  );
+};
+
+const PromoBannerLoop = () => {
+  const promos = React.useMemo(
+    () => [
+      {
+        eyebrow: "Launch discount",
+        title: `${PRICING_DISCOUNT_DISPLAY.launchPercent}% off your first annual Pro or Business payment`,
+        body: (
+          <>
             Annual billing already includes two months free. Launch discounts
             are display-only here and will be connected at checkout later.
-          </Typography>
-        </Box>
+          </>
+        ),
+        code: PRICING_DISCOUNT_DISPLAY.launchCode,
+        copyLabel: "launch",
+      },
+      {
+        eyebrow: "Referral program",
+        title: `Friend gets ${REFERRAL_PROGRAM.friendDiscountPercent}% off first payment; referrer earns $${REFERRAL_PROGRAM.referrerCreditAmount} credit`,
+        body: (
+          <>
+            Renewal uses {REFERRAL_PROGRAM.renewalCopy}. Discount applies{" "}
+            {REFERRAL_PROGRAM.friendDiscountDuration}; maximum benefit is
+            controlled by backend at ${REFERRAL_PROGRAM.backendMaxBenefitAmount}
+            . Eligible for {REFERRAL_PROGRAM.eligiblePlans.join(" or ")} plans.
+          </>
+        ),
+        code: REFERRAL_PROGRAM.code,
+        copyLabel: "referral",
+      },
+    ],
+    [],
+  );
+  const [activePromoIndex, setActivePromoIndex] = React.useState(0);
+  const activePromo = promos[activePromoIndex];
 
-        <Chip
-          clickable
-          role="button"
-          aria-label={`Copy launch code ${PRICING_DISCOUNT_DISPLAY.launchCode}`}
-          label={copied ? "COPIED" : PRICING_DISCOUNT_DISPLAY.launchCode}
-          onClick={handleCopyCode}
-          sx={{
-            height: 40,
-            px: 1,
-            borderRadius: "999px",
-            background: copied ? COLORS.teal : "#fff",
-            color: copied ? "#031211" : "#041e18",
-            fontSize: "0.85rem",
-            fontWeight: 900,
-            letterSpacing: 1.2,
-            cursor: "pointer",
-            transition:
-              "background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease",
-            "&:hover": {
-              background: copied ? COLORS.teal : "rgba(255,255,255,0.92)",
-              transform: "translateY(-2px)",
-              boxShadow: "0 10px 26px rgba(0,0,0,0.24)",
-            },
-            "&:active": {
-              transform: "translateY(0)",
-            },
-          }}
-        />
+  React.useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActivePromoIndex((current) => (current + 1) % promos.length);
+    }, 3000);
+
+    return () => window.clearInterval(interval);
+  }, [promos.length]);
+
+  return (
+    <Box sx={{ mb: { xs: 5, md: 10 } }}>
+      <PromoBanner {...activePromo} mb={0.75} />
+
+      <Stack
+        direction="row"
+        spacing={1}
+        justifyContent="center"
+        sx={{ mt: 0.75 }}
+      >
+        {promos.map((promo, index) => {
+          const selected = activePromoIndex === index;
+
+          return (
+            <Box
+              key={promo.code}
+              component="button"
+              type="button"
+              aria-label={`Show ${promo.eyebrow}`}
+              aria-pressed={selected}
+              onClick={() => setActivePromoIndex(index)}
+              sx={{
+                width: selected ? 18 : 7,
+                height: 7,
+                p: 0,
+                border: 0,
+                borderRadius: "999px",
+                background: selected ? COLORS.teal : "rgba(255,255,255,0.28)",
+                cursor: "pointer",
+                transition:
+                  "width 0.22s ease, background 0.22s ease, transform 0.22s ease",
+                "&:hover": {
+                  background: selected ? COLORS.teal : "rgba(255,255,255,0.5)",
+                  transform: "translateY(-1px)",
+                },
+              }}
+            />
+          );
+        })}
       </Stack>
     </Box>
   );
@@ -318,7 +481,7 @@ const PlanHeader = ({
   const {
     price: displayPrice,
     listPrice,
-    volumeDiscountPercent,
+    earlyBirdSavings,
     volumeSavings,
     annualSavings,
   } = getPlanPriceBreakdown(plan.id, billing, siteCount);
@@ -352,6 +515,7 @@ const PlanHeader = ({
         <Typography
           sx={{
             color: "#fff",
+            fontFamily: `${pricingFontStack} !important`,
             fontWeight: 1000,
             fontSize: "1.5rem",
             lineHeight: 1.1,
@@ -495,7 +659,8 @@ const PlanHeader = ({
         )}
       </Box>
 
-      {paidPlan && (annualSavings > 0 || volumeSavings > 0) ? (
+      {paidPlan &&
+      (annualSavings > 0 || earlyBirdSavings > 0 || volumeSavings > 0) ? (
         <Stack
           spacing={0.85}
           justifyContent="center"
@@ -533,6 +698,21 @@ const PlanHeader = ({
               },
             }}
           >
+            {earlyBirdSavings > 0 && (
+              <Chip
+                label={`${PRICING_DISCOUNT_DISPLAY.earlyBirdLabel} saves $${earlyBirdSavings.toLocaleString("en-US")}`}
+                sx={{
+                  height: 24,
+                  borderRadius: "6px",
+                  background: "rgba(47,184,179,0.16)",
+                  border: `1px solid ${COLORS.tealSoft}`,
+                  color: COLORS.teal,
+                  fontSize: "0.72rem",
+                  fontWeight: 900,
+                  letterSpacing: 0.2,
+                }}
+              />
+            )}
             {billing === "annual" && annualSavings > 0 && (
               <Chip
                 label={`Save $${annualSavings} · 2 months free`}
@@ -548,9 +728,10 @@ const PlanHeader = ({
                 }}
               />
             )}
-            {volumeDiscountPercent > 0 && (
+            {PRICING_DISCOUNT_DISPLAY.showVolumeDiscountChip &&
+              volumeSavings > 0 && (
               <Chip
-                label={`${volumeDiscountPercent}% volume discount`}
+                label={`Volume savings $${volumeSavings}`}
                 sx={{
                   height: 24,
                   borderRadius: "6px",
@@ -562,7 +743,7 @@ const PlanHeader = ({
                   letterSpacing: 0.2,
                 }}
               />
-            )}
+              )}
           </Stack>
         </Stack>
       ) : (
@@ -952,6 +1133,105 @@ const CompareCell = ({
 
 const PLAN_COL_WIDTH = "17%";
 
+const MobileComparisonTable = ({ expanded }: { expanded: boolean }) => {
+  const visibleGroups = expanded ? COMPARISON_GROUPS : COMPARISON_GROUPS.slice(0, 2);
+
+  return (
+    <Stack spacing={2.2} sx={{ display: { xs: "flex", md: "none" } }}>
+      {visibleGroups.map((group) => (
+        <Box key={group.category}>
+          <Typography
+            sx={{
+              px: 2,
+              py: 1.4,
+              background: "rgba(255,255,255,0.025)",
+              borderTop: `1px solid ${COLORS.border}`,
+              borderBottom: `1px solid ${COLORS.border}`,
+              fontSize: "0.68rem",
+              fontWeight: 800,
+              letterSpacing: 1.2,
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.45)",
+            }}
+          >
+            {group.category}
+          </Typography>
+
+          <Stack>
+            {group.rows.map((row) => (
+              <Box
+                key={row.feature}
+                sx={{
+                  px: 2,
+                  py: 1.8,
+                  borderBottom: `1px solid ${COLORS.border}`,
+                }}
+              >
+                <Typography
+                  sx={{
+                    mb: 1.35,
+                    color: "rgba(255,255,255,0.9)",
+                    fontSize: "0.95rem",
+                    fontWeight: 700,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {row.feature}
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                    gap: 0.8,
+                  }}
+                >
+                  {(["free", "pro", "business"] as const).map((planId) => {
+                    const plan = PLANS.find((item) => item.id === planId);
+                    const recommended = planId === "pro";
+
+                    return (
+                      <Box
+                        key={planId}
+                        sx={{
+                          minWidth: 0,
+                          p: 1,
+                          borderRadius: "10px",
+                          textAlign: "center",
+                          background: recommended
+                            ? "rgba(47,184,179,0.1)"
+                            : "rgba(255,255,255,0.035)",
+                          border: recommended
+                            ? `1px solid ${COLORS.tealSoft}`
+                            : `1px solid ${COLORS.border}`,
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            mb: 0.7,
+                            color: recommended ? COLORS.teal : "rgba(255,255,255,0.58)",
+                            fontSize: "0.62rem",
+                            fontWeight: 900,
+                            letterSpacing: 0.5,
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {plan?.label}
+                        </Typography>
+                        <CompareCell value={row[planId]} highlight={recommended} />
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+      ))}
+    </Stack>
+  );
+};
+
 const ComparisonTable = () => {
   const [expanded, setExpanded] = React.useState(false);
 
@@ -1007,8 +1287,10 @@ const ComparisonTable = () => {
             }}
             style={{ overflow: "hidden" }}
           >
+            <MobileComparisonTable expanded={expanded} />
             <Box
               sx={{
+                display: { xs: "none", md: "block" },
                 overflowX: "auto",
                 transform: expanded ? "translateY(0)" : "translateY(-2px)",
                 transition: "transform 0.35s ease",
@@ -1293,8 +1575,8 @@ const PricingSection: React.FC = () => {
         backgroundPosition: "center",
       }}
     >
-      <Container maxWidth="lg" sx={{ pt: 6, pb: { xs: 2, lg: 6 } }}>
-        <Box textAlign="center" mb={6}>
+      <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 6 }, pb: { xs: 1, lg: 6 } }}>
+        <Box textAlign="center" mb={{ xs: 5, md: 9 }}>
           <Box
             sx={{
               textAlign: "center",
@@ -1322,45 +1604,54 @@ const PricingSection: React.FC = () => {
               fontWeight={700}
               sx={{
                 color: "white",
-                fontSize: { xs: "25px", sm: "35px", md: "45px", lg: "55px" },
-                marginTop: { xs: "30px", md: "50px", lg: "90px" },
+                fontSize: { xs: "25px", sm: "30px", md: "42px", lg: "55px" },
+                marginTop: { xs: "18px", md: "50px", lg: "90px" },
                 display: "flex",
                 flexWrap: "wrap",
                 alignItems: "center",
-                gap: "10px",
-                lineHeight: 0.9,
+                columnGap: { xs: "6px", sm: "8px", md: "10px" },
+                rowGap: { xs: "8px", sm: "10px", md: "10px" },
+                lineHeight: { xs: 1.08, md: 0.95 },
                 justifyContent: "center",
-                fontFamily: "Plus Jakarta Sans",
+                fontFamily: `${pricingFontStack} !important`,
+                "& *": {
+                  fontFamily: `${pricingFontStack} !important`,
+                },
               }}
             >
-              Plans that grow with your business needs.
+              Plans that grow with you.
               <Box component="span" sx={{ width: "100%" }} />
               Start with a{" "}
               <Box component="span" sx={gradientText}>
                 FREE
-              </Box>{" "}
+              </Box>
+              <HeroAvatarCluster />{" "}
               landing page.
             </Typography>
           </Box>
 
-          <Typography
+          {/* <Typography
             variant="h6"
             maxWidth="800px"
             mx="auto"
             sx={{ color: "white", marginTop: "30px" }}
           >
-            Free gets you online. Pro makes you look professional. Business
-            helps you grow and scale.
-          </Typography>
+            Build for free, upgrade when your website grows.
+          </Typography> */}
         </Box>
       </Container>
 
-      <Box sx={{ pb: 10, pt: 0, color: "white" }}>
+      <Box sx={{ pb: { xs: 6, md: 10 }, pt: 0, color: "white" }}>
         <Container maxWidth="lg">
-          <LaunchDiscountBanner />
+          <PromoBannerLoop />
           <BillingToggle value={billing} onChange={setBilling} />
 
-          <Grid container spacing={4} alignItems="stretch">
+          <Grid
+            container
+            spacing={{ xs: 3, md: 4 }}
+            alignItems="stretch"
+            justifyContent="center"
+          >
             {PLANS.map((plan) => (
               <PricingCard key={plan.id} plan={plan} billing={billing} />
             ))}

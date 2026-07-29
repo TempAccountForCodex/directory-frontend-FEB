@@ -24,6 +24,7 @@ import {
   Palette,
   Rocket,
   Wrench,
+  Link2,
   type LucideIcon,
 } from "lucide-react";
 import { getDashboardColors } from "../../styles/dashboardTheme";
@@ -45,6 +46,7 @@ const CATEGORY_PLACEHOLDER_COLORS: Record<
   blog: { bg: "rgba(59,130,246,0.1)", accent: "#3B82F6", Icon: FileText },
   business: { bg: "rgba(37,99,235,0.1)", accent: "#2563EB", Icon: Building2 },
   creative: { bg: "rgba(168,85,247,0.1)", accent: "#A855F7", Icon: Palette },
+  creator: { bg: "rgba(124,92,255,0.1)", accent: "#7C5CFF", Icon: Link2 },
   ecommerce: {
     bg: "rgba(236,72,153,0.1)",
     accent: "#EC4899",

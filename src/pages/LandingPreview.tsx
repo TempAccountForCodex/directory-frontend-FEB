@@ -1371,6 +1371,7 @@ const buildLinkHubProPreviewData = (): BusinessData => {
       tagline: "@alexcreates",
       description: "Creator, designer, and builder of calm digital products.",
       primaryColor: "#7C5CFF",
+      contact: { email: "hello@alexcreates.co" },
     };
   }
   const templateContent = {
@@ -1408,6 +1409,7 @@ const buildLinkHubDarkProPreviewData = (): BusinessData => {
       tagline: "@studionorth",
       description: "Creator studio · products, drops, and collaborations.",
       primaryColor: "#FFFFFF",
+      contact: { email: "hello@studionorth.co" },
     };
   }
   const templateContent = {
@@ -1445,6 +1447,7 @@ const buildBeautyLinkHubProPreviewData = (): BusinessData => {
       tagline: "Makeup | Skin | Entrepreneur",
       description: "Soft glam looks, skin routines, and beauty referrals.",
       primaryColor: "#F5E8DC",
+      contact: { email: "hello@lunabelle.co" },
     };
   }
   const templateContent = {

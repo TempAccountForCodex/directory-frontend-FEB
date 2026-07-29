@@ -14,6 +14,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { queryClient } from "./api/queryClient";
 import { initSentry, isSentryEnabled, getSentry } from "./config/sentry";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 /**
  * CSP Nonce for Emotion (Step 2.12.3)
@@ -114,6 +116,8 @@ function AppWithErrorBoundary(): JSX.Element {
                   <CssBaseline />
                   <RemoveStartupShell />
                   <App />
+                  <Analytics />
+                  <SpeedInsights />
                   {import.meta.env.DEV && (
                     <ReactQueryDevtools initialIsOpen={false} />
                   )}

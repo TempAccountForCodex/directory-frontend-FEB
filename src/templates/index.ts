@@ -14,6 +14,7 @@ export type TemplateCategory =
   | "blog"
   | "business"
   | "creative"
+  | "creator"
   | "portfolio"
   | "agency"
   | "restaurant"
@@ -65,6 +66,7 @@ export const CATEGORY_LABELS: Record<TemplateCategory, string> = {
   blog: "Blog",
   business: "Business",
   creative: "Creative",
+  creator: "Creator / Link in Bio",
   portfolio: "Portfolio",
   agency: "Agency",
   restaurant: "Restaurant",

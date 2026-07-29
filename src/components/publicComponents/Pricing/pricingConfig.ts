@@ -24,36 +24,50 @@ export type Plan = {
 };
 
 // Edit these values to change paid-plan site-count controls and volume pricing.
-export const SITE_COUNT_MIN = 5;
-export const SITE_COUNT_MAX = 250;
-export const SITE_COUNT_STEP = 5;
-export const PLAN_BASE_SITE_COUNT: SiteCount = 5;
+export const SITE_COUNT_OPTIONS: SiteCount[] = [
+  1, 5, 10, 20, 25, 50, 100, 150, 200, 250,
+];
+export const SITE_COUNT_MIN = SITE_COUNT_OPTIONS[0];
+export const SITE_COUNT_MAX = SITE_COUNT_OPTIONS[SITE_COUNT_OPTIONS.length - 1];
+export const SITE_COUNT_STEP_LABEL = SITE_COUNT_OPTIONS.join(" -> ");
+export const PLAN_BASE_SITE_COUNT: SiteCount = 1;
 
-// Prices are placeholder display values pending final pricing approval.
-// Paid plan prices are the 5-site base price; 10-site and 15-site prices scale from this base.
-export const PLAN_BASE_PRICES: Record<PlanId, Record<BillingCycle, number>> = {
-  free: {
-    monthly: 0,
-    annual: 0,
-  },
-  pro: {
-    monthly: 9,
-    annual: 108,
-  },
-  business: {
-    monthly: 19,
-    annual: 228,
-  },
+// Paid plan prices are monthly price-per-website values.
+// Standard prices are the regular renewal/list prices.
+export const PLAN_PRICE_PER_WEBSITE: Record<PlanId, number> = {
+  free: 0,
+  pro: 9,
+  business: 17,
+};
+
+// Early-bird prices are the current launch display prices.
+// These should become Super Admin-managed values before production checkout.
+export const EARLY_BIRD_PRICE_PER_WEBSITE: Record<PlanId, number> = {
+  free: 0,
+  pro: 7,
+  business: 15,
 };
 
 // Temporary frontend-only discount display.
 // Replace or connect to checkout once final promotion rules are approved.
 export const PRICING_DISCOUNT_DISPLAY = {
   annualFreeMonths: 2,
+  earlyBirdLabel: "Early bird",
   launchPercent: 20,
   launchCode: "LAUNCH20",
-  volumeDiscountPercentPerTenSites: 1,
-  maxVolumeDiscountPercent: 20,
+  volumeDiscountPercentPerTenSites: 0,
+  maxVolumeDiscountPercent: 0,
+  showVolumeDiscountChip: false,
+};
+
+export const REFERRAL_PROGRAM = {
+  code: "REFERRAL20",
+  friendDiscountPercent: 20,
+  friendDiscountDuration: "once",
+  referrerCreditAmount: 5,
+  backendMaxBenefitAmount: 20,
+  eligiblePlans: ["Pro", "Business"],
+  renewalCopy: "regular monthly or annual price",
 };
 
 export const PLANS: Plan[] = [
@@ -66,7 +80,7 @@ export const PLANS: Plan[] = [
     cta: "Get Started",
     features: [
       "1 single-page landing site",
-      "1 form · 50 submissions/mo",
+      "1 built-in form · 50 submissions/mo",
       "5 blog posts",
       "50 MB storage",
       "5 AI actions/day",
@@ -91,15 +105,15 @@ export const PLANS: Plan[] = [
       //   ],
       // },
       "A directory listing for each site",
-      "1 custom domain & 5 forms/website",
-      "500 form submissions/mo",
-      "Unlimited posts",
+      "Custom domain",
+      "Built in forms · No Limit",
+      "Unlimited blog posts",
       "upto 200 MB storage/site",
       "100 AI actions/daily",
       "Custom code & embeds",
       "SEO optimization",
-      "Premium templates · custom CSS",
-      "Detailed analytics",
+      "Premium templates",
+      "Basic analytics",
       "2 collaborators per website",
     ],
   },
@@ -114,15 +128,16 @@ export const PLANS: Plan[] = [
       "Everything in Pro, plus:",
       "Priority based directory listing",
       "Advanced integrations",
-      "Unlimited forms and custom domains",
+      "Built in forms",
       "Unlimited blog posts",
       "1 GB storage/site",
       "500 AI actions/daily",
       "Custom code, CSS & embeds",
-      "SEO optimization for websites & blogs",
+      "SEO optimization",
       "Blog comments & moderation controls",
       "Conversion, funnel & real-time analytics",
       "10 collaborators per website",
+      "Custom domains",
       "Priority support",
       "Custom Integrated Shops",
     ],
@@ -133,9 +148,13 @@ export const getPlanListPrice = (
   planId: PlanId,
   billing: BillingCycle,
   siteCount: SiteCount,
-) =>
-  PLAN_BASE_PRICES[planId][billing] *
-  (planId === "free" ? 1 : siteCount / PLAN_BASE_SITE_COUNT);
+) => {
+  if (planId === "free") return 0;
+
+  const monthlyListPrice = PLAN_PRICE_PER_WEBSITE[planId] * siteCount;
+
+  return billing === "annual" ? monthlyListPrice * 12 : monthlyListPrice;
+};
 
 export const getVolumeDiscountPercent = (siteCount: SiteCount) => {
   const addedSites = Math.max(0, siteCount - PLAN_BASE_SITE_COUNT);
@@ -159,15 +178,17 @@ export const getPlanPrice = (
 
   if (billing === "annual") {
     return Math.round(
-      PLAN_BASE_PRICES[planId].monthly *
+      EARLY_BIRD_PRICE_PER_WEBSITE[planId] *
+        siteCount *
         (12 - PRICING_DISCOUNT_DISPLAY.annualFreeMonths) *
-        (siteCount / PLAN_BASE_SITE_COUNT) *
         volumeDiscountMultiplier,
     );
   }
 
   return Math.round(
-    getPlanListPrice(planId, billing, siteCount) * volumeDiscountMultiplier,
+    EARLY_BIRD_PRICE_PER_WEBSITE[planId] *
+      siteCount *
+      volumeDiscountMultiplier,
   );
 };
 
@@ -180,8 +201,14 @@ export const getPlanPriceBreakdown = (
   const volumeDiscountPercent =
     planId === "free" ? 0 : getVolumeDiscountPercent(siteCount);
   const volumeDiscountMultiplier = 1 - volumeDiscountPercent / 100;
-  const priceAfterVolumeDiscount = Math.round(
-    listPrice * volumeDiscountMultiplier,
+  const earlyBirdListPrice =
+    planId === "free"
+      ? 0
+      : EARLY_BIRD_PRICE_PER_WEBSITE[planId] *
+        siteCount *
+        (billing === "annual" ? 12 : 1);
+  const priceBeforeAnnualSavings = Math.round(
+    earlyBirdListPrice * volumeDiscountMultiplier,
   );
   const price = getPlanPrice(planId, billing, siteCount);
 
@@ -189,16 +216,31 @@ export const getPlanPriceBreakdown = (
     listPrice,
     price,
     volumeDiscountPercent,
-    volumeSavings: listPrice - priceAfterVolumeDiscount,
-    annualSavings: billing === "annual" ? priceAfterVolumeDiscount - price : 0,
+    earlyBirdSavings: listPrice - earlyBirdListPrice,
+    volumeSavings: earlyBirdListPrice - priceBeforeAnnualSavings,
+    annualSavings:
+      billing === "annual" ? priceBeforeAnnualSavings - price : 0,
     totalSavings: listPrice - price,
   };
 };
 
 export const getNextSiteCount = (siteCount: SiteCount, direction: -1 | 1) => {
-  const nextSiteCount = siteCount + direction * SITE_COUNT_STEP;
+  const currentIndex = SITE_COUNT_OPTIONS.indexOf(siteCount);
+  const fallbackIndex = SITE_COUNT_OPTIONS.findIndex(
+    (option) => option >= siteCount,
+  );
+  const startIndex =
+    currentIndex >= 0
+      ? currentIndex
+      : Math.max(
+          0,
+          fallbackIndex === -1 ? SITE_COUNT_OPTIONS.length - 1 : fallbackIndex,
+        );
+  const nextIndex = startIndex + direction;
 
-  return Math.max(SITE_COUNT_MIN, Math.min(SITE_COUNT_MAX, nextSiteCount));
+  return SITE_COUNT_OPTIONS[
+    Math.max(0, Math.min(SITE_COUNT_OPTIONS.length - 1, nextIndex))
+  ];
 };
 
 export const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
@@ -238,8 +280,8 @@ export const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
       {
         feature: "Site-count step",
         free: false,
-        pro: `${SITE_COUNT_STEP} sites`,
-        business: `${SITE_COUNT_STEP} sites`,
+        pro: SITE_COUNT_STEP_LABEL,
+        business: SITE_COUNT_STEP_LABEL,
       },
     ],
   },
@@ -305,6 +347,18 @@ export const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
     category: "Pricing discounts",
     rows: [
       {
+        feature: "Standard price per website",
+        free: "$0",
+        pro: `$${PLAN_PRICE_PER_WEBSITE.pro}/month`,
+        business: `$${PLAN_PRICE_PER_WEBSITE.business}/month`,
+      },
+      {
+        feature: "Early-bird price per website",
+        free: false,
+        pro: `$${EARLY_BIRD_PRICE_PER_WEBSITE.pro}/month`,
+        business: `$${EARLY_BIRD_PRICE_PER_WEBSITE.business}/month`,
+      },
+      {
         feature: "Annual billing savings",
         free: false,
         pro: `${PRICING_DISCOUNT_DISPLAY.annualFreeMonths} months free`,
@@ -313,20 +367,44 @@ export const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
       {
         feature: "Volume discount",
         free: false,
-        pro: `${PRICING_DISCOUNT_DISPLAY.volumeDiscountPercentPerTenSites}% per 10 added sites`,
-        business: `${PRICING_DISCOUNT_DISPLAY.volumeDiscountPercentPerTenSites}% per 10 added sites`,
+        pro: "Super Admin controlled",
+        business: "Super Admin controlled",
       },
       {
         feature: "Max volume discount",
         free: false,
-        pro: `${PRICING_DISCOUNT_DISPLAY.maxVolumeDiscountPercent}%`,
-        business: `${PRICING_DISCOUNT_DISPLAY.maxVolumeDiscountPercent}%`,
+        pro: "Hidden unless enabled",
+        business: "Hidden unless enabled",
       },
       {
         feature: "Launch code",
         free: false,
         pro: PRICING_DISCOUNT_DISPLAY.launchCode,
         business: PRICING_DISCOUNT_DISPLAY.launchCode,
+      },
+      {
+        feature: "Referral code",
+        free: false,
+        pro: REFERRAL_PROGRAM.code,
+        business: REFERRAL_PROGRAM.code,
+      },
+      {
+        feature: "Referral friend discount",
+        free: false,
+        pro: `${REFERRAL_PROGRAM.friendDiscountPercent}% first payment`,
+        business: `${REFERRAL_PROGRAM.friendDiscountPercent}% first payment`,
+      },
+      {
+        feature: "Referrer credit",
+        free: false,
+        pro: `$${REFERRAL_PROGRAM.referrerCreditAmount}`,
+        business: `$${REFERRAL_PROGRAM.referrerCreditAmount}`,
+      },
+      {
+        feature: "Renewal price",
+        free: "Regular",
+        pro: REFERRAL_PROGRAM.renewalCopy,
+        business: REFERRAL_PROGRAM.renewalCopy,
       },
     ],
   },
