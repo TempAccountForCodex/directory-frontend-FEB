@@ -8,34 +8,34 @@ import Hero from "./../../components/publicComponents/Pricing/Hero";
 const Pricing = () => {
   const pricingFAQs = [
     {
-      question: "Is the landing page really free?",
+      question: "Is the Free plan really free?",
       answer:
-        "Yes. Every business can create and publish a professional landing page for free, with no time limits or hidden costs.",
+        "Yes. Free includes one single-page landing site, one built-in form, 50 submissions per month, 5 blog posts, 50 MB storage, and a techietribe.app subdomain.",
     },
     {
-      question: "Do I need design or coding skills?",
+      question: "Can I buy only one website?",
       answer:
-        "No. Your landing page is auto-generated and fully editable through a simple dashboard — no coding required.",
+        "Yes. Paid plans start at 1 website. You can scale through 1, 5, 10, 20, 25, 50, 100, 150, 200, and 250 websites.",
     },
     {
-      question: "What can I add to my landing page?",
+      question: "What is included in Pro?",
       answer:
-        "You can add your business details, services, images, working hours, location, contact information, and social links.",
+        "Pro adds custom domains, directory listings for each site, premium templates, SEO tools, custom code and embeds, basic analytics, and 2 collaborators per website.",
     },
     {
-      question: "How does the business directory listing work?",
+      question: "What does Business add?",
       answer:
-        "Once your page is published, your business is automatically listed in our public directory so customers can discover you by category or location.",
+        "Business adds enhanced directory visibility, advanced integrations, higher AI and storage limits, moderation controls, conversion analytics, 10 collaborators per website, priority support, and light shop/catalog or payment-link features.",
     },
     {
-      question: "Can I edit my landing page after publishing?",
+      question: "What happens when I need more websites?",
       answer:
-        "Yes. You can update your content anytime, and changes go live after a quick quality review.",
+        "You can increase your site count from the pricing page or account billing area. Pricing scales by website, so you only pay for the number of sites you choose.",
     },
     {
-      question: "Are there any premium upgrade options available?",
+      question: "Can I change plans later?",
       answer:
-        "Yes. You can upgrade to access featured listings, enhanced visibility, advanced customization options, and additional promotional tools.",
+        "Yes. You can start free, upgrade when you need more websites or advanced features, and manage plan changes from your account once billing is connected.",
     },
   ];
 
@@ -47,7 +47,7 @@ const Pricing = () => {
 
       <PricingDetail />
 
-      <FAQSection title="Landing Page FAQ" items={pricingFAQs} />
+      <FAQSection title="Pricing FAQ" items={pricingFAQs} />
 
       <Team />
     </Box>

@@ -1666,7 +1666,7 @@ const buildInnerBlockFromLibraryItem = (item) => {
         content: {
           heading: "Our locations",
           body: "Display your offices or service regions.",
-          locations: ["Karachi", "Dubai", "London"],
+          locations: ["Houston", "Dubai", "London"],
         },
       };
     case "menu_display":

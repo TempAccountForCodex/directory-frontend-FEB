@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import type { ComponentProps } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -8,6 +9,7 @@ import {
   Button,
   IconButton,
   TextField,
+  SvgIcon,
   useTheme,
 } from "@mui/material";
 import { SnackbarProvider, useSnackbar } from "notistack";
@@ -26,6 +28,13 @@ import RotatingButton from "./UI/Rotatingbutton";
 import { useCookieConsent } from "../context/PreferencesContext";
 
 const { email, phone, OfficeLocation } = CompanyContactData[0];
+const DISCORD_URL = "https://discord.gg/fNCrM6gA7F";
+
+const DiscordIcon = (props: ComponentProps<typeof SvgIcon>) => (
+  <SvgIcon {...props} viewBox="0 0 24 24">
+    <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.516c-.21.375-.444.88-.608 1.275a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.275A19.74 19.74 0 0 0 3.832 4.37C.534 9.046-.36 13.58.087 18.058a19.9 19.9 0 0 0 5.994 3.03c.48-.655.91-1.35 1.28-2.08a12.98 12.98 0 0 1-2.02-.97c.17-.124.336-.253.498-.385 3.9 1.804 8.13 1.804 11.982 0 .164.134.33.263.498.386-.64.38-1.317.705-2.02.97.37.73.798 1.425 1.28 2.08a19.88 19.88 0 0 0 5.994-3.03c.524-5.188-.894-9.68-3.256-13.69ZM8.02 15.33c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.333-.956 2.419-2.157 2.419Zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.333-.946 2.419-2.157 2.419Z" />
+  </SvgIcon>
+);
 
 const forumSupport = [
   { name: "Terms and Conditions", path: "/terms-and-conditions" },
@@ -136,6 +145,11 @@ const Footer = () => {
 
   // ✅ Social Links
   const socialLinks = [
+    {
+      label: "Discord",
+      icon: DiscordIcon,
+      href: DISCORD_URL,
+    },
     {
       label: "Facebook",
       icon: FacebookIcon,

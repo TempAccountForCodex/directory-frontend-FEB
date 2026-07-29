@@ -258,7 +258,7 @@ const DynamicForm = ({
                           name={field.name}
                           fullWidth
                           variant="outlined"
-                          defaultCountry="PK"
+                          defaultCountry="US"
                           value={formik.values[field.name]}
                           onChange={(val) =>
                             formik.setFieldValue(field.name, val)

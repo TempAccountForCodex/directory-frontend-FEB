@@ -9,12 +9,8 @@
 
 // // Countries + Addresses
 // const officeLocations = {
-//   Pakistan: {
-//     address:
-//       "718, 7th Floor, Siddique Trade Center, Main Boulevard Gulberg 3, Lahore",
-//   },
 //   "United States of America": {
-//     address: "12828 Willow Centre Dr Ste D #363, Houston, TX 77066",
+//     address: "12828 Willow Centre Dr Ste D # 363 Houston TX 77066",
 //   },
 // };
 
@@ -72,7 +68,7 @@
 //           projection="geoMercator"
 //           projectionConfig={{
 //             scale: 160, // ✅ Zoom level (increased to match screenshot)
-//             center: [10, 45], // ✅ Moves the map to show US, Europe, and Pakistan
+//             center: [-60, 40], // ✅ Moves the map to show the US office
 //           }}
 //           width={980}
 //           height={650}
@@ -161,12 +157,7 @@
 // const officeLocations = {
 //   "United States of America": {
 //     coords: [-95.3698, 29.7604], // Houston, TX
-//     address: "12828 Willow Centre Dr Ste D #363, Houston, TX 77066",
-//   },
-//   Pakistan: {
-//     coords: [74.3587, 31.5204], // Lahore
-//     address:
-//       "718, 7th Floor, Siddique Trade Center, Main Boulevard Gulberg 3, Lahore",
+//     address: "12828 Willow Centre Dr Ste D # 363 Houston TX 77066",
 //   },
 // };
 
@@ -284,18 +275,16 @@ import {
 } from "react-simple-maps";
 import { feature } from "topojson-client";
 import { Box } from "@mui/material";
+import CompanyContactData from "../../Data/CompanyContactInfo";
+
+const { OfficeLocation } = CompanyContactData[0];
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 const officeLocations = {
   "United States of America": {
     coords: [-95.3698, 29.7604],
-    address: "12828 Willow Centre Dr Ste D #363, Houston, TX 77066",
-  },
-  Pakistan: {
-    coords: [74.3587, 31.5204],
-    address:
-      "718, 7th Floor, Siddique Trade Center, Main Boulevard Gulberg 3, Lahore",
+    address: OfficeLocation,
   },
 };
 
@@ -336,7 +325,7 @@ const WorldMap = () => {
         projection="geoMercator"
         projectionConfig={{
           scale: 150,
-          center: [10, 45],
+          center: [-60, 40],
         }}
         style={{
           width: "100%",

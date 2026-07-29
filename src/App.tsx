@@ -266,16 +266,11 @@ const AuthDashboardLayout = () => (
   </>
 );
 
+// MainLayout already supplies ScrollToTop, Navbar and Footer.
 const NotFoundLayout = () => (
-  <>
-    <ScrollToTop />
-    <Suspense fallback={null}>
-      <NotFound />
-    </Suspense>
-    <Suspense fallback={null}>
-      <MoveUpBtn />
-    </Suspense>
-  </>
+  <Suspense fallback={null}>
+    <NotFound />
+  </Suspense>
 );
 
 const App = () => {

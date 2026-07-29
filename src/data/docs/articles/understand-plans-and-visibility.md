@@ -4,8 +4,8 @@ Your plan determines how much you can create and what is visible to the public. 
 
 Plans typically gate **capacity** and **features**, for example:
 
-- How many websites, listings, or stores you can create.
-- Access to advanced blocks, custom domains, or store checkout.
+- How many websites or listings you can create.
+- Access to advanced blocks, custom domains, and other publishing features.
 - Limits on media storage and gallery size.
 
 Check the pricing page for the exact limits of each tier. Upgrading raises limits immediately; downgrading may hide content that exceeds the new limit until you remove the excess.

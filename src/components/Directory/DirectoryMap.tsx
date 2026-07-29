@@ -71,10 +71,10 @@ const DirectoryMap: React.FC<DirectoryMapProps> = ({
       };
     }
 
-    // If no mappable listings, use default center (Pakistan as default)
+    // If no mappable listings, use default center (Houston HQ as default)
     if (mappableListings.length === 0) {
       return {
-        center: [30.3753, 69.3451], // Pakistan center
+        center: [29.7604, -95.3698], // Houston, TX
         bounds: null,
       };
     }

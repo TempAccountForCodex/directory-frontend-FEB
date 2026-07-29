@@ -239,6 +239,7 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                 </Stack>
 
                 <Button
+                  href="/contact"
                   variant="contained"
                   fullWidth
                   disableElevation

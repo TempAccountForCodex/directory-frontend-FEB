@@ -77,7 +77,6 @@ const EXCLUDED_PREFIXES = [
 // Google's video indexer does not flag them as thumbnail-less.
 const UNCRAWLABLE_VIDEOS = [
   "/assets/publicAssets/videos/About/bg_test2_compressed.mp4",
-  "/assets/publicAssets/videos/About/why-choose-us-bg.webm",
   "/assets/video/logoLoader.webm",
 ];
 

@@ -21,12 +21,14 @@ type DeferredSectionProps = {
   children: ReactNode;
   minHeight: string;
   rootMargin?: string;
+  id?: string;
 };
 
 const DeferredSection = ({
   children,
   minHeight,
   rootMargin = "250px 0px",
+  id,
 }: DeferredSectionProps) => {
   const [visible, setVisible] = useState(false);
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -52,7 +54,11 @@ const DeferredSection = ({
   }, [rootMargin, visible]);
 
   return (
-    <div ref={mountRef} style={{ minHeight: visible ? undefined : minHeight }}>
+    <div
+      id={id}
+      ref={mountRef}
+      style={{ minHeight: visible ? undefined : minHeight }}
+    >
       {visible ? <Suspense fallback={null}>{children}</Suspense> : null}
     </div>
   );
@@ -79,7 +85,11 @@ const ContactUs = () => {
         <Map />
       </DeferredSection>
 
-      <DeferredSection minHeight="82vh" rootMargin="300px 0px">
+      <DeferredSection
+        id="contact-form"
+        minHeight="82vh"
+        rootMargin="300px 0px"
+      >
         <FormSection />
       </DeferredSection>
 

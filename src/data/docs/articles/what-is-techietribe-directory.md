@@ -4,7 +4,7 @@ Techietribe Directory lets you build your online presence without writing any co
 
 - **Websites** — your own site, built from ready-made sections and published to a web address. No coding required.
 - **Directory listings** — a business entry that appears in the public directory, with your photos, contact details, reviews, and favorites.
-- **Stores** — a product catalog with checkout, attached to your website.
+- **Stores** — coming soon; product catalogs and checkout are not available yet.
 
 ## How the pieces fit together
 

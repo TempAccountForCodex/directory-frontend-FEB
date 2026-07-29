@@ -512,6 +512,18 @@ const contactFAQs = [
 ];
 
 const ContactFAQSection: React.FC = () => {
+  const scrollToContactForm = () => {
+    const form = document.getElementById("contact-form");
+
+    if (form) {
+      form.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    // Fallback: the form lives on /contact, so send the user there.
+    window.location.href = "/contact#contact-form";
+  };
+
   return (
     <Box
       sx={{
@@ -668,6 +680,7 @@ const ContactFAQSection: React.FC = () => {
                 <Button
                   variant="contained"
                   fullWidth
+                  onClick={scrollToContactForm}
                   sx={{
                     bgcolor: "#1f1f1f",
                     color: "#fff",

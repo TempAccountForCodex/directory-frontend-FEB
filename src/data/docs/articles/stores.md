@@ -1,30 +1,19 @@
-A store adds a product catalog and checkout to your presence, so customers can buy from you directly.
+Store setup is coming soon. Techietribe does not currently offer live store creation, product catalogs, or checkout.
 
-## Creating a store
+## Current availability
 
-Start from the store setup wizard in your dashboard. It walks you through naming your store, adding your first products, and connecting it to a website.
+Stores are planned, but the setup flow is not available in the dashboard yet. You cannot create a store, add products, or take orders through Techietribe today.
 
-## Managing products
+## What you can use now
 
-Each product has a name, description, price, and photos. From the store area you can:
+You can still publish a website, create directory listings, manage listing visibility, upload media, and keep your business profile current.
 
-- Add, edit, and remove products.
-- Set prices and mark items as available or sold out.
-- Upload product photos. See [images and media](/docs/images-and-media).
+## What's next
 
-## Checkout
-
-Customers add products to their cart and complete the purchase at checkout. You'll see orders come through in your dashboard.
-
-## Showing your store on your site
-
-Feature your store on your website so customers can browse products in context — add the store section when [editing your website](/docs/website-builder).
-
-## Plan note
-
-Some store and checkout features depend on your plan. See [understand plans and visibility](/docs/understand-plans-and-visibility).
+When stores become available, this guide will cover setup, product management, checkout, and how to feature store content on your website.
 
 ## Related
 
 - [Build and edit your website](/docs/website-builder)
+- [Publish your first listing](/docs/publish-your-first-listing)
 - [Images and media](/docs/images-and-media)

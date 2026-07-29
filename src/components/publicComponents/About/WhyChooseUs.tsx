@@ -7,6 +7,7 @@ const videoSrc: string =
   "/assets/publicAssets/videos/About/bg_test2_compressed.mp4";
 const bgVideoSrc: string =
   "/assets/publicAssets/videos/About/why-choose-us-bg.webm";
+const videoPoster: string = "/assets/publicAssets/images/about/newHero2.webp";
 
 const Wrapper = styled(Box)(({ theme }) => ({
   position: "relative",
@@ -269,6 +270,7 @@ export default function WhyChooseUs(): JSX.Element {
           muted
           playsInline
           preload="none"
+          poster={videoPoster}
           sx={{
             position: "absolute",
             inset: 0,
@@ -293,6 +295,7 @@ export default function WhyChooseUs(): JSX.Element {
           muted
           playsInline
           preload="none"
+          poster={videoPoster}
           crossOrigin="anonymous"
           aria-hidden="true"
           tabIndex={-1}

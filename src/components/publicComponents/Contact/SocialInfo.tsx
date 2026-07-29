@@ -9,6 +9,14 @@ const instagramImage = "/assets/publicAssets/images/ContactUs/instagram.webp";
 const github = "/assets/publicAssets/images/ContactUs/github.webp";
 const linkedin = "/assets/publicAssets/images/ContactUs/linkedin.webp";
 const facebook = "/assets/publicAssets/images/ContactUs/facebook.webp";
+const DISCORD_URL = "https://discord.gg/fNCrM6gA7F";
+const EMAIL_URL = "mailto:info@thetechietribe.com";
+const PHONE_URL = "tel:+17134878746";
+const MAP_URL = "https://maps.app.goo.gl/G2MNu77hjGQVJpkLA";
+const GITHUB_URL = "https://github.com/thetechietribe";
+const INSTAGRAM_URL = "https://www.instagram.com/thetechietribe_/";
+const LINKEDIN_URL = "https://www.linkedin.com/company/techietribe";
+const FACEBOOK_URL = "https://www.facebook.com/thetechietribe.official";
 
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
@@ -30,11 +38,25 @@ const pulse = keyframes`
   }
 `;
 
-const StatCard = ({ icon: Icon, value, label, color = "#fff" }: any) => {
+const StatCard = ({
+  icon: Icon,
+  value,
+  label,
+  color = "#fff",
+  href,
+  ariaLabel,
+}: any) => {
   const isImage = typeof Icon === "string";
+  const isExternal =
+    typeof href === "string" && /^https?:\/\//i.test(href);
 
   return (
     <Paper
+      component={href ? "a" : "div"}
+      href={href}
+      target={isExternal ? "_blank" : undefined}
+      rel={isExternal ? "noopener noreferrer" : undefined}
+      aria-label={ariaLabel || value}
       elevation={0}
       sx={{
         background: "rgba(255, 255, 255, 0.03)",
@@ -49,6 +71,17 @@ const StatCard = ({ icon: Icon, value, label, color = "#fff" }: any) => {
         width: { xs: "180", lg: "240px" },
         height: { xs: "200", lg: "246px" },
         color: "white",
+        textDecoration: "none",
+        cursor: href ? "pointer" : "default",
+        transition:
+          "transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease",
+        "&:hover": href
+          ? {
+              backgroundColor: "rgba(255, 255, 255, 0.07)",
+              borderColor: "rgba(0, 242, 254, 0.38)",
+              transform: "translateY(-3px)",
+            }
+          : undefined,
       }}
     >
       <Box sx={{ mb: 1.5, opacity: 0.9 }}>
@@ -179,6 +212,8 @@ const ScaleShowcase = () => {
                 value="Chat with us"
                 label="Support available"
                 icon={ChatBubbleOutlineIcon}
+                href={DISCORD_URL}
+                ariaLabel="Chat with Techietribe on Discord"
               />
             </Grid>
 
@@ -187,14 +222,18 @@ const ScaleShowcase = () => {
                 value="info@thetechietribe.com"
                 label="Email us anytime"
                 icon={EmailOutlinedIcon}
+                href={EMAIL_URL}
+                ariaLabel="Email Techietribe"
               />
             </Grid>
 
             <Grid item xs={6}>
               <StatCard
                 value="Call us"
-                label="(251) 373-2325"
+                label="+1 713-487-8746"
                 icon={CallOutlinedIcon}
+                href={PHONE_URL}
+                ariaLabel="Call Techietribe"
               />
             </Grid>
 
@@ -203,6 +242,8 @@ const ScaleShowcase = () => {
                 value="Visit us"
                 label="Houston, TX Office"
                 icon={LocationOnOutlinedIcon}
+                href={MAP_URL}
+                ariaLabel="Open Techietribe office location"
               />
             </Grid>
           </Grid>
@@ -298,6 +339,8 @@ const ScaleShowcase = () => {
                 label="Open source work"
                 icon={github}
                 color="#ffffff"
+                href={GITHUB_URL}
+                ariaLabel="Techietribe on GitHub"
               />
             </Grid>
             <Grid item xs={6}>
@@ -305,6 +348,8 @@ const ScaleShowcase = () => {
                 value="Instagram"
                 label="Daily updates"
                 icon={instagramImage}
+                href={INSTAGRAM_URL}
+                ariaLabel="Techietribe on Instagram"
               />
             </Grid>
 
@@ -314,6 +359,8 @@ const ScaleShowcase = () => {
                 label="Company profile"
                 icon={linkedin}
                 color="#0A66C2"
+                href={LINKEDIN_URL}
+                ariaLabel="Techietribe on LinkedIn"
               />
             </Grid>
 
@@ -323,6 +370,8 @@ const ScaleShowcase = () => {
                 label="Community"
                 icon={facebook}
                 color="#1877F2"
+                href={FACEBOOK_URL}
+                ariaLabel="Techietribe on Facebook"
               />
             </Grid>
           </Grid>

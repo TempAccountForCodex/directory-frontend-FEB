@@ -1,4 +1,4 @@
-Guidance for images and media across listings, websites, and stores.
+Guidance for images and media across listings and websites. Store media support is coming soon.
 
 ## Supported formats
 
@@ -27,7 +27,7 @@ Upload high-quality source images; the platform resizes for display. Keep indivi
 - Listing image shows in directory cards and previews.
 - Inline images and videos render inside the full listing description.
 - Website images render inside their blocks on the published site.
-- Store product images show in the catalog and checkout.
+- Store product images will be covered when store setup becomes available.
 
 Anything you upload to a **published** item is public — do not upload anything you would not want shown. Text is moderated separately from the visual content inside media files.
 

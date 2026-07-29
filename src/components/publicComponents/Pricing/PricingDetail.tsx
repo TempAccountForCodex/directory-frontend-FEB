@@ -1030,6 +1030,7 @@ const PricingCard = ({
             <Button
               fullWidth
               variant="outlined"
+              href="/early-access"
               disabled={comingSoon}
               sx={{
                 mt: "auto",

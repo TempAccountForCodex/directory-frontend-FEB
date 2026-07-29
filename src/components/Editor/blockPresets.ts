@@ -483,9 +483,9 @@ export const getBlockDefaultContent = (
     case "MAP_LOCATION":
       return {
         heading: "Visit our office",
-        address: "Shahrah-e-Faisal, Karachi",
-        latitude: "24.8607",
-        longitude: "67.0011",
+        address: "12828 Willow Centre Dr Ste D # 363 Houston TX 77066",
+        latitude: "29.7604",
+        longitude: "-95.3698",
       };
     case "MENU_DISPLAY":
       return {

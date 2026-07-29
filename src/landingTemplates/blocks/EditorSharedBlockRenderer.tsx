@@ -5224,7 +5224,7 @@ export const renderEditorSharedBlock = ({
   }
 
   if (blockType === "map_location") {
-    const defaultIframe = `<iframe src="https://www.google.com/maps?q=Lahore%2C%20Pakistan&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+    const defaultIframe = `<iframe src="https://www.google.com/maps?q=12828%20Willow%20Centre%20Dr%20Ste%20D%20%23%20363%20Houston%20TX%2077066&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
 
     const iframeHtml = block.content?.iframe || defaultIframe;
 

@@ -8,8 +8,8 @@
  * `DocSearch` already expect from the backend `/api/docs/*` endpoints.
  *
  * Audience: the docs are written for the people who USE the platform to create
- * websites, directory listings, and stores — not for developers maintaining the
- * codebase. Keep articles task-oriented and free of code/API internals.
+ * websites and directory listings — not for developers maintaining the codebase.
+ * Keep articles task-oriented and free of code/API internals.
  *
  * The pages call the live API first and fall back to these accessors only when
  * the request fails (e.g. no backend running in local dev), so the docs site is
@@ -107,7 +107,7 @@ export const DOCS_SECTIONS: DocsSectionSeed[] = [
     slug: "guides",
     title: "Guides",
     description:
-      "Build websites and manage listings, favorites, reviews, and stores.",
+      "Build websites and manage listings, favorites, and reviews.",
   },
   {
     slug: "customization",
@@ -137,7 +137,7 @@ export const DOC_META: Record<string, DocArticleMeta> = {
   "what-is-techietribe-directory": {
     title: "What is Techietribe Directory?",
     description:
-      "A quick tour of what you can create: websites, directory listings, and stores.",
+      "A quick tour of what you can create: websites and directory listings.",
     category: "getting-started",
     section: "Overview",
     tags: ["overview", "basics"],
@@ -173,7 +173,7 @@ export const DOC_META: Record<string, DocArticleMeta> = {
   },
   "dashboard-overview": {
     title: "Find your way around the dashboard",
-    description: "Where to manage your websites, listings, stores, and media.",
+    description: "Where to manage your websites, listings, media, and reviews.",
     category: "getting-started",
     section: "Overview",
     tags: ["dashboard", "basics"],
@@ -349,7 +349,7 @@ export const DOC_META: Record<string, DocArticleMeta> = {
   },
   stores: {
     title: "Set up a store",
-    description: "Create a store, add products, and take orders at checkout.",
+    description: "Store setup is coming soon and is not available yet.",
     category: "guides",
     section: "Stores",
     tags: ["stores", "commerce"],

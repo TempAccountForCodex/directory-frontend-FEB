@@ -6,7 +6,21 @@ import { loadSlim } from "@tsparticles/slim";
 import { useVisibility } from "@/hooks/useVisibility";
 import "./ParticlesBackground.css";
 
-const ParticlesBackground = () => {
+interface ParticlesBackgroundProps {
+  /** Dot colour. Defaults to near-white. */
+  particleColor?: string;
+  /**
+   * Connecting-line colour. Defaults to the app theme, which is correct on
+   * Techietribe pages but wrong on white-label sites — pass the site's own
+   * accent there so the field matches its branding.
+   */
+  linkColor?: string;
+}
+
+const ParticlesBackground = ({
+  particleColor = "#f1f1f1",
+  linkColor,
+}: ParticlesBackgroundProps = {}) => {
   const [init, setInit] = useState(false);
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -57,9 +71,9 @@ const ParticlesBackground = () => {
         },
       },
       particles: {
-        color: { value: "#f1f1f1" },
+        color: { value: particleColor },
         links: {
-          color: theme.palette.text.main,
+          color: linkColor || theme.palette.text.main,
           distance: 100,
           enable: true,
           opacity: 0.5,
@@ -93,7 +107,7 @@ const ParticlesBackground = () => {
       },
       detectRetina: false,
     }),
-    [theme, isSmallScreen],
+    [theme, isSmallScreen, particleColor, linkColor],
   );
 
   return (

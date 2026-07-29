@@ -224,12 +224,14 @@ const styles = {
 const StyledHader: React.FC = () => {
   const [videoIndex, setVideoIndex] = React.useState(0);
   const [shouldLoadVideo, setShouldLoadVideo] = React.useState(false);
+  const [videoLoaded, setVideoLoaded] = React.useState(false);
 
   const videos = [HeroVideo1];
   const videoPosters = [HeroVideo1Poster];
   const images = [HeroImage1];
 
   const handleVideoEnd = () => {
+    setVideoLoaded(false);
     setVideoIndex((prev) => (prev + 1) % videos.length);
   };
   const theme = useTheme();
@@ -309,24 +311,45 @@ const StyledHader: React.FC = () => {
           <video
             key={videoIndex} // important to force re-render
             src={videos[videoIndex]} // dynamic video
-            poster={videoPosters[videoIndex]}
+            poster={videoLoaded ? undefined : videoPosters[videoIndex]}
             autoPlay
             muted
-            loop={false} // stop looping manually
+            loop={videos.length === 1}
             playsInline
             preload="none"
-            onEnded={handleVideoEnd}
+            onCanPlay={() => setVideoLoaded(true)}
+            onWaiting={() => setVideoLoaded(false)}
+            onEnded={videos.length > 1 ? handleVideoEnd : undefined}
             style={{
               width: "100%",
               height: "100%",
               objectFit: "cover",
               filter: "brightness(0.55)",
+              opacity: videoLoaded ? 1 : 0,
+              transition: "opacity 0.5s ease-in",
               transform: "translateZ(0)",
               backfaceVisibility: "hidden",
               willChange: "transform",
             }}
           />
         )}
+        <Box
+          component="img"
+          src={videoPosters[videoIndex]}
+          alt=""
+          aria-hidden
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "brightness(0.55)",
+            opacity: videoLoaded ? 0 : 1,
+            transition: "opacity 0.5s ease-in",
+            willChange: "opacity",
+          }}
+        />
       </Box>
 
       <Box

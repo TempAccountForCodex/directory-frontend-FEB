@@ -26,7 +26,6 @@ import { useAuth } from "../context/AuthContext";
 
 const WhiteLogo = "/WhiteLogo.png";
 const NAV_ACCENT = "#47aab6";
-const NAV_ACCENT_DARK = "#2d7a85";
 const NAV_ACCENT_SOFT = "rgba(71,170,182,0.12)";
 
 const tabs = [
@@ -115,6 +114,7 @@ const docsMenuGroups: {
 const docsQuickStartItems: (DocsMenuLink & {
   iconBg: string;
   iconColor: string;
+  comingSoon?: boolean;
 })[] = [
   {
     label: "Build a website",
@@ -136,6 +136,7 @@ const docsQuickStartItems: (DocsMenuLink & {
     icon: Store,
     iconBg: NAV_ACCENT_SOFT,
     iconColor: NAV_ACCENT,
+    comingSoon: true,
   },
 ];
 
@@ -570,11 +571,13 @@ function Navbar() {
                       width: 580,
                       maxWidth: "calc(100vw - 32px)",
                       overflow: "visible",
-                      border: "1px solid #f3f4f6",
+                      border: "1px solid rgba(255,255,255,0.12)",
                       borderRadius: "8px",
-                      bgcolor: "#fff",
-                      boxShadow: "0 8px 30px rgba(0,0,0,0.1)",
-                      color: "#111827",
+                      bgcolor: "rgba(5, 13, 18, 0.96)",
+                      boxShadow:
+                        "0 18px 60px rgba(0,0,0,0.46), 0 0 0 1px rgba(71,170,182,0.08)",
+                      color: "#f8fafc",
+                      backdropFilter: "blur(18px)",
                       "&::before": {
                         content: '""',
                         position: "absolute",
@@ -596,7 +599,7 @@ function Navbar() {
                           rowGap: 3,
                           p: 3,
                           pr: 2,
-                          borderRight: "1px solid #f3f4f6",
+                          borderRight: "1px solid rgba(255,255,255,0.1)",
                         }}
                       >
                         {docsMenuGroups.map((group) => (
@@ -612,7 +615,7 @@ function Navbar() {
                               component="h3"
                               sx={{
                                 mb: 1.5,
-                                color: "#6b7280",
+                                color: "rgba(255,255,255,0.52)",
                                 fontSize: 12,
                                 fontWeight: 700,
                                 letterSpacing: "0.08em",
@@ -648,7 +651,7 @@ function Navbar() {
                                         width: "100%",
                                         border: "none",
                                         background: "transparent",
-                                        color: "#374151",
+                                        color: "rgba(255,255,255,0.82)",
                                         cursor: "pointer",
                                         display: "flex",
                                         alignItems: "center",
@@ -678,7 +681,7 @@ function Navbar() {
                                             color:
                                               item.label === "What's New"
                                                 ? NAV_ACCENT
-                                                : "#9ca3af",
+                                                : "rgba(255,255,255,0.46)",
                                             flexShrink: 0,
                                             transition: "color 0.16s ease",
                                           }}
@@ -702,7 +705,7 @@ function Navbar() {
                           justifyContent: "center",
                           gap: 1,
                           p: 2.5,
-                          bgcolor: "rgba(249, 250, 251, 0.5)",
+                          bgcolor: "rgba(255,255,255,0.035)",
                         }}
                       >
                         <Typography
@@ -710,7 +713,7 @@ function Navbar() {
                           sx={{
                             px: 0.5,
                             mb: 0.5,
-                            color: "#9ca3af",
+                            color: "rgba(255,255,255,0.48)",
                             fontSize: 10,
                             fontWeight: 700,
                             letterSpacing: "0.12em",
@@ -722,20 +725,25 @@ function Navbar() {
                         </Typography>
                         {docsQuickStartItems.map((item) => {
                           const Icon = item.icon;
+                          const isComingSoon = Boolean(item.comingSoon);
                           return (
                             <Box
                               key={item.path}
                               component="button"
                               type="button"
                               role="menuitem"
-                              onClick={() => onNavClick(item.path)}
+                              onClick={() => {
+                                if (!isComingSoon) onNavClick(item.path);
+                              }}
                               sx={{
                                 width: "100%",
-                                border: "1px solid #e5e7eb",
+                                border: "1px solid rgba(255,255,255,0.1)",
                                 borderRadius: "6px",
-                                bgcolor: "#fff",
-                                color: "#374151",
-                                cursor: "pointer",
+                                background: isComingSoon
+                                  ? "linear-gradient(135deg, rgba(71,170,182,0.14), rgba(255,255,255,0.05))"
+                                  : "rgba(255,255,255,0.045)",
+                                color: "rgba(255,255,255,0.84)",
+                                cursor: isComingSoon ? "default" : "pointer",
                                 display: "flex",
                                 alignItems: "center",
                                 gap: 1.25,
@@ -744,11 +752,19 @@ function Navbar() {
                                 fontFamily: "inherit",
                                 textAlign: "left",
                                 transition:
-                                  "border-color 0.16s ease, box-shadow 0.16s ease, color 0.16s ease",
+                                  "background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, color 0.16s ease",
                                 "&:hover, &:focus-visible": {
-                                  borderColor: "rgba(71,170,182,0.35)",
-                                  boxShadow: "0 1px 4px rgba(15, 23, 42, 0.08)",
-                                  color: NAV_ACCENT,
+                                  backgroundColor: isComingSoon
+                                    ? "rgba(71,170,182,0.09)"
+                                    : "rgba(71,170,182,0.11)",
+                                  borderColor: isComingSoon
+                                    ? "rgba(71,170,182,0.34)"
+                                    : "rgba(71,170,182,0.44)",
+                                  boxShadow:
+                                    "0 10px 24px rgba(0, 0, 0, 0.24)",
+                                  color: isComingSoon
+                                    ? "rgba(255,255,255,0.88)"
+                                    : NAV_ACCENT,
                                   outline: "none",
                                 },
                               }}
@@ -773,12 +789,41 @@ function Navbar() {
                                 component="span"
                                 sx={{
                                   color: "inherit",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "flex-start",
+                                  gap: 0.6,
+                                  minWidth: 0,
+                                  flex: 1,
                                   fontSize: 12,
                                   fontWeight: 600,
                                   lineHeight: 1.25,
                                 }}
                               >
-                                {item.label}
+                                <Box component="span" sx={{ minWidth: 0 }}>
+                                  {item.label}
+                                </Box>
+                                {isComingSoon && (
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      border: "1px solid rgba(71,170,182,0.45)",
+                                      borderRadius: "999px",
+                                      bgcolor: "rgba(71,170,182,0.12)",
+                                      color: NAV_ACCENT,
+                                      fontSize: 9,
+                                      fontWeight: 700,
+                                      letterSpacing: "0.04em",
+                                      lineHeight: 1,
+                                      px: 0.7,
+                                      py: 0.4,
+                                      flexShrink: 0,
+                                      textTransform: "uppercase",
+                                    }}
+                                  >
+                                    Coming soon
+                                  </Box>
+                                )}
                               </Typography>
                             </Box>
                           );
@@ -788,7 +833,7 @@ function Navbar() {
 
                     <Box
                       sx={{
-                        borderTop: "1px solid #f3f4f6",
+                        borderTop: "1px solid rgba(255,255,255,0.1)",
                         px: 2.5,
                         py: 1.5,
                         display: "flex",
@@ -800,7 +845,7 @@ function Navbar() {
                       <Typography
                         component="span"
                         sx={{
-                          color: "#9ca3af",
+                          color: "rgba(255,255,255,0.48)",
                           fontSize: 12,
                           fontWeight: 500,
                           lineHeight: 1.2,
@@ -816,7 +861,7 @@ function Navbar() {
                         sx={{
                           border: "none",
                           background: "transparent",
-                          color: "#4b5563",
+                          color: "rgba(255,255,255,0.82)",
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
@@ -828,7 +873,7 @@ function Navbar() {
                           lineHeight: 1.2,
                           transition: "color 0.16s ease",
                           "&:hover, &:focus-visible": {
-                            color: NAV_ACCENT_DARK,
+                            color: NAV_ACCENT,
                             outline: "none",
                           },
                         }}

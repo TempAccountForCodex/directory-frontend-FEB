@@ -4,14 +4,14 @@ Your dashboard is the home base for everything you create. This is a quick map o
 
 - **Websites** — create, edit, and publish your sites. Each site has its own pages and design.
 - **Listings** — manage your directory listings: edit details, add photos, and publish.
-- **Stores** — set up a product catalog and take orders.
+- **Stores** — coming soon; store creation and checkout are not available yet.
 - **Media** — the images and files you've uploaded, reused across your sites and listings.
 - **Reviews** — see reviews left on your listings and reply to them.
 - **Account & plan** — update your details and see what your current plan includes.
 
 ## Getting around
 
-- Use the main menu to switch between websites, listings, and stores.
+- Use the main menu to switch between websites, listings, media, reviews, and account settings.
 - Each item shows its current status — for listings, that's whether it's a **draft**, **needs completion**, **published**, or **archived**. See the [listing lifecycle](/docs/directory-listings).
 - Open any item to edit it; your changes are saved as you go and only go live when you publish.
 

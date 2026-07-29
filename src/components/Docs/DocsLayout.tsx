@@ -230,13 +230,10 @@ const TopBar = memo<TopBarProps>(
         )}
 
         <Box
-          component={Link}
-          to="/docs"
           sx={{
             display: "flex",
             alignItems: "center",
             gap: 1,
-            textDecoration: "none",
             color: DOCS.text,
             flexShrink: 0,
             minWidth: 0,
@@ -244,39 +241,62 @@ const TopBar = memo<TopBarProps>(
           }}
         >
           <Box
-            component="img"
-            src={mode === "light" ? LightDocsLogo : "/WhiteLogo.png"}
-            alt="Techietribe"
+            component={Link}
+            to="/"
+            aria-label="Go to Techietribe homepage"
             sx={{
-              height: 26,
-              width: "auto",
-              maxWidth: { xs: 190, md: 240 },
-              display: { xs: "none", sm: "block" },
+              display: "inline-flex",
+              alignItems: "center",
+              textDecoration: "none",
+              flexShrink: 0,
             }}
-          />
+          >
+            <Box
+              component="img"
+              src={mode === "light" ? LightDocsLogo : "/WhiteLogo.png"}
+              alt="Techietribe"
+              sx={{
+                height: 26,
+                width: "auto",
+                maxWidth: { xs: 190, md: 240 },
+                display: { xs: "none", sm: "block" },
+              }}
+            />
+            <Box
+              component="img"
+              src={CompactDocsLogo}
+              alt="Techietribe"
+              sx={{
+                height: 32,
+                width: 32,
+                objectFit: "contain",
+                display: { xs: "block", sm: "none" },
+              }}
+            />
+          </Box>
           <Box
-            component="img"
-            src={CompactDocsLogo}
-            alt="Techietribe"
+            component={Link}
+            to="/docs"
+            aria-label="Go to Docs"
             sx={{
-              height: 32,
-              width: 32,
-              objectFit: "contain",
-              display: { xs: "block", sm: "none" },
-            }}
-          />
-          <Box
-            component="span"
-            sx={{
-              fontWeight: 600,
-              fontSize: "0.95rem",
-              color: DOCS.textMuted,
-              borderLeft: `1px solid ${DOCS.border}`,
-              pl: 1,
+              textDecoration: "none",
               display: { xs: "none", sm: "block" },
             }}
           >
-            Docs
+            <Box
+              component="span"
+              sx={{
+                fontWeight: 600,
+                fontSize: "0.95rem",
+                color: DOCS.textMuted,
+                borderLeft: `1px solid ${DOCS.border}`,
+                pl: 1,
+                transition: "color 0.15s ease",
+                "&:hover": { color: DOCS.text },
+              }}
+            >
+              Docs
+            </Box>
           </Box>
         </Box>
 

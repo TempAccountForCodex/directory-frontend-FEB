@@ -78,6 +78,7 @@ export default function HeroDepthCarousel() {
   const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
   const [shouldLoadVideo, setShouldLoadVideo] = React.useState(false);
   const [videoLoaded, setVideoLoaded] = React.useState(false);
+  const [loadedVideoSrc, setLoadedVideoSrc] = React.useState("");
   const navigate = useNavigate();
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const observerRef = React.useRef<IntersectionObserver | null>(null);
@@ -142,6 +143,8 @@ export default function HeroDepthCarousel() {
 
   const heroVideoSrc = SLIDES[index].video;
   const heroPlaceholderSrc = SLIDES[index].frame;
+  const isCurrentVideoLoaded =
+    videoLoaded && loadedVideoSrc === heroVideoSrc;
 
   // (Re)load the video whenever its source changes; fade it back in once
   // the new source is playable so the per-slide placeholder shows meanwhile
@@ -150,9 +153,11 @@ export default function HeroDepthCarousel() {
     const video = videoRef.current;
 
     setVideoLoaded(false);
+    setLoadedVideoSrc("");
 
     const handleCanPlay = () => {
       setVideoLoaded(true);
+      setLoadedVideoSrc(heroVideoSrc);
     };
 
     const handleError = () => {
@@ -214,29 +219,29 @@ export default function HeroDepthCarousel() {
         paddingBottom: 40,
       }}
     >
+      <img
+        src={heroPlaceholderSrc}
+        alt=""
+        aria-hidden
+        decoding="async"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex: 0,
+          opacity: isCurrentVideoLoaded ? 0 : 0.85,
+          transition: "opacity 0.5s ease-in",
+          willChange: "opacity",
+        }}
+      />
       {shouldRenderVideo && (
         <>
-          <img
-            src={heroPlaceholderSrc}
-            alt=""
-            aria-hidden
-            decoding="async"
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              zIndex: 0,
-              opacity: videoLoaded ? 0 : 0.85,
-              transition: "opacity 0.5s ease-in",
-              willChange: "opacity",
-            }}
-          />
           <video
             ref={videoRef}
             src={heroVideoSrc}
-            poster={heroPlaceholderSrc}
+            poster={isCurrentVideoLoaded ? undefined : heroPlaceholderSrc}
             autoPlay
             muted
             loop
@@ -251,7 +256,7 @@ export default function HeroDepthCarousel() {
               height: "100%",
               objectFit: "cover",
               zIndex: 0,
-              opacity: videoLoaded ? 0.85 : 0,
+              opacity: isCurrentVideoLoaded ? 0.85 : 0,
               transition: "opacity 0.5s ease-in",
               willChange: "opacity",
               transform: "translateZ(0)",

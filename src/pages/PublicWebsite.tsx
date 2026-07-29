@@ -28,6 +28,7 @@ import {
   type BlogArticleSeoData,
 } from "../components/PublicWebsite/dynamic/BlogArticleBlock";
 import ImageWithLoader from "../components/UI/ImageWithLoader";
+import NotFoundContent from "../components/UI/NotFoundContent";
 import { useGoogleAnalytics } from "../hooks/useGoogleAnalytics";
 import LanguageSelector from "../components/LanguageSelector";
 import TemplateEngine from "../landingTemplates/templateEngine/TemplateEngine";
@@ -111,11 +112,7 @@ const extractBlogArticleIdentifier = (
 ): string | null => {
   const normalizedPath = pagePath.replace(/\/+$/, "") || "/";
   const normalizedIndexPath = blogIndexPath.replace(/\/+$/, "") || "/blog";
-  const prefixes = [
-    `${normalizedIndexPath}/`,
-    "/blog-detail/",
-    "/blogdetail/",
-  ];
+  const prefixes = [`${normalizedIndexPath}/`, "/blog-detail/", "/blogdetail/"];
 
   for (const prefix of prefixes) {
     if (
@@ -220,6 +217,9 @@ const PublicWebsite: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // A real path was requested that matches no page — render the 404 body
+  // instead of silently serving the home page at that URL (a soft 404).
+  const [pageNotFound, setPageNotFound] = useState(false);
 
   // Blog article SEO override — populated by BlogArticleBlock via context
   const [blogSeoData, setBlogSeoData] = useState<BlogArticleSeoData | null>(
@@ -304,6 +304,7 @@ const PublicWebsite: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+        setPageNotFound(false);
 
         const websiteSlug = getWebsiteSlug();
 
@@ -499,9 +500,7 @@ const PublicWebsite: React.FC = () => {
                 (p) =>
                   p.pageType === "BLOG_DETAIL" ||
                   (Array.isArray(p.blocks) &&
-                    p.blocks.some(
-                      (b: any) => b.blockType === "BLOG_ARTICLE",
-                    )),
+                    p.blocks.some((b: any) => b.blockType === "BLOG_ARTICLE")),
               );
               const detailBlock =
                 detailPage && Array.isArray(detailPage.blocks)
@@ -550,10 +549,19 @@ const PublicWebsite: React.FC = () => {
           }
         }
 
-        // If still no page, use home page.
+        // A non-root path that matched no real page (and was not resolved as a
+        // blog detail above) is a genuine 404. Falling back to home here would
+        // serve homepage content under the wrong URL — a soft 404 that search
+        // engines index as duplicate content and that misleads visitors.
+        const isMissingPage = !page && pagePath !== "/";
+
+        // The root path still falls back, so sites without an explicit `isHome`
+        // page keep working.
         if (!page) {
           page = sortedPages.find((p) => p.isHome) || sortedPages[0];
         }
+
+        setPageNotFound(isMissingPage);
 
         const websiteFrontendTemplateId =
           normalizedWebsiteData.frontendTemplateId;
@@ -696,9 +704,11 @@ h1, h2, h3, h4, h5, h6 {
 
   // Blog article SEO overrides (set by BlogArticleBlock when it loads a post)
   const isBlogArticle = !!blogSeoData;
-  const metaTitle = isBlogArticle
-    ? blogSeoData!.title || baseMetaTitle
-    : baseMetaTitle;
+  const metaTitle = pageNotFound
+    ? `Page Not Found | ${website?.businessName || website?.name || ""}`.trim()
+    : isBlogArticle
+      ? blogSeoData!.title || baseMetaTitle
+      : baseMetaTitle;
   const metaDescription = isBlogArticle
     ? blogSeoData!.description || baseMetaDescription
     : baseMetaDescription;
@@ -947,7 +957,10 @@ h1, h2, h3, h4, h5, h6 {
       currentPage?.path,
     );
 
+  // `currentPage` still points at the home fallback on a 404, so this branch
+  // would otherwise render the full template home body for a missing path.
   if (
+    !pageNotFound &&
     resolvedFrontendTemplateId &&
     hasFrontendTemplateBaseData(resolvedFrontendTemplateId) &&
     frontendTemplateData &&
@@ -986,16 +999,21 @@ h1, h2, h3, h4, h5, h6 {
     );
   }
 
-  const hasWebsiteHeader = pageBodyBlocks.some(
-    (b: any) =>
-      b.blockType === "WEBSITE_HEADER" ||
-      (b.blockType === "NAVBAR" && b.content?._subType === "website_header"),
-  );
+  // On a 404 the body blocks belong to the home fallback, not to what we
+  // render — so its header must not count as "already rendered".
+  const hasWebsiteHeader =
+    !pageNotFound &&
+    pageBodyBlocks.some(
+      (b: any) =>
+        b.blockType === "WEBSITE_HEADER" ||
+        (b.blockType === "NAVBAR" && b.content?._subType === "website_header"),
+    );
   const shouldUseTemplatePageShell = Boolean(
     resolvedFrontendTemplateId &&
-    hasFrontendTemplateBaseData(resolvedFrontendTemplateId) &&
-    frontendTemplateData &&
-    !currentPage?.isHome,
+      hasFrontendTemplateBaseData(resolvedFrontendTemplateId) &&
+      frontendTemplateData &&
+      // Template sites get the 404 inside their own shell chrome.
+      (!currentPage?.isHome || pageNotFound),
   );
   const genericHeader = (
     <AppBar
@@ -1039,23 +1057,25 @@ h1, h2, h3, h4, h5, h6 {
             {website.name}
           </Typography>
         </Box>
-        {website.pages.filter((page) => !isBlogDetailPage(page)).map((page) => (
-          <Button
-            key={page.id}
-            component={Link}
-            to={`/site/${website.slug}${page.path}`}
-            sx={{
-              color:
-                currentPage?.id === page.id
-                  ? website.primaryColor
-                  : "text.secondary",
-              fontWeight: currentPage?.id === page.id ? 600 : 400,
-              textDecoration: "none",
-            }}
-          >
-            {page.title}
-          </Button>
-        ))}
+        {website.pages
+          .filter((page) => !isBlogDetailPage(page))
+          .map((page) => (
+            <Button
+              key={page.id}
+              component={Link}
+              to={`/site/${website.slug}${page.path}`}
+              sx={{
+                color:
+                  currentPage?.id === page.id
+                    ? website.primaryColor
+                    : "text.secondary",
+                fontWeight: currentPage?.id === page.id ? 600 : 400,
+                textDecoration: "none",
+              }}
+            >
+              {page.title}
+            </Button>
+          ))}
         <Box sx={{ ml: 2 }}>
           <LanguageSelector variant="standard" size="small" showIcon={false} />
         </Box>
@@ -1074,8 +1094,23 @@ h1, h2, h3, h4, h5, h6 {
     frontendTemplateData?.primaryColor || website.primaryColor || "#378C92";
   const publicStaticStyleOverrides =
     ((frontendTemplateData?.templateContent as Record<string, any> | undefined)
-      ?.__editorStaticStyleOverrides as Record<string, Record<string, any>> | undefined) ||
-    {};
+      ?.__editorStaticStyleOverrides as
+      Record<string, Record<string, any>> | undefined) || {};
+  // Rendering the 404 as the page *body* means it is automatically wrapped in
+  // whichever chrome this site uses — the owner's own header and footer, or the
+  // template shell — instead of needing its own branding.
+  const notFoundContent = (
+    <NotFoundContent
+      homeHref={slug ? `/site/${slug}` : "/"}
+      homeLabel="Back to Home"
+      message="The page vou were looking for is in a different quantum state. Ready to reconnect?"
+      baseColor={effectivePrimaryColor}
+      accentColor={website.secondaryColor || "#D3EB63"}
+      showParticles
+      particleLinkColor={website.secondaryColor || effectivePrimaryColor}
+    />
+  );
+
   const pageBlocksContent = (
     <Box>
       {!pageBodyBlocks.length ? (
@@ -1171,7 +1206,12 @@ h1, h2, h3, h4, h5, h6 {
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: pageNotFound ? effectivePrimaryColor : "background.default",
+      }}
+    >
       <DynamicBlockProvider>
         <BlogArticleSeoContext.Provider value={blogArticleSeoContextValue}>
           <PublicWebsiteIntegrations
@@ -1232,7 +1272,7 @@ h1, h2, h3, h4, h5, h6 {
             )}
 
             {/* Keep unpublished/preview posts out of search indexes */}
-            {isBlogArticle && blogSeoData?.noindex && (
+            {((isBlogArticle && blogSeoData?.noindex) || pageNotFound) && (
               <meta name="robots" content="noindex, nofollow" />
             )}
           </Helmet>
@@ -1244,12 +1284,12 @@ h1, h2, h3, h4, h5, h6 {
               fallbackHeader={sharedHeader || genericHeader}
               fallbackFooter={sharedFooter || genericFooter}
             >
-              {pageBlocksContent}
+              {pageNotFound ? notFoundContent : pageBlocksContent}
             </TemplatePageShell>
           ) : (
             <>
               {!hasWebsiteHeader && (sharedHeader || genericHeader)}
-              {pageBlocksContent}
+              {pageNotFound ? notFoundContent : pageBlocksContent}
               {sharedFooter || genericFooter}
             </>
           )}

@@ -76,8 +76,9 @@ const ROLE_PATHS = [
   {
     icon: <ShoppingBag size={18} />,
     label: "Set up a store",
-    description: "Add products and take orders at checkout.",
+    description: "Commerce tools are planned and not available yet.",
     to: "/docs/stores",
+    comingSoon: true,
   },
 ];
 
@@ -204,7 +205,8 @@ const DocsHome = memo(() => {
           }}
         >
           Guides and troubleshooting to help you build websites, publish
-          directory listings, manage favorites and reviews, and set up stores.
+          directory listings, manage favorites and reviews. Store setup is
+          coming soon.
         </Box>
 
         {/* Popular links */}
@@ -270,12 +272,32 @@ const DocsHome = memo(() => {
                     color: DOCS.text,
                     display: "flex",
                     alignItems: "center",
-                    gap: 0.5,
+                    gap: 0.75,
                     mb: 0.25,
                   }}
                 >
                   {role.label}
-                  <ArrowRight size={13} />
+                  {role.comingSoon ? (
+                    <Box
+                      component="span"
+                      sx={{
+                        border: `1px solid ${DOCS.accentSoftBg}`,
+                        borderRadius: 999,
+                        color: DOCS.accent,
+                        fontSize: "0.58rem",
+                        fontWeight: 750,
+                        letterSpacing: "0.06em",
+                        lineHeight: 1,
+                        px: 0.8,
+                        py: 0.45,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Coming soon
+                    </Box>
+                  ) : (
+                    <ArrowRight size={13} />
+                  )}
                 </Box>
                 <Box sx={{ color: DOCS.textMuted, fontSize: "0.78rem" }}>
                   {role.description}

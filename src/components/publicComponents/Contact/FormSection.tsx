@@ -1,13 +1,59 @@
 import React, { useState, useEffect } from "react";
+import type { ComponentProps } from "react";
 import * as Yup from "yup";
 import { useLocation } from "react-router-dom";
-import { Box, Typography, Grid, Container } from "@mui/material";
+import { Box, Typography, Grid, Container, SvgIcon } from "@mui/material";
 import Form from "../../../components/publicComponents/careers/form";
 import { useTheme, alpha } from "@mui/material/styles";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import CompanyContactData from "../../Data/CompanyContactInfo";
+
+const { phone: companyPhone, OfficeLocation: companyAddress } =
+  CompanyContactData[0];
+
+const DISCORD_URL = "https://discord.gg/fNCrM6gA7F";
+
+const DiscordIcon = (props: ComponentProps<typeof SvgIcon>) => (
+  <SvgIcon {...props} viewBox="0 0 24 24">
+    <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.516c-.21.375-.444.88-.608 1.275a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.275A19.74 19.74 0 0 0 3.832 4.37C.534 9.046-.36 13.58.087 18.058a19.9 19.9 0 0 0 5.994 3.03c.48-.655.91-1.35 1.28-2.08a12.98 12.98 0 0 1-2.02-.97c.17-.124.336-.253.498-.385 3.9 1.804 8.13 1.804 11.982 0 .164.134.33.263.498.386-.64.38-1.317.705-2.02.97.37.73.798 1.425 1.28 2.08a19.88 19.88 0 0 0 5.994-3.03c.524-5.188-.894-9.68-3.256-13.69ZM8.02 15.33c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.333-.956 2.419-2.157 2.419Zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.333-.946 2.419-2.157 2.419Z" />
+  </SvgIcon>
+);
+
+const contactSocialLinks = [
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/thetechietribe_/",
+    Icon: InstagramIcon,
+    hoverColor: "#E4405F",
+  },
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/thetechietribe.official",
+    Icon: FacebookIcon,
+    hoverColor: "#1877F2",
+  },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/company/techietribe",
+    Icon: LinkedInIcon,
+    hoverColor: "#0A66C2",
+  },
+  {
+    label: "GitHub",
+    href: "https://github.com/thetechietribe",
+    Icon: GitHubIcon,
+    hoverColor: "#6E5494",
+  },
+  {
+    label: "Discord",
+    href: DISCORD_URL,
+    Icon: DiscordIcon,
+    hoverColor: "#5865F2",
+  },
+];
 
 type ContactFieldOption = {
   value: string;
@@ -305,10 +351,7 @@ const ContactDiscussSection = () => {
                 </Typography>
 
                 <Typography sx={{ color: "#6b7280", fontSize: "16px" }}>
-                  +92 300 456 1162
-                </Typography>
-                <Typography sx={{ color: "#6b7280", fontSize: "16px" }}>
-                  +1 (251) 373-2325
+                  {companyPhone}
                 </Typography>
               </Grid>
 
@@ -326,10 +369,7 @@ const ContactDiscussSection = () => {
                 </Typography>
 
                 <Typography sx={{ color: "#6b7280", fontSize: "16px" }}>
-                  USA, Houston TX 77066
-                </Typography>
-                <Typography sx={{ color: "#6b7280", fontSize: "16px" }}>
-                  Willow Centre Dr, Ste D #363
+                  {companyAddress}
                 </Typography>
               </Grid>
 
@@ -365,41 +405,28 @@ const ContactDiscussSection = () => {
                 </Typography>
 
                 <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
-                  <InstagramIcon
-                    sx={{
-                      color: "#000000ff",
-                      cursor: "pointer",
-                      fontSize: 22,
-                      "&:hover": { color: "#E4405F" },
-                    }}
-                  />
-
-                  <FacebookIcon
-                    sx={{
-                      color: "#000000ff",
-                      cursor: "pointer",
-                      fontSize: 22,
-                      "&:hover": { color: "#1877F2" },
-                    }}
-                  />
-
-                  <LinkedInIcon
-                    sx={{
-                      color: "#000000ff",
-                      cursor: "pointer",
-                      fontSize: 22,
-                      "&:hover": { color: "#0A66C2" },
-                    }}
-                  />
-
-                  <GitHubIcon
-                    sx={{
-                      color: "#000000ff",
-                      cursor: "pointer",
-                      fontSize: 22,
-                      "&:hover": { color: "#111827" },
-                    }}
-                  />
+                  {contactSocialLinks.map(
+                    ({ label, href, Icon, hoverColor }) => (
+                      <Box
+                        key={label}
+                        component="a"
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Techietribe on ${label}`}
+                        title={`Techietribe on ${label}`}
+                        sx={{
+                          color: "#000000ff",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          textDecoration: "none",
+                          "&:hover": { color: hoverColor },
+                        }}
+                      >
+                        <Icon aria-hidden="true" sx={{ fontSize: 22 }} />
+                      </Box>
+                    ),
+                  )}
                 </Box>
               </Grid>
             </Grid>

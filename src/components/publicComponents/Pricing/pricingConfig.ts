@@ -122,13 +122,12 @@ export const PLANS: Plan[] = [
     label: "Business",
     tagline: "Grow and scale",
     positioning: "Scale with maximum directory visibility.",
-    comingSoon: true,
-    cta: "Coming Soon",
+    cta: "Get Started",
     features: [
       "Everything in Pro, plus:",
       "Priority based directory listing",
       "Advanced integrations",
-      "Built in forms",
+      "Built in forms · No Limit",
       "Unlimited blog posts",
       "1 GB storage/site",
       "500 AI actions/daily",
@@ -255,7 +254,7 @@ export const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
       },
       {
         feature: "Directory listings",
-        free: "1 standard",
+        free: false,
         pro: "1 per site",
         business: "Unlimited*",
       },
@@ -277,12 +276,6 @@ export const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
         pro: "200 MB/site",
         business: "1 GB",
       },
-      {
-        feature: "Site-count step",
-        free: false,
-        pro: SITE_COUNT_STEP_LABEL,
-        business: SITE_COUNT_STEP_LABEL,
-      },
     ],
   },
   {
@@ -291,14 +284,14 @@ export const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
       {
         feature: "Forms",
         free: "1",
-        pro: "5 per website",
-        business: "Unlimited",
+        pro: "No limit",
+        business: "No limit",
       },
       {
         feature: "Form submissions",
         free: "50/month",
-        pro: "500/month",
-        business: "10,000/month",
+        pro: "No limit",
+        business: "No limit",
       },
       {
         feature: "Booking/reservation forms",
@@ -365,18 +358,6 @@ export const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
         business: `${PRICING_DISCOUNT_DISPLAY.annualFreeMonths} months free`,
       },
       {
-        feature: "Volume discount",
-        free: false,
-        pro: "Super Admin controlled",
-        business: "Super Admin controlled",
-      },
-      {
-        feature: "Max volume discount",
-        free: false,
-        pro: "Hidden unless enabled",
-        business: "Hidden unless enabled",
-      },
-      {
         feature: "Launch code",
         free: false,
         pro: PRICING_DISCOUNT_DISPLAY.launchCode,
@@ -400,12 +381,6 @@ export const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
         pro: `$${REFERRAL_PROGRAM.referrerCreditAmount}`,
         business: `$${REFERRAL_PROGRAM.referrerCreditAmount}`,
       },
-      {
-        feature: "Renewal price",
-        free: "Regular",
-        pro: REFERRAL_PROGRAM.renewalCopy,
-        business: REFERRAL_PROGRAM.renewalCopy,
-      },
     ],
   },
   {
@@ -427,7 +402,7 @@ export const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
       {
         feature: "Custom code & embeds",
         free: false,
-        pro: false,
+        pro: true,
         business: true,
       },
     ],
@@ -455,9 +430,9 @@ export const COMPARISON_GROUPS: { category: string; rows: CompareRow[] }[] = [
     rows: [
       {
         feature: "Directory ranking boost",
-        free: "Standard",
-        pro: "Enhanced",
-        business: "Highest",
+        free: false,
+        pro: "Standard",
+        business: "Enhanced",
       },
       {
         feature: "Featured directory listing",
